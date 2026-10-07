@@ -10,6 +10,14 @@ import CirclePacking.SevenNineAngleData
 import CirclePacking.SevenNine
 import CirclePacking.SevenNineAngleProofs
 import CirclePacking.SevenNineCoverage
+import CirclePacking.RootIsolation
+import CirclePacking.HennebergCore
+import CirclePacking.FiniteOptimality
+import CirclePacking.SevenNineFiniteOptimality
+import CirclePacking.AngularCellCertificate
+import CirclePacking.GeometricAngle
+import CirclePacking.CyclicGap
+import CirclePacking.PolarAngle
 
 /-!
 # Formal algebraic core for unequal-circle packing
