@@ -1,0 +1,21 @@
+{
+  "kind": "frontier-farkas-manifest",
+  "status": "partial-frontier-only",
+  "farkas_artifact": "artifacts/core9-no5-rho-8.0-farkas-3nodes.jsonl.gz",
+  "sha256": "0b89a12ae8347d4800041705c6196961606d756b67cdeebaf317d3208cc63dab",
+  "nodes": {
+    "1": {
+      "records": 20160,
+      "status": "certified-local"
+    },
+    "01": {
+      "records": 20160,
+      "status": "certified-local"
+    },
+    "001": {
+      "records": 20160,
+      "status": "certified-local"
+    }
+  },
+  "unresolved_frontier_is_not_claimed_closed": true
+}

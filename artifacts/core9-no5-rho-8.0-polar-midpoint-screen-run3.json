@@ -1,0 +1,263 @@
+{
+  "kind": "diagnostic-only",
+  "rho": "8.0",
+  "radii_squared": [
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "results": [
+    {
+      "node": "1",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "01",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000000000000000001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000000000000000000000011",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000000000000000000101",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000000000000000000000001001",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000000000000000000100011",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000000000000000000000001000101",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000000000000000000100010011",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "00000000000000000000000000000001000100101",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "0000000000000000000000000000000100010010011",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000000000000000000000010001001001011",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    },
+    {
+      "node": "000000000000000000000000000000010001001001010",
+      "orders_tested": 20160,
+      "midpoint_surviving_count": 0,
+      "midpoint_surviving_orders": []
+    }
+  ]
+}

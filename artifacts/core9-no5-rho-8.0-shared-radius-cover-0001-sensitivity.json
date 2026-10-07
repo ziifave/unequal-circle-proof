@@ -1,0 +1,44 @@
+{
+  "kind": "shared-radius-cover-diagnostic",
+  "node": "0001",
+  "orders": 20160,
+  "processed": 8,
+  "frontier": 7,
+  "leaves": [
+    {
+      "depth": 7,
+      "status": "OPEN",
+      "unresolved": 19460,
+      "certified": 700,
+      "split_score": 13412.754744095626
+    },
+    {
+      "depth": 1,
+      "status": "FRONTIER"
+    },
+    {
+      "depth": 2,
+      "status": "FRONTIER"
+    },
+    {
+      "depth": 3,
+      "status": "FRONTIER"
+    },
+    {
+      "depth": 4,
+      "status": "FRONTIER"
+    },
+    {
+      "depth": 5,
+      "status": "FRONTIER"
+    },
+    {
+      "depth": 6,
+      "status": "FRONTIER"
+    },
+    {
+      "depth": 7,
+      "status": "FRONTIER"
+    }
+  ]
+}

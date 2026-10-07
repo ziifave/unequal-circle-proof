@@ -1,0 +1,640 @@
+{
+  "kind": "diagnostic-only",
+  "rho": "8.0",
+  "radii_squared": [
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "results": [
+    {
+      "node": "1",
+      "tested_orders": 20160,
+      "all_orders_infeasible": true
+    },
+    {
+      "node": "01",
+      "tested_orders": 20160,
+      "all_orders_infeasible": true
+    },
+    {
+      "node": "001",
+      "tested_orders": 20160,
+      "all_orders_infeasible": true
+    },
+    {
+      "node": "0001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000000000000000001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000000000000000000000011",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000000000000000000101",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000000000000000000000001001",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000000000000000000100011",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000000000000000000000001000101",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000000000000000000100010011",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "00000000000000000000000000000001000100101",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "0000000000000000000000000000000100010010011",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000000000000000000000010001001001011",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "node": "000000000000000000000000000000010001001001010",
+      "tested_orders": 1,
+      "all_orders_infeasible": false,
+      "witness_order": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    }
+  ]
+}

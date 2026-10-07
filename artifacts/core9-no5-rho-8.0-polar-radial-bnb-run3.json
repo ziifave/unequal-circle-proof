@@ -1,0 +1,41 @@
+{
+  "kind": "diagnostic-only",
+  "rho": "8.0",
+  "radii_squared": [
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "results": [
+    {
+      "node": "1",
+      "processed": 1,
+      "frontier": 0,
+      "unresolved": 0,
+      "best_alive_orders": 0,
+      "closed": true
+    },
+    {
+      "node": "01",
+      "processed": 1,
+      "frontier": 0,
+      "unresolved": 0,
+      "best_alive_orders": 0,
+      "closed": true
+    },
+    {
+      "node": "001",
+      "processed": 178,
+      "frontier": 57,
+      "unresolved": 0,
+      "best_alive_orders": 0,
+      "closed": false
+    }
+  ]
+}
