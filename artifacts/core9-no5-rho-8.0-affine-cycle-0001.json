@@ -1,7 +1,0 @@
-{
-  "kind": "diagnostic-only",
-  "node": "0001",
-  "orders": 20160,
-  "affine_certified": 0,
-  "max_affine_margin": -19.295419896249605
-}
