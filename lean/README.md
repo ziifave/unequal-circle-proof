@@ -73,6 +73,78 @@ packings to analytic radial bounds, and the finite MPFI endpoint comparison
 for the exported radial partition.  The remaining trust boundary is the
 external generation of the exported rational data itself.
 
+## Global proof entry point
+
+`CirclePacking/GlobalOptimality.lean` is the focused Lean entry point for the
+global proof.  The optimum is defined by the unique solution of the exact
+angle equations; identifying it with the separate high-degree polynomial root
+`R0` is not needed.  `CirclePacking/GlobalAnchorRadius.lean` proves directly
+from the packing axioms that if disk 9 has radius 3, disk 10 has radius
+`sqrt 10`, and disk 10's center radius is at most `2253/2000`, then the
+container radius is strictly greater than `15947/2000`.
+
+`CirclePacking/CertificateTree.lean` formalizes coverage for a finite tree of
+rational box splits.  Each child box is indexed by the parent's exact cut, and
+Lean proves that every point in the root box belongs to a leaf box.  This is
+the structural coverage layer only; contractor soundness, the concrete
+radial-tree data, and its terminal exclusions still need to be connected.
+
+`CirclePacking/RadialPropagation.lean` proves that a pairwise radial
+contraction, and any finite sequence of such contractions, preserves every
+packing represented by the input box.
+
+`CirclePacking/GlobalRadialBox.lean` now checks the ten downward-rounded
+square-root lower bounds from the global certificate as exact rational
+inequalities.  It derives the initial rational radial box from container
+containment and pairwise separation, then composes the all-pairs contractor to
+prove that every ten-circle packing below the certificate's radius upper
+bound remains in the propagated root box.  It also combines this result with
+the generic split-tree coverage theorem: any rational split tree rooted at
+that box has a leaf containing the packing's radial vector.  The actual
+exported radial tree and main-order leaf exclusions are still outside Lean.
+
+`CirclePacking/PropagatedSplitTree.lean` models the search's per-node order:
+contract the current box, split the contracted box, and contract again at each
+child.  Its generic coverage theorem is connected to the ten-circle geometry
+by `tenCircle_propagatedGlobalTree_covers`.  Thus arbitrary packings are now
+proved to reach a leaf of any correctly indexed tree with that node structure;
+the exported node data and each leaf's exclusion certificate remain to be
+replayed.
+
+`CirclePacking/NineCircleCertificate.lean` now replays the concrete
+two-order, 308-node nine-circle certificate. The generated data contains 155
+cycle leaves; Lean checks every split point, each exact integer cross-product
+for a Taylor/corner inequality, and every strictly negative cycle sum. The
+input JSON is pinned by SHA-256 in
+`tools/export_nine_circle_certificate_lean.py`. Regenerate it from the
+repository root and build it with:
+
+```sh
+uv run python tools/export_nine_circle_certificate_lean.py
+cd lean
+lake build CirclePacking.NineCircleCertificate
+```
+
+This finite arithmetic replay uses
+`native_decide`, whose evaluator is an additional trust dependency. It does
+not yet extract real inequalities from the finite checker.
+
+`CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
+bridge: four corner bounds over a radial box imply a touch-angle lower bound;
+non-overlap turns this into a directed angle-gap bound; and summing those
+bounds around any closed walk contradicts a strictly negative total. The
+remaining connection is to prove that each checked integer Taylor/corner
+comparison in the concrete checker supplies the corresponding real cosine
+inequality, then apply this theorem to all 155 checked leaves. The concrete
+radial tree and its main-order angle-barrier cases also remain to be replayed.
+
+The radial tree, angle-barrier certificates, and the analytic connection for
+the alternate nine-circle cycle are therefore not yet fully replayed by Lean.
+They remain checked by the exact Python composition verifier, so this is a
+verified foundation with one concrete finite payload replayed, not yet a Lean
+proof of global optimality. Build the focused global entry point with
+`lake build CirclePacking.GlobalOptimality`.
+
 Build with:
 
 ```text

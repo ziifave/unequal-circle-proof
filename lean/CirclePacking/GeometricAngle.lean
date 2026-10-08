@@ -28,8 +28,13 @@ theorem center_cosine_le_touch_cosine
     nlinarith
   unfold centerCosine touchCosine
   rw [hpa, hqb]
-  apply (div_le_div_iff₀ (mul_pos (by norm_num : (0 : ℝ) < 2) hab)).2
-  nlinarith
+  have hmul :
+      (p.1 * q.1 + p.2 * q.2) * (2 * (a * b)) ≤
+        (a ^ 2 + b ^ 2 - d ^ 2) * (a * b) := by
+    nlinarith
+  have hfrac := (div_le_div_iff₀ hab
+    (mul_pos (by norm_num : (0 : ℝ) < 2) hab)).2 hmul
+  simpa [mul_assoc] using hfrac
 
 theorem touch_angle_le_center_angle
     {p q : Point} {a b d : ℝ}

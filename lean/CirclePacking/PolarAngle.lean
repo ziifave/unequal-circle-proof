@@ -25,11 +25,16 @@ theorem centerCosine_polar
     pointNorm_polarPoint (le_of_lt ha)
   have hpb : pointNorm (polarPoint b β) = b :=
     pointNorm_polarPoint (le_of_lt hb)
-  unfold centerCosine polarPoint
+  unfold centerCosine
   rw [hpa, hpb]
-  rw [← Real.cos_sub]
+  simp only [polarPoint, Prod.fst, Prod.snd]
+  have hfactor :
+      a * Real.cos α * (b * Real.cos β) +
+        a * Real.sin α * (b * Real.sin β) =
+      (a * b) * (Real.cos α * Real.cos β + Real.sin α * Real.sin β) := by
+    ring
+  rw [hfactor, ← Real.cos_sub]
   field_simp
-  ring
 
 theorem centerAngle_polar_sub
     {a b α β : ℝ} (ha : 0 < a) (hb : 0 < b)
