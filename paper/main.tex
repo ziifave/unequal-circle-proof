@@ -10,6 +10,7 @@
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
 
 \geometry{margin=28mm}
 \hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
@@ -95,6 +96,14 @@ the analytic lemmas prove that each case rule is valid; and the exact witness
 proves attainability.  Section~\ref{sec:composition} gives the complete case
 accounting, while Section~\ref{sec:verification} describes the replay and
 its trust boundary.
+
+Computer-assisted global optimality proofs for circle packing have important
+precedents.  For example, Mark\'ot gives interval-based proofs for the
+maximal packings of 31, 32, and 33 equal circles in a square
+\cite{Markot2021}.  The geometry and certificate architecture here are
+different: the present problem has unequal radii and a circular container,
+and its final cases reduce to angular inequalities and difference-constraint
+cycles.
 
 \section{Problem and exact statement}
 
@@ -483,11 +492,50 @@ cyclic order must satisfy
 where $\pi_+$ is a rational upper bound for $\pi$ obtained from Machin's
 identity and alternating arctangent series.
 
+\begin{lemma}[Four-corner bound for the radial cosine]
+\label{lem:corner-bound}
+Let $d>0$ and let $x,y$ range over a positive rectangle.  The maximum of
+\[
+  c(x,y)=\frac{x^2+y^2-d^2}{2xy}
+\]
+on that rectangle is attained at one of its four corners.
+\end{lemma}
+
+\begin{proof}
+For fixed $y>0$,
+\[
+  \frac{\partial c}{\partial x}
+   =\frac{x^2-y^2+d^2}{2yx^2}.
+\]
+Its numerator is strictly increasing in $x$ and has at most one zero; if a
+zero occurs, the derivative changes from negative to positive, so the
+stationary point is a minimum.  Thus the maximum over an $x$-interval occurs
+at an endpoint.  Applying the same argument in $y$ to each of those two
+edges proves the corner claim.  The checker applies this to rational radial
+rectangles and uses a lower rational bound for $d=r_i+r_j$, which only
+increases the upper bound on $c$.
+\end{proof}
+
+\begin{lemma}[Negative-cycle criterion for angular constraints]
+\label{lem:negative-cycle}
+Suppose angular variables $\theta_i$ satisfy difference constraints
+$\theta_v-\theta_u\le w(u,v)$ on the directed edges of a finite graph.  If
+the graph contains a directed cycle whose edge weights have strictly
+negative sum, the constraints have no solution.
+\end{lemma}
+
+\begin{proof}
+Sum the inequalities around the directed cycle.  The left side telescopes to
+zero, so feasibility would imply $0\le\sum w(u,v)<0$, a contradiction.
+The certificate checker verifies that every listed cycle is simple and
+recomputes its strictly negative total with upward-rounded rational edge
+weights.
+\end{proof}
+
 Assign the directed edge $j\to i$ weight $-q_{ij}$ and the edge
 $i\to j$ weight $2\pi_+-q_{ij}$.  The angle differences are variables
-satisfying the corresponding difference constraints.  A directed cycle of
-strictly negative total weight is impossible: summing its constraints would
-assert that zero is at most a negative number.
+satisfying the corresponding difference constraints.  Lemma~\ref{lem:negative-cycle}
+therefore turns each verified negative cycle into a geometric impossibility.
 
 \subsection{Finite certificate}
 
@@ -546,6 +594,81 @@ Lemma~\ref{lem:main-radius-floor} supplies the radius range required by the
 barrier.  After these links are replayed, all $14{,}757{,}888$ sector
 assignments are closed and no residual case remains.
 
+\begin{lemma}[Completeness of sector-order projection]
+\label{lem:sector-projection}
+Fix a four-circle skeleton $\sigma$ in cyclic order and effective sector
+masks $M=(M_0,M_1,M_2,M_3)$ for the remaining circles with positive angular
+lower bounds.  The set $\Pi(\sigma,M)$ formed by preserving the skeleton
+order and taking every permutation of the assigned labels within each sector
+contains every order compatible with that assignment.  Every full order,
+after deleting labels whose angular lower bounds vanish, restricts to one of
+these projections.  Consequently, if every order in $\Pi(\sigma,M)$ has its
+seven-circle restriction equal to
+$(10,5,7,9,2,8,6)$, the main angle barrier applies to every packing in that
+mask.  If every order instead has its nine-circle restriction, after
+deleting circle $1$, in $\{P,Q\}$, the negative-cycle certificate applies
+to every packing in that mask.
+\end{lemma}
+
+\begin{proof}
+Read any compatible cyclic order starting at the first skeleton circle.
+Each remaining circle with a positive angular lower bound lies in one sector
+between consecutive skeleton circles.  Its within-sector order is one of the
+permutations enumerated in $\Pi(\sigma,M)$; ties can be assigned either
+consistent order and both are included.  Circles with zero lower bounds are
+deleted, which only relaxes the necessary inequalities.  The composition
+checker constructs the whole projection set for each residual mask and
+verifies the required restrictions for every member; it does not infer them
+from the single order stored with an angular model.
+\end{proof}
+
+For the $197$ residual sector assignments, the replay checks $790$ projected
+orders in total.  All $772$ projections in the main-order groups restrict to
+the stated seven-circle order.  All $18$ projections in the exceptional
+groups restrict, after deleting circle $1$, to $P$ or $Q$.  The $147$ local
+terminal models are separately replayed order by order through the main
+barrier.  These finite checks make the connection from the case tree to the
+two geometric theorems explicit.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[>=Stealth, every node/.style={font=\small}]
+  \tikzset{
+    box/.style={draw,rounded corners,align=center,minimum height=9mm,
+                text width=4.1cm,inner sep=4pt},
+    widebox/.style={draw,rounded corners,align=center,minimum height=9mm,
+                    text width=5.0cm,inner sep=4pt},
+    arrow/.style={-{Stealth[length=2mm]},thick}
+  }
+  \node[box] (tree) at (0,0) {Complete rational radial tree\\
+    2,401 nodes; 1,201 leaves};
+  \node[box] (closed) at (-4.4,-1.7) {Exact radial/angular checks\\
+    14,757,691 assignments};
+  \node[box] (residual) at (0,-1.7) {197 residual assignments\\
+    all sector masks expanded};
+  \node[box] (local) at (4.4,-1.7) {147 prior local terminals\\
+    independently reclassified};
+  \node[widebox] (main) at (-2.65,-3.65) {193 residual main-order cases\\
+    + 147 local terminals\\seven-circle angle barrier};
+  \node[widebox] (exception) at (2.65,-3.65) {4 exceptional masks project to $P$\\
+    both $P$ and $Q$ checked by negative cycles};
+  \node[box] (done) at (0,-5.55) {Every case closed\\
+    global lower bound at $R_{\mathrm{crit}}$};
+  \draw[arrow] (tree) -- (closed);
+  \draw[arrow] (tree) -- (residual);
+  \draw[arrow,dashed] (tree) -- (local);
+  \draw[arrow] (residual) -- (main);
+  \draw[arrow] (residual) -- (exception);
+  \draw[arrow] (local) -- (main);
+  \draw[arrow] (main) -- (done);
+  \draw[arrow] (exception) -- (done);
+\end{tikzpicture}
+\caption{Structure of the finite lower-bound proof. The 147 local terminals
+are a separate set of tree conclusions, rechecked through the main angle
+barrier; they are not additional sector assignments.}
+\label{fig:proof-flow}
+\end{figure}
+
 \begin{proof}[Proof of Theorem~\ref{thm:global}]
 Let $R<\Rcrit$.  Since $\Rcrit<\Rcap$, every putative packing belongs to
 the certified radial-tree domain.  Every sector assignment is closed either
@@ -594,12 +717,78 @@ are on the wall, and all remaining inequalities have positive certified
 slack.  Hence this is an actual feasible configuration at the exact root,
 not merely a rounded numerical picture.
 
+Figure~\ref{fig:packing} shows the witness at rounded coordinates for
+orientation only.  The proof uses the exact root-defined polar coordinates
+above and the rational auxiliary centers; it does not infer feasibility from
+the drawing.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[x=0.34cm,y=0.34cm]
+  \draw[gray,dashed,line width=1pt] (0,0) circle (8.303468);
+  % Three auxiliary circles, followed by the seven-circle core.
+  \draw[fill=orange!24,draw=orange!70!black] (-3.979800,6.114800) circle (1.000000);
+  \node[font=\scriptsize] at (-3.979800,6.114800) {$1$};
+  \draw[fill=orange!24,draw=orange!70!black] (6.477700,0.884900) circle (1.732051);
+  \node[font=\scriptsize] at (6.477700,0.884900) {$3$};
+  \draw[fill=orange!24,draw=orange!70!black] (5.522200,-2.757400) circle (2.000000);
+  \node[font=\scriptsize] at (5.522200,-2.757400) {$4$};
+  \draw[fill=blue!18,draw=blue!65!black] (1.003716,0.000000) circle (3.162278);
+  \node[font=\scriptsize] at (1.003716,0.000000) {$10$};
+  \draw[fill=blue!18,draw=blue!65!black] (4.323262,4.257083) circle (2.236068);
+  \node[font=\scriptsize] at (4.323262,4.257083) {$5$};
+  \draw[fill=blue!18,draw=blue!65!black] (-0.356672,5.646463) circle (2.645751);
+  \node[font=\scriptsize] at (-0.356672,5.646463) {$7$};
+  \draw[fill=blue!18,draw=blue!65!black] (-4.826665,2.197743) circle (3.000000);
+  \node[font=\scriptsize] at (-4.826665,2.197743) {$9$};
+  \draw[fill=blue!18,draw=blue!65!black] (-6.643005,-1.825464) circle (1.414214);
+  \node[font=\scriptsize] at (-6.643005,-1.825464) {$2$};
+  \draw[fill=blue!18,draw=blue!65!black] (-3.266261,-4.394043) circle (2.828427);
+  \node[font=\scriptsize] at (-3.266261,-4.394043) {$8$};
+  \draw[fill=blue!18,draw=blue!65!black] (1.885282,-5.542091) circle (2.449490);
+  \node[font=\scriptsize] at (1.885282,-5.542091) {$6$};
+  \fill (0,0) circle (1.5pt);
+\end{tikzpicture}
+\caption{The ten-circle witness. Blue circles form the seven-circle core;
+orange circles are the three fixed rational auxiliary centers. The drawing
+uses rounded root coordinates and is illustrative only.}
+\label{fig:packing}
+\end{figure}
+
+The eight active contacts within the core have a compact graph description.
+The seven edges of the cyclic chain follow the order used by the angular
+barrier, and the additional chord is the contact $(10,7)$.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[>=Stealth,
+  vertex/.style={circle,draw=blue!65!black,fill=blue!10,minimum size=7mm,
+                 inner sep=1pt,font=\small},
+  chain/.style={blue!70!black,line width=1.1pt},
+  chord/.style={red!75!black,line width=1.3pt}]
+  \node[vertex] (v10) at (2.2,0) {$10$};
+  \node[vertex] (v5) at (1.45,1.65) {$5$};
+  \node[vertex] (v7) at (0,2.2) {$7$};
+  \node[vertex] (v9) at (-1.65,1.45) {$9$};
+  \node[vertex] (v2) at (-2.2,0) {$2$};
+  \node[vertex] (v8) at (-1.45,-1.65) {$8$};
+  \node[vertex] (v6) at (0,-2.2) {$6$};
+  \draw[chain] (v10)--(v5)--(v7)--(v9)--(v2)--(v8)--(v6)--(v10);
+  \draw[chord] (v10)--(v7);
+  \node[font=\small,align=center] at (0,-2.85)
+    {cyclic contact chain\quad additional chord $(10,7)$};
+\end{tikzpicture}
+\caption{Contact graph of the seven-circle core. The blue cycle contributes
+seven tangencies; the red chord is the eighth core tangency.}
+\label{fig:core-contacts}
+\end{figure}
+
 \section{Reproducibility and trust boundary}
 \label{sec:verification}
 
 The complete composition is replayed from the repository root with
 \begin{quote}\small\ttfamily
-uv run --locked --no-sync python \textbackslash\\
+uv run --locked python \textbackslash\\
 \hspace*{1em}\path{tools/verify_global_optimality_completion.py}
 \end{quote}
 The first command checks the tree, case linkage, root theorem, witness,
@@ -621,11 +810,18 @@ whose hashes the composition checker records.  The proof is not formalized
 end-to-end in Lean.  In particular, references to old Lean developments or
 the MPFI generator do not substitute for the exact replay used here.
 
+The composition entry point rejects Python's optimized modes, because some
+component checkers use \texttt{assert} statements for certificate conditions;
+running it with \texttt{-O} or \texttt{-OO} would otherwise remove those
+checks.  The SHA-256 manifest covers the exact case tree, theorem data,
+verifiers, locked Python environment, composition note, root README, and the
+manuscript source and PDF.  All of these are committed as one reproducible
+source unit.
+
 The repository's global-optimality completion note and the
 \path{proof/global_completion/} directory contain the individual theorem
 proofs and certificate details.  The composition report records SHA-256
-hashes for the tree, certificates, and verifier sources so a replay can be
-tied to the checked inputs.
+hashes for these inputs so a replay can be tied to the checked inputs.
 
 \section{Conclusion and remaining identifications}
 
@@ -639,5 +835,15 @@ separate task would be to prove that $\Rcrit$ equals the previously computed
 algebraic root $R_0$; overlapping decimal enclosures alone would not prove
 that identity.  The exact coupled-angle definition is already a complete
 specification of the optimum.
+
+\begin{thebibliography}{9}
+\bibitem{Markot2021}
+Mih\'aly Csaba Mark\'ot,
+\newblock Improved interval methods for solving circle packing problems in
+the unit square,
+\newblock \emph{Journal of Global Optimization} 81(3) (2021), 773--803.
+\newblock \href{https://doi.org/10.1007/s10898-021-01086-z}
+{doi:10.1007/s10898-021-01086-z}.
+\end{thebibliography}
 
 \end{document}

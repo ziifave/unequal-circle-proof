@@ -30,9 +30,11 @@ claimed or needed here.
 
 ## How the global cases close
 
-The exact replay of [`skeleton-radial-tree-v27.json.gz`](certificates/skeleton-radial-tree-v27.json.gz)
-checks 2,401 nodes, 1,200 rational splits, and 1,201 leaves covering every configuration with container radius
-at most \(U\). Its original angular ledgers closed 14,757,691 sector cases
+The exact replay of the complete radial-tree certificate
+([`certificate file`](certificates/skeleton-radial-tree-v27.json.gz)) checks
+2,401 nodes, 1,200 rational splits, and 1,201 leaves covering every
+configuration with container radius at most \(U\). Its original angular
+ledgers closed 14,757,691 sector cases
 and left 197 open:
 
 - 193 cases have seven-disk core order \((10,5,7,9,2,8,6)\). Their complete
@@ -44,7 +46,7 @@ and left 197 open:
   \((10,3,7,5,8,4,6,9,2)\), covered by the exact nine-circle negative-cycle
   certificate. The verifier also replays the second possible 4/6 order.
 
-The v27 tree had also closed 145 core-order models and two full-order witnesses
+The radial tree had also closed 145 core-order models and two full-order witnesses
 using its local terminal rule. The completion checker reclassifies each of
 those 147 terminals through the same seven-disk angle-barrier theorem: every
 one has the required core order and disk-10 interval. Thus these closures no
@@ -67,15 +69,25 @@ are closed by their exact cycle or radial contradictions. Since
 \(R_{\rm crit}<U\), all configurations with \(R<R_{\rm crit}\) are covered.
 The root's exact ten-disk construction supplies the matching upper bound.
 
+The composition checker expands every residual sector mask into all
+sector-compatible orders before connecting it to a geometric theorem. It
+checks 790 projected orders: 772 have the main seven-circle restriction and
+18 reduce to one of the two nine-circle orders. The 147 reclassified local
+terminal models are each checked separately.
+
 ## Reproduction
 
 Run the complete proof composition with the locked workspace environment:
 
-    uv run --locked --no-sync python tools/verify_global_optimality_completion.py
+    uv run --locked python tools/verify_global_optimality_completion.py
 
 The checker writes
 [the JSON composition report](artifacts/global-optimality-completion-2026-10-09.json),
-including SHA-256 hashes for the tree, certificates, and verifier sources.
+including SHA-256 hashes for the tree, theorem certificates, verifier
+sources, locked Python environment, root README, and manuscript source and
+PDF. The case tree, report, paper, and input manifest are kept together in the release commit. The
+checker refuses Python's optimized `-O`/`-OO` modes so component assertions
+cannot be disabled accidentally.
 The individual attached theorem verifiers and certificates are preserved in
 [proof/global_completion](proof/global_completion).
 
@@ -84,7 +96,7 @@ The individual attached theorem verifiers and certificates are preserved in
 All proof decisions in the composition, root, and nine-circle verifiers use
 exact rational/integer arithmetic. Floating-point routines may help discover
 candidate bounds, but every accepted certificate inequality is checked
-exactly. The v27 tree and its split endpoints are also replayed exactly. The
+exactly. The radial tree and its split endpoints are also replayed exactly. The
 result is a reproducible computational proof, not a Lean formalization. It
 proves equality to the angle-defined exact \(R_{\rm crit}\), not equality to
 the previously computed polynomial root \(R_0\).

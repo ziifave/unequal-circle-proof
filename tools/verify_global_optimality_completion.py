@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Compose the exact ten-disk global optimality proof certificates.
 
-All theorem premises are replayed locally. The result checks the v27
-exhaustive tree, both attached geometric theorems, and the exact 10-disk
-upper witness. It then maps every v27 open/local terminal model to one of the
-attached angle-barrier or nine-circle impossibility theorems.
+All theorem premises are replayed locally. The result checks the complete
+radial case tree, both attached geometric theorems, and the exact ten-disk
+upper witness. Every residual order projection is connected to a theorem.
 """
 from __future__ import annotations
 
@@ -17,6 +16,12 @@ import gzip
 from collections import Counter
 from fractions import Fraction as F
 from pathlib import Path
+
+# Several component replayers intentionally use Python assertions as checks.
+# Refuse optimized execution rather than silently allowing ``python -O`` to
+# remove them from this composition proof.
+if sys.flags.optimize != 0:
+    raise SystemExit("proof replay requires Python without -O/-OO optimization")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -88,6 +93,9 @@ def replay_tree_and_connect(data: dict) -> dict:
     unknown_assignment_count = 0
     alt_mask_counts: Counter[tuple[int, ...]] = Counter()
     alt_order_counts: Counter[tuple[int, ...]] = Counter()
+    projected_alt_order_types: set[tuple[int, ...]] = set()
+    projected_order_checks = main_projected_order_checks = 0
+    alternate_projected_order_checks = 0
     local_core_models = local_full_witnesses = 0
     target_t_boxes = 0
     seen_leaves = 0
@@ -118,15 +126,41 @@ def replay_tree_and_connect(data: dict) -> dict:
                 if kind == "ANGLE_MODEL":
                     order = tuple(group["order"])
                     unknown_assignment_count += pending_count
+                    skeleton = tuple(record["order"])
+                    projections = tuple(projected_orders(skeleton, masks))
+                    assert order in projections, (order, masks)
+                    # A single feasible potential vector only witnesses one
+                    # linear order.  The theorem connection instead checks
+                    # every order allowed by this mask's sector permutations.
+                    projected_order_checks += len(projections)
+                    projected_core_orders = {
+                        tuple(label for label in candidate if label in CORE)
+                        for candidate in projections
+                    }
                     core_order = tuple(label for label in order if label in CORE)
                     if core_order == MAIN_ORDER:
-                        require_main_order(order, bounds[10])
+                        assert projected_core_orders == {MAIN_ORDER}, (
+                            masks, projected_core_orders
+                        )
+                        main_projected_order_checks += len(projections)
+                        for candidate in projections:
+                            require_main_order(candidate, bounds[10])
                         main_cases += pending_count
                         target_t_boxes += 1
                     else:
+                        projected_nine_orders = {
+                            tuple(label for label in candidate if label != 1)
+                            for candidate in projections
+                        }
+                        assert projected_nine_orders.issubset(ALT_ORDERS), (
+                            masks, projected_nine_orders
+                        )
+                        projected_alt_order_types.update(projected_nine_orders)
+                        assert all(set(candidate) == set(range(2, 11))
+                                   for candidate in projected_nine_orders)
+                        alternate_projected_order_checks += len(projections)
                         nine_order = tuple(label for label in order if label != 1)
-                        assert nine_order in ALT_ORDERS, (order, nine_order)
-                        assert set(nine_order) == set(range(2, 11))
+                        assert nine_order in projected_nine_orders
                         alt_cases += pending_count
                         alt_mask_counts[masks] += pending_count
                         alt_order_counts[nine_order] += pending_count
@@ -165,11 +199,13 @@ def replay_tree_and_connect(data: dict) -> dict:
     assert local_core_models == 145
     assert local_full_witnesses == 2
     assert target_t_boxes >= 193
+    assert (projected_order_checks, main_projected_order_checks,
+            alternate_projected_order_checks) == (790, 772, 18)
     total_sector_cases = 3 * 4**6 * report["leaves"]
     assert report["closed_leaf_sector_cases"] + report["unknown_leaf_sector_cases"] == total_sector_cases
 
     return {
-        "v27_tree_status_before_completion": report["status"],
+        "radial_tree_status_before_completion": report["status"],
         "tree_coverage_verified": True,
         "tree_nodes": report["nodes"],
         "tree_splits": report["splits"],
@@ -185,11 +221,17 @@ def replay_tree_and_connect(data: dict) -> dict:
                             for key, value in sorted(alt_mask_counts.items())},
         "alternate_nine_orders": {"/".join(map(str, key)): value
                                   for key, value in sorted(alt_order_counts.items())},
+        "projected_alternate_nine_orders": ["/".join(map(str, order))
+                                            for order in sorted(projected_alt_order_types)],
         "local_core_order_models_reclassified": local_core_models,
         "local_full_order_witnesses_reclassified": local_full_witnesses,
         "main_and_local_orders_fit_barrier_range": True,
         "strict_main_order_radius_lower_bound": f">{MAIN_RADIUS_FLOOR}",
         "all_alternate_orders_are_in_the_nine_circle_certificate": True,
+        "all_residual_order_projections_checked": True,
+        "residual_projected_orders_checked": projected_order_checks,
+        "main_core_projected_orders_checked": main_projected_order_checks,
+        "alternate_nine_circle_projected_orders_checked": alternate_projected_order_checks,
     }
 
 
@@ -240,12 +282,23 @@ def run_all() -> dict:
         ROOT / "proof/large_four_certificate.py",
         ROOT / "tools/verify_global_optimality_completion.py",
         ROOT / "GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md",
+        ROOT / "README.md",
+        ROOT / "pyproject.toml",
+        ROOT / "uv.lock",
+        ROOT / "paper/main.tex",
+        ROOT / "paper/main.pdf",
+        ROOT / "paper/README.md",
         *sorted(p for p in (ROOT / "proof/global_completion").rglob("*")
                 if p.is_file() and p.suffix != ".pyc"),
     ]
     hashes = {str(path.relative_to(ROOT)): sha256(path) for path in inputs}
     return {
         "status": "GLOBAL_OPTIMALITY_CERTIFIED",
+        "python_runtime": {
+            "implementation": sys.implementation.name,
+            "version": ".".join(map(str, sys.version_info[:3])),
+            "optimization": sys.flags.optimize,
+        },
         "claim": "The optimal container radius for disks of radii sqrt(1),...,sqrt(10) equals the exact angle-root Rcrit.",
         "critical_radius_bracket": [str(refined_root["R_lo"]), str(refined_root["R_hi"])],
         "global_tree_upper_scope": str(U_MAIN),
