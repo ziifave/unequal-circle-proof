@@ -67,6 +67,25 @@ gzip -dc certificates/fixed-order-radial-partition7-mpfi-7.9.dat.gz | \
   ./fixed_order_replay -
 ```
 
+An independent structural audit is also available:
+
+```bash
+python3 mpfi/audit_partition_certificate.py \
+  certificates/fixed-order-radial-partition7-mpfi-7.9.dat.gz \
+  --rho 7.9 --start 4 --n 7 --split 2
+```
+
+It checks the 360 order representatives, the 128 boxes per order, and the
+coverage of every radial interval separately from the MPFI inequality replay.
+
 This is an implementation-conditional computational certificate, not a proof
 formalized in a proof assistant. It proves exclusion at the displayed radius
 and, by monotonicity, at every smaller radius; it does not establish `R*=R0`.
+
+For the global completion, the same 46,080-cell lower-bound certificate is now
+also replayed by the exact-rational verifier
+[`tools/verify_fixed_order_rational_certificate.py`](tools/verify_fixed_order_rational_certificate.py).
+That verifier uses MPFI data only as rational interval endpoints; all angle,
+Farkas, and \(2\pi\) comparisons are checked with `Fraction` arithmetic. The
+global completion and its scope are documented in
+[`GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md`](GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md).

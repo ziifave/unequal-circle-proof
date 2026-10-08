@@ -1,106 +1,129 @@
 # 大域最適性証明：作業記録・方針・再開手順
 
-2026-10-08 更新。**この文書のv12節が最新状態**であり、下記の元v1記録は
-設計経緯として読むこと。
+**2026-10-09 最終状況:** 大域証明は完了し、\(R^*=R_{\rm crit}\) を証明した。再現手順と
+証明の接続は [GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md](GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md)。
+この引き継ぎ本文は、完成前の2026-10-08時点のv27スナップショットと設計経緯を残す。
 
-**最適性等式 `R*=R0` はまだ未証明。** v12木は全初期領域を被覆し、葉ごとの
-不可能性・局所下界証明を独立replayできる。未解決は193葉、19,929個の
-「半径箱×骨格×扇形割当」ケース。
+このスナップショット時点では、`R*=Rcrit` の大域接続が未完了だった。現在も、別途定義された
+高次代数根 `R0` と `Rcrit` の同一性は主張していない。v27木はU以下の初期半径領域を完全被覆し、
+独立replayで木の被覆と各閉鎖根拠を確認した。現在は107葉、197個の「半径箱×骨格×扇形割当」
+ケースが未解決。
 
-## 最新checkpoint：v12
+## 最新checkpoint：v27
 
-探索半径の安全な上限は `U=8.303468122111490`、既知候補は
-`R0≈8.3034681221114890787043811875...`。大域方針はU以下の全配置を覆い、
-各ケースを不可能性または認証済み局所下界で閉じること。U内の全配置を
-不可能として排除する必要はない。
+安全な探索上限は `U=8.303468122111490`、既知候補は
+`R0≈8.3034681221114890787043811875...`。目的はU以下の全配置を被覆し、各領域を
+不可能性または認証済み局所下界で閉じること。U内の全配置を不可能とする必要はない。
 
-独立replayの結果は次の通り。
+独立replayの結果（現在の検証器で再実行済み）:
 
-| 項目 | v12 |
+| 項目 | v27 |
 |---|---:|
-| 二分割 / ノード / 葉 | 980 / 1,961 / 981 |
-| 全セクターケースを閉じた葉 | 788 |
-| 未解決葉 | 193 |
+| 二分割 / ノード / 葉 | 1,200 / 2,401 / 1,201 |
+| 全ケースを閉じた葉 | 1,094 |
+| 未解決葉 | 107 |
 | 最大木深さ | 310 |
-| 箱×配置ケース（閉 / 全） | 12,034,599 / 12,054,528 |
-| 箱×配置ケースの閉鎖率 | 99.834676% |
-| 順序群の負閉路・局所終端 | 6,601群 / うち局所終端2群 |
+| 箱×配置ケース（閉 / 全） | 14,757,691 / 14,757,888 |
+| 箱×配置ケース閉鎖率 | 99.998665% |
+| 未解決ケース（v12 → v27） | 19,929 → 197（99.01%減） |
+| 閉じた順序群 / 局所順序群 | 14,562群 / 2群 |
 | 局所順序終端で全ケースを閉じた葉 | 1 |
 
-半径箱をまたいで同じ離散パターンを重複計上しない場合は、3種類の反射商骨格と
-`4^6` 個のセクター割当からなる12,288種類中、6,300種類（51.269531%）を
-全半径領域で閉じた。5,988種類は少なくとも1つの未解決半径箱に残る。
-したがって99.834676%は葉ごとの延べケース率、51.269531%は重複なしの
-大域パターン率であり、意味が異なる。
+延べケース数は半径葉ごとに同じ扇形割当を数えるため、分割数をまたいだ比較では
+重複する。v12時点では重複なし12,288パターン中6,300種を全半径領域で閉じていたが、
+v27ではこの重複なしパターン率を再集計していない。v12の51.27%をv27の進捗率として
+扱わないこと。
 
-v12は候補を含む局所枝も閉じた。全10円の候補動径を含む葉はv11時点のnode 1744
-で、全順序群のうち1群を局所定理、残りを負閉路で閉じる。v12はこの葉を保持する。
-局所半径区間の幅をみるとき、角度順序ごとの座標区間全体が局所半径
-`delta >= 5.8599087798744e-5` に入ることを有理数で判定する。
+v15からv27では、全10円の動径中点分割を候補ごとに評価し、子の角度被覆後に残る
+扇形割当が最少となる円を選ぶ強分岐を220回追加した。順序精密化は、生の割当数でなく
+射影後に列挙する順序数で制限し、1葉あたり30,000順序以下を追加検査した。局所判定は
+非コア円も差分制約グラフに残し、半径下界には全10円の包含条件を使う。
+
+これらは分岐の選択と、既存の必要条件の適用範囲を広げる変更である。新しい終端は
+追加されず、局所終端は引き続き1葉のみ。残る197モデルは4個の骨格／有効扇形マスク組に
+集約され、頻度は103、90、3、1。最多の2組は骨格 `(10,7,9,8)` とマスク
+`(20,1,2,40)`、`(24,1,2,36)` である。局所定理の幅事前条件を通る葉は6葉だが、
+座標包含判定に到達したものはない。残存葉はすべて全順序精密化済み。
+
+最多2組に対応する射影済み全順序はそれぞれ
+`(10,3,5,7,1,9,2,8,6,4)` と `(10,4,5,7,1,9,2,8,6,3)`。
+これは差分緩和の順序であり、実配置の存在を示すものではない。
+
+角度差分グラフから得る方向差の範囲と円対の最小中心距離を使った診断では、197件中12件に
+矛盾候補が見つかった。ただし、これは証明書に入っておらず、再生検証もされていない。
+v27 replayの `pair_distance_models_closed` は0。witnessの生成・検証コードを追加した
+v28生成は内部検証中に中断し、完成証明書はない。引き継ぎ時は、式と有向丸め、
+証明書への接続、小さな例での独立replayを先に監査すること。
+
+引き継ぎ時のGit `HEAD` は `aa2cd61` (`Document external arithmetic to Lean workflow`)。
+作業ツリーには多数の変更済み・未追跡ファイルがあり、v27証明書・replay・この文書の更新も
+未コミット。内容確認前に `git clean` や一括リセットをしないこと。
 
 局所下界は [artifacts/local-optimality-constants.json](artifacts/local-optimality-constants.json)
-にある認証済み局所定理を前提とする。今回のreplayは定数のスカラー条件と
-根箱・包含判定を検査するが、元の局所証明の全線形代数をこの大域replay内で
-再生成してはいない。局所定理の元証明も最終成果に含めて確認すること。
+にある局所定理を前提とする。大域replayは定数のスカラー条件と根箱・包含判定を検査するが、
+元の局所証明の線形代数を再生成しない。最終成果では局所定理の元証明も確認する必要がある。
 
-証明書: [skeleton-radial-tree-v12-global-refinement.json](certificates/skeleton-radial-tree-v12-global-refinement.json)
+証明書: [skeleton-radial-tree-v27.json](certificates/skeleton-radial-tree-v27.json)
 
-独立replay: [skeleton-radial-tree-v12-global-refinement-replay.json](artifacts/skeleton-radial-tree-v12-global-refinement-replay.json)
+独立replay: [skeleton-radial-tree-v27-replay.json](artifacts/skeleton-radial-tree-v27-replay.json)
 
-SHA-256: 証明書 `446d0172c59d25dd35cc1807e35d2a7a09743c6fc3138433cdbb03d8a354f4dd`、
-検証器 `30090a9dd14cb3c5580a28a69106926d8d34aaa2116aebca0f32bda4f0de2ee4`。
-対象ファイル一覧のmanifest: [skeleton-radial-tree-v12-global-refinement-manifest.json](artifacts/skeleton-radial-tree-v12-global-refinement-manifest.json)
+証明書SHA-256: `1c44da69975736fb0d857f10138fc7f2b4b33ceda055370120e87ae1069e6dab`。
+ファイル一覧と依存コードのmanifest: [skeleton-radial-tree-v27-manifest.json](artifacts/skeleton-radial-tree-v27-manifest.json)
 
-### v12を再検証・再開する
+### v27を再検証・再開する
 
 リポジトリ直下で実行する。
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run --locked --no-sync python -m proof.skeleton_radial_tree \
-  certificates/skeleton-radial-tree-v12-global-refinement.json \
-  --output artifacts/skeleton-radial-tree-v12-global-refinement-replay.json
+  certificates/skeleton-radial-tree-v27.json \
+  --output artifacts/skeleton-radial-tree-v27-replay.json
+
+# 先に分割し、後から順序を追加する。分割選択は全10円の候補を評価する。
+PYTHONDONTWRITEBYTECODE=1 uv run --locked --no-sync python -m tools.certify_skeleton_radial_tree \
+  --resume certificates/skeleton-radial-tree-v27.json \
+  --local-certificate artifacts/local-optimality-constants.json \
+  --splits 20 \
+  --output certificates/skeleton-radial-tree-v28-radial.json \
+  --report artifacts/skeleton-radial-tree-v28-radial-report.json
 
 PYTHONDONTWRITEBYTECODE=1 uv run --locked --no-sync python -m tools.certify_skeleton_radial_tree \
-  --resume certificates/skeleton-radial-tree-v12-global-refinement.json \
+  --resume certificates/skeleton-radial-tree-v28-radial.json \
   --local-certificate artifacts/local-optimality-constants.json \
-  --all-pair-orders --splits 100 \
-  --output certificates/skeleton-radial-tree-v13.json \
-  --report artifacts/skeleton-radial-tree-v13-report.json
-
-PYTHONDONTWRITEBYTECODE=1 uv run --with pytest --locked python -m pytest -q
+  --all-pair-orders --splits 0 \
+  --output certificates/skeleton-radial-tree-v28.json \
+  --report artifacts/skeleton-radial-tree-v28-report.json
 ```
 
-`--all-pair-orders` は、各葉の未解決セクターケースが64以下のとき、円1〜6の
-セクター内全順序を検査する。各順序は負閉路で排除するか、コアの座標射影全体が
-局所 `delta` 近傍内にあることを確認して閉じる。その他の順序が残れば葉は未解決の
-まま保持される。既知候補の全10動径は探索の優先順位にだけ使い、箱の除外や
-局所判定には使わない。
+強分岐は探索順だけを決める。証明木には有理数の中点と両方の子を保存し、replay側は
+初期領域から全分割を再構成する。全順序精密化は各未解決の扇形割当を射影した順序数で
+予算を見積もり、30,000順序以下の葉に限って証明を追加する。上限を超える葉は未解決で残る。
+現在の作業ツリーにはpair-distance witnessの未検証変更が含まれるため、生成を再開する前に
+v27のreplayを再現し、witnessの健全性を独立した最小例で確認すること。
 
-v12時点のテストは66件と8件のサブテストが通過。検証器は証明書の被覆・各葉の
-排除・負閉路・局所射影をreplayする。`UNKNOWN` と `global_optimality_proved=false`
-を維持しており、最適性証明達成とは扱わない。
+v12 checkpoint時点では66テストと8サブテストが通過していた。v13〜v27の今回の変更後に
+テストスイートは再実行していない。v27の完全な木・負閉路・局所包含は独立replayで確認した。
+状態は `UNKNOWN`、`global_optimality_proved=false` であり、最適性証明達成ではない。
 
-### v12の主な実装ファイル
+### 主な実装ファイル
 
 | 役割 | ファイル |
 |---|---|
-| 角度・全配置台帳・360コア順序・閉路replay | [proof/skeleton_cover.py](proof/skeleton_cover.py) |
-| 適応木の独立検証・葉ごとの局所終端 | [proof/skeleton_radial_tree.py](proof/skeleton_radial_tree.py) |
-| コアの有理角度区間から局所近傍を検査 | [proof/skeleton_local_terminal.py](proof/skeleton_local_terminal.py) |
-| 木の生成・再開・順序精密化 | [tools/certify_skeleton_radial_tree.py](tools/certify_skeleton_radial_tree.py) |
-| 全対順序の証明書生成 | [tools/certify_skeleton_cover.py](tools/certify_skeleton_cover.py) |
-| 回帰テスト | `tests/test_skeleton_cover.py`, `tests/test_skeleton_radial_tree.py` |
-| v12証明書・replay | 上記証明書とreplayリンク |
-| 方針・証明の入口 | [GLOBAL_PROOF_STRATEGY_2026-10-08.md](GLOBAL_PROOF_STRATEGY_2026-10-08.md), [LARGE_FOUR_SKELETON_STATUS.md](LARGE_FOUR_SKELETON_STATUS.md) |
+| 全配置台帳・角度差分・閉路replay | [proof/skeleton_cover.py](proof/skeleton_cover.py) |
+| 適応木の独立検証・局所終端 | [proof/skeleton_radial_tree.py](proof/skeleton_radial_tree.py) |
+| 全順序を使った局所近傍包含 | [proof/skeleton_local_terminal.py](proof/skeleton_local_terminal.py) |
+| 強分岐・順序予算・再開 | [tools/certify_skeleton_radial_tree.py](tools/certify_skeleton_radial_tree.py) |
+| 順序群ごとの閉路・局所証明生成 | [tools/certify_skeleton_cover.py](tools/certify_skeleton_cover.py) |
+| v27証明書・replay | 上記証明書とreplayリンク |
+| 大域方針 | [GLOBAL_PROOF_STRATEGY_2026-10-08.md](GLOBAL_PROOF_STRATEGY_2026-10-08.md) |
 
-### 次に進めること
+### 次の課題
 
-1. v12から再開し、局所近傍に隣接する半径箱と大域的な残存箱を細分する。
-2. 未解決5,988種類の配置パターンを、円1,3,4の挿入可能性・動径角度相関・順序別
-   局所包含でさらに減らす。木の延べ未解決ケースと重複なしパターンを分けて追う。
-3. 異なる局所根や局所 `delta` 外で残る配置があれば、別証明を加える。
-4. 全981葉の後続木がすべて不可能性または局所下界で閉じたら、完全被覆を独立replayし、
-   はじめて `R*=R0` と結論する。
+1. v27から動径分割と順序精密化を別バッチで再開し、残り197延べケースを減らす。
+2. 重複なし配置パターン率をv27証明書から再計算する。
+3. 分割で減らない少数モデルについて、円1・3・4を含む実際の挿入可能領域と動径角度相関を使う。
+4. 局所 `delta` の事前条件を通る6葉は、座標距離が不合格となる成分を個別に記録し、局所終端を増やせるか調べる。
+5. 全葉が閉じ、局所下界の元証明と上側候補の厳密証明を含めて再検証できたときに限り、`R*=R0` と結論する。
 
 ## 元v1時点の設計・検証記録（履歴）
 
