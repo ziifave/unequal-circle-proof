@@ -1,0 +1,9 @@
+Eliminating sqrt(2), 8 output components; input degree 112
+Degree now 224, max coefficient digits approx 1963.3
+Eliminating sqrt(3), 4 output components; input degree 224
+Degree now 448, max coefficient digits approx 3912.41
+Eliminating sqrt(5), 2 output components; input degree 448
+Degree now 896, max coefficient digits approx 7817.57
+Eliminating sqrt(7), 1 output components; input degree 896
+Degree now 1792, max coefficient digits approx 15627.3
+DONE primitive 1792, leading coefficient digits 978, common content digits 14502

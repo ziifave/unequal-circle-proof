@@ -13,6 +13,7 @@ import CirclePacking.SevenNineCoverage
 import CirclePacking.RootIsolation
 import CirclePacking.HennebergCore
 import CirclePacking.G112
+import CirclePacking.P1792
 import CirclePacking.FiniteOptimality
 import CirclePacking.SevenNineFiniteOptimality
 import CirclePacking.AngularCellCertificate

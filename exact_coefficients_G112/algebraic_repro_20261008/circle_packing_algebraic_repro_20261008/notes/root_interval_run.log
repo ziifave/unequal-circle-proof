@@ -1,0 +1,22 @@
+P(low) sign -1 P(high) sign 1 integer evaluation exact
+numerator decimals length at left/right 63426 63426
+denominator exponent 60929
+PASS: at least one real P-root in [low,high] by IVT
+P'(low) sign 1 scaled log10 magnitude 63425
+M2 magnitude digits 2731
+simple derivative bound succeeds? False
+INCONCLUSIVE: cannot prove uniqueness with simple global derivative bound
+Taylor term 1 numerator digits 63395
+Taylor term 2 numerator digits 63363
+Taylor term 3 numerator digits 63332
+Taylor term 4 numerator digits 63299
+Taylor term 5 numerator digits 63267
+Taylor term 6 numerator digits 63235
+Taylor term 7 numerator digits 63203
+Taylor term 8 numerator digits 63170
+Taylor term 9 numerator digits 63138
+Taylor term 10 numerator digits 63105
+P derivative center sign 1
+Dominance: |P'(low)| scaled > variation+tail ? True
+PASS: rational Taylor certificate P' strictly positive on [low,high]
+PASS: exactly one real root of P in rational interval, entirely integer arithmetic

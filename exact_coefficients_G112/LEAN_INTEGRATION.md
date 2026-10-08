@@ -52,8 +52,30 @@ does not include its expanded coefficient list. The Lean structure
 concrete rational polynomial and its root/irreducibility proofs are supplied,
 `degree1792_root_is_algebraic` derives algebraicity of `R0` immediately.
 
+The later algebraic reproducibility bundle adds the complete 1793-coefficient
+integer polynomial. It is represented in `lean/CirclePacking/P1792.lean` as
+`p1792PrimitivePolynomial : Polynomial ℚ`, with its exact real evaluation and
+the bridge structure `P1792R0Certificate`. Supplying the exact root,
+nonzero, degree, and irreducibility fields constructs the earlier
+`Degree1792R0Certificate` via `P1792R0Certificate.toDegree1792`.
+
 The attached `circle_exact_eliminant.sage` gives the characteristic-zero
 resultant construction, but is explicitly marked as not executed in this
 environment. The attached rational interval script was executed and
 reproduced the strict endpoint signs and positive derivative on the stated
 interval.
+
+## Division of responsibilities
+
+The external arithmetic layer is responsible for large finite-field and
+resultant computations, together with reproducible coefficient tables and
+hashes. Lean is responsible for the exact logical assembly: a supplied
+`ContactEliminationBridge` produces `P1792(R0) = 0`, and supplied nonzero,
+degree, and irreducibility proofs produce `IsAlgebraic ℚ R0` through
+`P1792R0Certificate.toDegree1792`.
+
+Finite-field logs alone are not inserted as axioms under a theorem name. They
+must eventually be converted into either a Lean replay theorem or an explicit
+certificate field whose proof is separately supplied. This keeps the external
+calculation boundary visible while avoiding an unverified claim that interval
+overlap or a modular match alone identifies the real root.
