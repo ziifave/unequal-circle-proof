@@ -218,6 +218,13 @@ For two wall circles $i,j\in W$, their necessary angle is
   2\arcsin\sqrt{\frac{r_ir_j}{a_i(R)a_j(R)}}.
   \label{eq:beta}
 \end{equation}
+Thus these are specializations of the general necessary angle:
+\[
+  \alpha_i(t,R)=\phi_{10,i}\bigl(t,a_i(R)\bigr),\qquad
+  \beta_{ij}(R)=\phi_{ij}\bigl(a_i(R),a_j(R)\bigr).
+\]
+For the wall-wall pair, the cosine law gives
+$\cos\beta_{ij}=1-2r_ir_j/(a_i a_j)$, yielding the half-angle form above.
 Define
 \begin{align}
  C(R)&=\beta_{79}(R)+\beta_{92}(R)+\beta_{28}(R)+\beta_{86}(R),\\
@@ -225,6 +232,19 @@ Define
  B(t,R)&=\alpha_7(t,R)+C(R)+\alpha_6(t,R).
  \label{eq:AB}
 \end{align}
+The critical pair has a direct contact-and-closure description:
+\begin{equation}
+ \alpha_5(t_{\mathrm{crit}},R_{\mathrm{crit}})
+      +\beta_{57}(R_{\mathrm{crit}})
+   =\alpha_7(t_{\mathrm{crit}},R_{\mathrm{crit}}),\qquad
+ \alpha_7(t_{\mathrm{crit}},R_{\mathrm{crit}})
+      +C(R_{\mathrm{crit}})
+      +\alpha_6(t_{\mathrm{crit}},R_{\mathrm{crit}})=2\pi.
+ \label{eq:critical-contact-closure}
+\end{equation}
+The first equation matches the two contact routes from circle $10$ to
+circle $7$; the second closes the seven-circle cycle.  Equivalently, with
+$F=A-B$ and $G=B-2\pi$, the critical pair is the solution of $F=G=0$.
 
 For the stated order, the directed loop
 $10\to5\to7\to9\to2\to8\to6\to10$ has total angle $2\pi$ and therefore
@@ -251,6 +271,19 @@ For $i\in\{5,6,7\}$ let
  b_i=a_i(R)^2-D_i^2,\qquad
  H_i=4a_i(R)^2t^2-(t^2+b_i)^2.
 \]
+They also satisfy
+\begin{align}
+ b_i&=(a_i-D_i)(a_i+D_i)
+     =(R+r_{10})(R-r_{10}-2r_i),\\
+ H_i&=\bigl((a_i+D_i)^2-t^2\bigr)
+       \bigl(t^2-(a_i-D_i)^2\bigr)\\
+    &=\bigl((R+r_{10})^2-t^2\bigr)
+       \bigl(t^2-(R-r_{10}-2r_i)^2\bigr).
+ \label{eq:factor-b-H}
+\end{align}
+On the geometric domain $0<t<a_i+D_i$, the condition $H_i>0$ is equivalent
+to the strict triangle inequalities $|a_i-D_i|<t<a_i+D_i$ for the three
+lengths $t,a_i,D_i$.
 Where the angles are in $(0,\pi)$,
 \begin{equation}
  \frac{\partial\alpha_i}{\partial t}
@@ -263,9 +296,11 @@ For a wall-wall angle,
 \begin{equation}
  \frac{\partial\beta_{ij}}{\partial R}
   =-\left(\frac1{a_i(R)}+\frac1{a_j(R)}\right)
-    \sqrt{\frac{r_ir_j}{a_i(R)a_j(R)-r_ir_j}}.
+    \tan\frac{\beta_{ij}(R)}2.
  \label{eq:beta-derivative}
 \end{equation}
+Here
+$\tan(\beta_{ij}/2)=\sqrt{r_ir_j/(a_i a_j-r_ir_j)}$.
 The sign certificates have different scopes.  On the root rectangle
 $J_t\times J_R$, they prove $A_t(t,R)>0$ and $B_t(t,R)<0$, which gives
 uniqueness of the critical pair.  For the global barrier, they also prove
@@ -294,23 +329,25 @@ Here $z-b_7>0$ and $b_6-z>0$ for $t\in I$.  Squaring the positive terms
 shows that $B_t(t,\Rcrit)<0$ follows from
 \begin{align*}
  (z-b_7)^2H_6-(b_6-z)^2H_7&=4zQ(z),\\
- Q(z)&=(D_6^2-D_7^2)z^2
-       +2(a_7^2b_6-a_6^2b_7)z\\
-     &\quad+a_6^2b_7^2-a_7^2b_6^2+(b_6-b_7)b_6b_7.
+ Q(z)&=D_6^2(z-b_7)^2-D_7^2(z-b_6)^2.
 \end{align*}
-The identity follows by expansion, and the leading coefficient is negative,
-so $Q$ is concave.  On
-$z\in[0.73753744,1.26900225]$, exact interval evaluation gives endpoint
-lower bounds greater than $50.40$ and $205.27$.  Concavity puts $Q$ above the
-chord joining these positive endpoint values, proving $Q>0$ throughout.
-
-To prove existence, write
+The identity follows by expansion using $b_i=a_i^2-D_i^2$.  Set
+$X=D_6(z-b_7)$ and $Y=D_7(b_6-z)$.  Both are positive on this interval, so
 \[
- F(t,R)=A(t,R)-B(t,R)
-       =\alpha_5(t,R)+\beta_{57}(R)-\alpha_7(t,R),
- \qquad
- G(t,R)=B(t,R)-2\pi.
+ Q(z)=X^2-Y^2=(X-Y)(X+Y),\qquad
+ X>Y\ \Longleftrightarrow\
+ z>\frac{D_6b_7+D_7b_6}{D_6+D_7}.
 \]
+The exact interval checker verifies the coarser rational bounds
+\[
+ D_6>5.6,\quad D_7<5.9,\quad b_7<-1.6,\quad
+ 2.75<b_6<2.8,\quad z>0.73.
+\]
+Consequently $X>5.6(0.73+1.6)=13.048$, while
+$Y<5.9(2.8-0.73)=12.213$.  Thus $X>Y$, hence $Q>0$ and $B_t<0$.
+
+To prove existence, use the functions $F=A-B$ and $G=B-2\pi$ defined by
+the contact-and-closure equations above.
 The exact checker proves opposite signs for $F$ on the lower and upper
 $t$-edges of the rational rectangle, and opposite signs for $G$ on the lower
 and upper $R$-edges.  Table~\ref{tab:root-edge-signs} gives outward-rounded
@@ -685,7 +722,11 @@ For a pair with required center distance $d_{ij}=r_i+r_j$, define
 \[
   c_{ij}(x,y)=\frac{x^2+y^2-d_{ij}^2}{2xy}.
 \]
-The necessary smaller central angle is $\arccos(c_{ij})$.  On a positive
+By \eqref{eq:phi}, the radial cosine is the cosine of the necessary angle:
+\[
+  c_{ij}(x,y)=\cos\phi_{ij}(x,y).
+\]
+Thus that angle is $\phi_{ij}(x,y)=\arccos(c_{ij}(x,y))$.  On a positive
 radial rectangle, $c_{ij}$ attains its maximum at a corner:
 
 \begin{lemma}[Four-corner bound for the radial cosine]

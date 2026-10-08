@@ -226,19 +226,23 @@ def interval_sign_proof():
     def abd(i,R):
         a=R-r[i];d=r[10]+r[i]; b=a.square()-d.square()
         return a,b,d
-    aa={};bb={};dd={}
+    bb={};dd={}
     for i in (5,6,7):
-        aa[i],bb[i],dd[i]=abd(i,Rcrit)
+        _,bb[i],dd[i]=abd(i,Rcrit)
     assert (bb[5]-Z).lo>0
     assert (bb[6]-Z).lo>0
     assert (Z-bb[7]).lo>0
-    q2=dd[6].square()-dd[7].square()
-    q1=2*(aa[7].square()*bb[6]-aa[6].square()*bb[7])
-    q0=(aa[6].square()*bb[7].square()-aa[7].square()*bb[6].square()
-        +(bb[6]-bb[7])*bb[6]*bb[7])
-    assert q2.hi<0
-    for z in (Z.lo,Z.hi):
-        assert (q2*z*z+q1*z+q0).lo>0
+    # Factor Q as X^2-Y^2. Coarse rational bounds suffice uniformly over
+    # the certified Rcrit enclosure and the full t interval.
+    assert dd[6].lo>F('5.6') and dd[7].hi<F('5.9')
+    assert bb[7].hi<F('-1.6')
+    assert bb[6].lo>F('2.75') and bb[6].hi<F('2.8')
+    assert Z.lo>F('0.73')
+    X_lower=F('5.6')*(F('0.73')+F('1.6'))
+    Y_upper=F('5.9')*(F('2.8')-F('0.73'))
+    assert X_lower>Y_upper
+    print('CERTIFIED: B_t<0 by Q=(X-Y)(X+Y), with exact rational bounds')
+    print('  X >',X_lower,'>',Y_upper,'> Y.')
     print('CERTIFIED: A_t>0 and B_t<0 at R=Rcrit throughout t in [0.8588,1.1265].')
     for i in (5,6,7):
         a,b,d=abd(i,Rall)
@@ -249,6 +253,9 @@ def interval_sign_proof():
     for i,j in ((5,7),(7,9),(9,2),(2,8),(8,6)):
         ai=Rall-r[i];aj=Rall-r[j]
         assert (ai*aj-r[i]*r[j]).lo>0
+    # These domain checks make each alpha_R and beta_R strictly negative,
+    # so the sums A_R and B_R are negative term by term.
+    print('CERTIFIED: every alpha_R and beta_R term is negative on the full domain.')
     print('CERTIFIED: A_R<0 and B_R<0 for R in [7.9,Rcrit], t in [0.8588,1.1265].')
 
 if __name__=='__main__':

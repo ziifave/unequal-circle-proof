@@ -20,6 +20,14 @@ A(t,R) = alpha_5(t,R)+beta_57(R)+C(R)+alpha_6(t,R)
 B(t,R) = alpha_7(t,R)+C(R)+alpha_6(t,R)
 ```
 
+These are special cases of the general angle phi_ij(x,y) defined by
+cos(phi_ij)=(x^2+y^2-(r_i+r_j)^2)/(2*x*y):
+alpha_i=phi_10,i(t,a_i) and beta_ij=phi_ij(a_i,a_j).
+The critical pair is characterized geometrically by
+alpha_5+beta_57=alpha_7 (the two contact routes from disk 10 to disk 7)
+and alpha_7+C+alpha_6=2*pi (cycle closure). Equivalently, these are
+F=A-B=0 and G=B-2*pi=0.
+
 All quantities used below have real arguments on the indicated compact intervals; this is checked by the rational-only verifier.
 
 Define the exact rational rectangle
@@ -69,9 +77,14 @@ D_i = r_10+r_i,
 b_i = a_i^2-D_i^2,
 z=t^2,
 H_i = 4*a_i^2*z-(z+b_i)^2.
+b_i = (a_i-D_i)*(a_i+D_i) = (R+r_10)*(R-r_10-2*r_i)
+H_i = ((a_i+D_i)^2-t^2)*(t^2-(a_i-D_i)^2)
 ```
 
-Where `H_i>0`, direct differentiation gives
+On the geometric domain `0<t<a_i+D_i`, the condition
+`H_i>0` is equivalent to the strict triangle inequalities
+`|a_i-D_i|<t<a_i+D_i`. Where these angles are defined, direct
+differentiation gives
 
 `partial_t alpha_i=(b_i-z)/(t*sqrt(H_i))`.
 
@@ -85,12 +98,17 @@ Thus `A_t=alpha_5,t+alpha_6,t>0`, while `alpha_7,t<0`. In order to prove `B_t=al
 
 ```
 (z-b_7)^2*H_6-(b_6-z)^2*H_7 = 4*z*Q(z),
-Q(z) = (D_6^2-D_7^2)*z^2
-       + 2*(a_7^2*b_6-a_6^2*b_7)*z
-       + a_6^2*b_7^2-a_7^2*b_6^2+(b_6-b_7)*b_6*b_7.
+Q(z) = D_6^2*(z-b_7)^2-D_7^2*(z-b_6)^2.
 ```
 
-This identity follows from direct polynomial expansion using `b_i=a_i^2-D_i^2`. Since `D_6^2-D_7^2<0`, `Q` is strictly concave. Its two rational interval endpoint lower bounds are positive, so `Q>0` across `z in I^2`. It follows that `B_t<0`.
+The factorization follows by expansion using `b_i=a_i^2-D_i^2`. Put
+`X=D_6(z-b_7)` and `Y=D_7(b_6-z)`, both positive on the interval.
+Then `Q=(X-Y)(X+Y)`, and `X>Y` is equivalent to
+`z>(D_6b_7+D_7b_6)/(D_6+D_7)`.
+The exact rational interval checker proves `D_6>5.6`, `D_7<5.9`,
+`b_7<-1.6`, `2.75<b_6<2.8`, and `z>0.73`. Hence
+`X>5.6(0.73+1.6)=13.048`, whereas
+`Y<5.9(2.8-0.73)=12.213`. Therefore `Q>0` and `B_t<0`.
 
 At fixed `t`, using `a_i=R-r_i`, another exact differentiation gives
 
@@ -99,7 +117,12 @@ partial_R alpha_i=-(a_i^2+D_i^2-t^2)/(a_i*sqrt(H_i)) <0,
 partial_R beta_ij=-(1/a_i+1/a_j)*sqrt(r_i*r_j/(a_i*a_j-r_i*r_j)) <0.
 ```
 
-All domains and displayed signs hold for `t in I`, `R in [7.9,8.30346812212]`, while the derivative-in-t comparison above holds for `R in J_R`. Therefore `A_R<0` and `B_R<0` in this domain. All sign endpoints are checked using only exact fractions and integer square root in the attached script.
+Equivalently, partial_R beta_ij=-(1/a_i+1/a_j)*tan(beta_ij/2).
+The interval checker verifies a_i^2+D_i^2-t^2>0, the strict triangle
+conditions, and a_i*a_j-r_i*r_j>0. Thus each radial derivative is negative
+separately, and A_R<0 and B_R<0 follow term by term.
+
+All domains and displayed signs hold for `t in I`, `R in [7.9,8.30346812212]`, while the derivative-in-t comparison above holds for `R in J_R`. All sign endpoints are checked using only exact fractions and integer square root in the attached script.
 
 ## Theorem 1: Critical exact root exists and is unique in the rectangle
 
