@@ -50,46 +50,41 @@ those 147 terminals through the same seven-disk angle-barrier theorem: every
 one has the required core order and disk-10 interval. Thus these closures no
 longer depend on the separate local-optimality premise.
 
-The angle-barrier theorem needs \(R\ge7.9\). The 7.9 lower-bound certificate
-has therefore been replayed separately with a new exact-rational verifier.
-It checks all 46,080 radial/order cells using integers and `Fraction`; it does
-not require MPFI or any floating-point inequality decision. The existing MPFI
-kernel could not be built in this environment because its development headers
-are absent, so this independent replay removes that dependency.
-
-The new refined root rectangle lies strictly below the v27 cap \(U\), so every
-putative packing with \(7.9\le R<R_{\rm crit}\) is inside the tree's certified
-radial domain. Combining the 193 angle-barrier cases, the four nine-circle
-cases, all 147 reclassified local terminals, and the tree's exact cycle and
-radial contradictions leaves no open sector case. The root's exact ten-disk
-construction supplies the matching upper bound.
+The angle-barrier derivative check covers the radius interval required by
+the global cases. Every main-core case and each of the 147
+reclassified local terminals has \(t=s_{10}\le1.1265\). Non-overlap of disks
+9 and 10 gives \(s_9+t\ge3+\sqrt{10}\), while containment of disk 9 gives
+\(R\ge3+s_9\). Since \(\sqrt{10}>3.1\), every such feasible case satisfies
+\[
+R\ge6+\sqrt{10}-t
+>6+3.1-1.1265
+=7.9735.
+\]
+Thus every angle-barrier application lies in the interval on which its
+derivative signs are certified. The alternative nine-circle theorem covers
+its four cases for all \(R\le U_+=8.30346812212\), and the other tree leaves
+are closed by their exact cycle or radial contradictions. Since
+\(R_{\rm crit}<U\), all configurations with \(R<R_{\rm crit}\) are covered.
+The root's exact ten-disk construction supplies the matching upper bound.
 
 ## Reproduction
 
 Run the complete proof composition with the locked workspace environment:
 
-```bash
-uv run --locked --no-sync python tools/verify_global_optimality_completion.py
-```
+    uv run --locked --no-sync python tools/verify_global_optimality_completion.py
 
 The checker writes
-[`artifacts/global-optimality-completion-2026-10-09.json`](artifacts/global-optimality-completion-2026-10-09.json),
+[the JSON composition report](artifacts/global-optimality-completion-2026-10-09.json),
 including SHA-256 hashes for the tree, certificates, and verifier sources.
-The independent 7.9 replay can also be run alone:
-
-```bash
-uv run --locked --no-sync python tools/verify_fixed_order_rational_certificate.py
-```
-
 The individual attached theorem verifiers and certificates are preserved in
-[`proof/global_completion`](proof/global_completion).
+[proof/global_completion](proof/global_completion).
 
 ## Scope and trust
 
-All proof decisions in the new composition, root, nine-circle, and 7.9
-verifiers use exact rational/integer arithmetic. `math.acos` in the 7.9
-verifier only proposes a rational angle tick; an exact cosine Taylor inequality
-must pass before that tick is used. The v27 tree and its split endpoints are
-also replayed exactly. The result is a reproducible computational proof, not a
-Lean formalization. It proves equality to the angle-defined exact \(R_{\rm
-crit}\), not equality to the previously computed polynomial root \(R_0\).
+All proof decisions in the composition, root, and nine-circle verifiers use
+exact rational/integer arithmetic. Floating-point routines may help discover
+candidate bounds, but every accepted certificate inequality is checked
+exactly. The v27 tree and its split endpoints are also replayed exactly. The
+result is a reproducible computational proof, not a Lean formalization. It
+proves equality to the angle-defined exact \(R_{\rm crit}\), not equality to
+the previously computed polynomial root \(R_0\).

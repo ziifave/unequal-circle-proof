@@ -11,380 +11,634 @@
 \usepackage{hyperref}
 \usepackage{tikz}
 
-\geometry{margin=30mm}
+\geometry{margin=28mm}
 \hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
 \newtheorem{corollary}[theorem]{Corollary}
 \theoremstyle{remark}
 \newtheorem{remark}[theorem]{Remark}
 
 \newcommand{\Ropt}{R^*}
-\newcommand{\Rupper}{\overline{R}}
+\newcommand{\Rcrit}{R_{\mathrm{crit}}}
+\newcommand{\Rcap}{U}
 \newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\ang}{\alpha}
+\newcommand{\bet}{\beta}
 
-\title{A Certified Lower Bound for Packing Ten Unequal Circles in a Circle}
-\author{Computational proof project}
-\date{October 2026}
+\title{Exact Global Optimality for Packing Ten Unequal Circles}
+\author{The unequal-circle proof project}
+\date{October 9, 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We study the problem of packing ten pairwise non-overlapping circles of
-radii $\sqrt{1},\sqrt{2},\ldots,\sqrt{10}$ in a circular container of minimum
-radius.  We present a reproducible interval-arithmetic certificate proving
-that the optimum radius satisfies
-\[
-  7.9\le \Ropt \le
-  8.303468122111490.
-\]
-The lower bound uses only a seven-circle subset and all-pair angular inequalities
-for each of the 360 cyclic orders up to rotation and reversal.  A Farkas dual certificate rules out
-every order, without assuming a contact graph.
-The upper bound is a conditional feasible-witness bound obtained from a
-seven-circle interval computation and positive slack checks for the remaining
-ten-circle constraints.  We describe the directed-decimal arithmetic and
-certificate-replay procedure, including a SciPy-free replay of the angular
-Farkas cut.
-The paper deliberately distinguishes implementation-checked computational
-claims from mathematical implications proved analytically in the text; equality with the displayed upper
-bound remains an open step of the project.
+We consider ten pairwise non-overlapping circles with radii
+$r_i=\sqrt{i}$, $1\le i\le 10$, inside a circular container.  We give a
+computer-assisted proof that the minimum container radius is an exact value
+$\Rcrit$, defined as the unique solution of two explicit angular equations in
+a rational rectangle.  A matching ten-circle realization exists at this
+value, and a finite global certificate excludes every smaller radius.  The
+lower-bound proof combines a complete radial and angular case tree, a
+two-inequality angle barrier for the main seven-circle order, and
+negative-cycle certificates for the four exceptional cases.  The complete
+composition closes all $14{,}757{,}888$
+sector assignments.  The proof decisions in the replay use integer and
+rational arithmetic; the result is a reproducible computer-assisted proof,
+not an end-to-end theorem-prover formalization.  We do not claim that
+$\Rcrit$ is identical to a separately computed algebraic root $R_0$.
 \end{abstract}
 
 \section{Introduction}
 
-Let $r_i=\sqrt{i}$ for $i=1,\ldots,10$.  The unequal-circle packing problem
-asks for the smallest $R$ for which there exist centers $p_i\in\mathbb R^2$
-such that
+Let $r_i=\sqrt{i}$ for $1\le i\le10$.  The problem is to find the smallest
+radius $R$ for which there are centers $p_1,\ldots,p_{10}\in\mathbb R^2$
+satisfying
 \begin{align}
-  \norm{p_i}&\le R-r_i, && i=1,\ldots,10, \\
-  \norm{p_i-p_j}&\ge r_i+r_j, &&1\le i<j\le10.
+  \norm{p_i}+r_i&\le R
+       &&(1\le i\le10), \label{eq:containment}\\
+  \norm{p_i-p_j}&\ge r_i+r_j
+       &&(1\le i<j\le10). \label{eq:separation}
 \end{align}
-We write $\Ropt$ for this minimum.
+Write $\Ropt$ for this minimum.  The minimum is attained: after fixing a
+bounded interval of candidate radii, all center coordinates lie in a compact
+set, and the constraints are closed.
 
-The minimum exists: for any bounded interval of container radii the feasible
-set is closed, and a feasible configuration is contained in a compact disk.
-The area bound gives a finite lower bound, while any sufficiently large
-container is feasible, so the infimum is attained.
+This paper proves exact global optimality, rather than only a lower bound for
+a selected subfamily or a local statement near a proposed configuration.  The
+proof is a composition of geometric inequalities with finite certificates.
+Its central idea is to turn each possible placement into one of finitely many
+radial boxes and cyclic-sector assignments.  Most assignments close directly
+by rational radial or angular-cycle bounds.  The remaining cases split into
+two geometric families:
+\begin{enumerate}
+  \item a seven-circle core in one fixed cyclic order, ruled out by two
+        angular sums whose monotonicities point in opposite directions as
+        the radius of circle $10$ varies;
+  \item four exceptional assignments, projected to a nine-circle order and
+        ruled out by a finite negative-cycle certificate.
+\end{enumerate}
+The angle barrier applies to every residual main-order case by a local
+radius estimate from the non-overlap and containment constraints.  Finally,
+the same two angular equations that force the lower bound also define a
+configuration at $\Rcrit$.
 
-The main contribution of this paper is a lower-bound argument that does not
-depend on a guessed optimal contact graph.  The key observation is that a
-finite set of centers surrounding the origin must spend a total angular budget
-of $2\pi$.  Pairwise non-overlap gives lower bounds for angular path lengths.
-For each possible cyclic order, these inequalities are combined by a Farkas
-dual certificate.
+The finite checks are substantial, but the logical roles are simple:
+the tree proves that every possible configuration reaches a checked case;
+the analytic lemmas prove that each case rule is valid; and the exact witness
+proves attainability.  Section~\ref{sec:composition} gives the complete case
+accounting, while Section~\ref{sec:verification} describes the replay and
+its trust boundary.
 
-Our result is intentionally modest.  It does not prove that the currently
-known feasible configuration is globally optimal.  Instead, it establishes a
-a strong, reproducible lower bound for subsequent global exclusion arguments.
+\section{Problem and exact statement}
 
-\section{Problem formulation}
+\subsection{Feasibility and the candidate value}
 
-Since the area bound gives $R\ge\sqrt{55}>\sqrt{10}$, it suffices to consider
-$\rho\ge\sqrt{10}$.  For such $\rho$, feasibility is equivalently expressed
-by
-\begin{align}
-  \norm{p_i}^2&\le (\rho-r_i)^2, \\
-  \norm{p_i-p_j}^2&\ge (r_i+r_j)^2.
-\end{align}
-The area bound gives $R\ge\sqrt{55}$, but is substantially weaker than the
-bound obtained below.  Since every feasible ten-circle configuration restricts
-to every subset of its circles, infeasibility of a subset at radius $\rho$
-implies infeasibility of the full problem at the same radius.
+For $\rho>0$, call $\rho$ feasible if there are centers satisfying
+\eqref{eq:containment}--\eqref{eq:separation} with $R=\rho$.  Feasibility is
+monotone in $\rho$: a configuration feasible at $\rho$ is feasible at every
+larger container radius.  Thus a certified infeasibility result at one radius
+is a lower bound for $\Ropt$.
 
-\section{The angular-cycle lower bound}
-
-Fix a subset $S$ of circles.  Put $a_i=\norm{p_i}$.  Containment gives
-$a_i\le \rho-r_i$.  For any $j\in S\setminus\{i\}$, the triangle inequality
-and non-overlap give
+We define the exact candidate through the angular quantities introduced in
+Section~\ref{sec:barrier}.  Let
 \[
- a_i\ge r_i+r_j-a_j
-     \ge r_i+2r_j-\rho.
+\begin{aligned}
+  J_t&=[1.0037160860750841,\;1.0037160860750846],\\
+  J_R&=[8.3034681221114890,\;8.3034681221114900].
+\end{aligned}
 \]
-Consequently every feasible configuration satisfies
+The number $\Rcrit$ is the $R$-coordinate of the unique pair
+$(t_{\mathrm{crit}},R_{\mathrm{crit}})\in J_t\times J_R$ satisfying
 \begin{equation}
-  L_i(\rho):=\max\left(0,\max_{j\in S\setminus\{i\}}(r_i+2r_j-\rho)\right)
-  \le a_i\le U_i(\rho):=\rho-r_i.
-  \label{eq:radial-bounds}
+  A(t_{\mathrm{crit}},R_{\mathrm{crit}})=2\pi,
+  \qquad
+  B(t_{\mathrm{crit}},R_{\mathrm{crit}})=2\pi.
+  \label{eq:root-definition}
 \end{equation}
-
-For the certificate below, $L_i(\rho)>0$ for every $i\in S$, so all selected
-center vectors are nonzero.  For two nonzero centers define $\theta_{ij}$ to be their smaller central
-angle.  The law of cosines gives
-\[
- (r_i+r_j)^2\le a_i^2+a_j^2-2a_ia_j\cos\theta_{ij}.
-\]
-Hence the required angular lower bound is defined by
+The existence and uniqueness of this pair, as well as the strict upper
+endpoint inequality, are proved by exact rational interval checks in
+Section~\ref{sec:barrier}.  In particular,
 \begin{equation}
- \alpha_{ij}(\rho):=
- \min_{\substack{a_i\in[L_i(\rho),U_i(\rho)]\\
-                    a_j\in[L_j(\rho),U_j(\rho)]}}
- \arccos\left(
- \frac{a_i^2+a_j^2-(r_i+r_j)^2}{2a_ia_j}
- \right).
- \label{eq:angle-bound}
+  8.303468122111489\le \Rcrit
+  < 8.303468122111490 = \Rcap.
+  \label{eq:root-bracket}
 \end{equation}
-Equivalently, if
+The equations, rather than a rounded decimal or a polynomial root
+identification, are the definition of the exact value in this paper.
+
+\begin{theorem}[Global optimality]
+\label{thm:global}
+For ten circles of radii $1,\sqrt2,\ldots,\sqrt{10}$ in a circular
+container,
 \[
- c_{ij}^{\max}(\rho):=
- \max_{\substack{a_i\in[L_i(\rho),U_i(\rho)]\\
-                    a_j\in[L_j(\rho),U_j(\rho)]}}
- \frac{a_i^2+a_j^2-(r_i+r_j)^2}{2a_ia_j},
+  \boxed{\Ropt=\Rcrit.}
 \]
-then $\alpha_{ij}(\rho)=\arccos c_{ij}^{\max}(\rho)$, with the usual
-endpoint convention when the enclosing cosine bound lies outside $[-1,1]$.
-
-The maximization of the cosine expression over that rectangle may be reduced
-to the four corners.  Indeed, for fixed $b$ its derivative with respect to
-$a$ has at most one zero, and that stationary point is a minimum, so the
-maximum in $a$ occurs at an endpoint.  Evaluating those two endpoints and
-then applying the same argument to $b$ leaves the four corners.
-We evaluate the four corner values
-with outward-rounded decimal arithmetic and then apply the decreasing function
-$\arccos$ using a directed enclosure.
-
-Let $w_{ij}=\alpha_{ij}(\rho)$.  If the centers in $S$ are listed in their
-cyclic order around the origin, the sum of the consecutive angular gaps is
-$2\pi$.  Therefore a necessary condition for feasibility is
-\begin{equation}
-  \min_{C\text{ Hamiltonian cycle on }S}\sum_{(i,j)\in C}w_{ij}
-  \le 2\pi.
-  \label{eq:tsp-cut}
-\end{equation}
-The minimum is computed by the Held--Karp dynamic program.  No cyclic order
-is assumed in advance.
-
-\begin{proposition}[Angular-cycle infeasibility criterion]
-If the left-hand side of \eqref{eq:tsp-cut} is strictly larger than $2\pi$,
-then the subset $S$ cannot be packed in a container of radius $\rho$.
-\end{proposition}
-
-\begin{proof}
-Every feasible realization has a cyclic ordering of its nonzero center
-vectors.  Each consecutive gap is bounded below by the corresponding
-$w_{ij}$, and the gaps sum to $2\pi$.  Its cyclic ordering is one of the
-Hamiltonian cycles considered in \eqref{eq:tsp-cut}, contradicting the strict
-inequality.  The radial lower bounds ensure that the selected centers are
-nonzero in the certificate used below.
-\end{proof}
-
-For a stronger certificate, fix one cyclic order and write its seven angular
-gaps as $x_0,\ldots,x_6$.  For every pair of positions there are two directed
-paths around the cycle.  If $q_k\in\{0,1\}^6$ is the incidence vector of one
-such path and $b_k$ is the corresponding pair-angle lower bound, feasibility
-requires
-\begin{equation}
- q_k\mathbin{\cdot}x\ge b_k\quad(k=1,\ldots,42),
- \qquad x\ge0,\qquad \sum_g x_g=2\pi.
- \label{eq:path-system}
-\end{equation}
-
-\begin{proposition}[Fixed-order Farkas certificate]
-Suppose $y_k\ge0$ satisfies
-\begin{equation}
- \sum_{k=1}^{42}y_kq_k[g]\le1\quad(g=0,\ldots,6)
- \label{eq:farkas-columns}
-\end{equation}
-and $\sum_k y_kb_k>2\pi$.  Then the selected cyclic order is impossible.
-\end{proposition}
-
-\begin{proof}
-Multiplying the inequalities in \eqref{eq:path-system} by $y_k$ and summing,
-then using \eqref{eq:farkas-columns}, gives
-\[
- \sum_k y_kb_k
- \le \sum_k y_k(q_k\mathbin{\cdot}x)
- \le \sum_gx_g=2\pi,
-\]
-which contradicts the assumed strict inequality.
-\end{proof}
-
-\section{Certified computation}
-
-All interval endpoints are finite decimal numbers.  Arithmetic operations are
-rounded toward the appropriate direction.  The numerical data are supplied as
-machine-readable supplementary certificates.  The replay verifier reconstructs
-the model, recomputes the directed bounds, and checks the recorded inequalities;
-the logical implication from those inequalities to infeasibility is proved in
-the preceding propositions.
-
-For the present result we use
-\[
-S=\{4,5,6,7,8,9,10\},\qquad \rho=7.9.
-\]
-There are $(7-1)!/2=360$ cyclic orders after identifying orders related by
-rotation and reversal.  Reversal need not be considered separately because
-both directed paths for every pair are included.  For each of these 360 cyclic
-orders, the radial interval for each circle is split into two subintervals.
-The resulting $360\cdot2^7=46080$ radial boxes each have a certificate with
-nonnegative Farkas multipliers for all 42 directed path inequalities.  The
-MPFI replay verifies that every resulting dual value strictly exceeds the
-upward-rounded bound \(2\pi_{\mathrm{upper}}\), where
-\[
-  2\pi_{\mathrm{upper}}
-  =6.283185307179586476925286766559\ldots .
-\]
-The accompanying machine-readable certificate contains outward-rounded box
-endpoints and decimal multipliers for all 46080 boxes.  The MPFI replay checks
-all dual column inequalities and all directed angle bounds; SciPy is used
-only to discover the multipliers.  The analytic argument above is
-self-contained, while the displayed numerical conclusion is conditional on
-the supplementary certificate and its MPFI implementation.
-
-\begin{theorem}[Certified lower bound]
-Subject to the stated directed-decimal model and replay of the supplementary
-certificate,
-\[
-  \Ropt\ge 7.9.
-\]
+More precisely, no packing exists for any $R<\Rcrit$, and a packing exists
+at $R=\Rcrit$.
 \end{theorem}
 
+The exact v27 radial tree covers every configuration with $R\le\Rcap$.
+Its residual cases are closed by the angle barrier and the nine-circle
+negative-cycle certificate.  Since $\Rcrit<\Rcap$, these facts cover every
+putative packing below $\Rcrit$.  The matching construction is given in
+Section~\ref{sec:witness}.
+
+\subsection{Exactness and scope}
+
+The value in Theorem~\ref{thm:global} is an exact root-defined real number,
+not a claim that the finite decimal in \eqref{eq:root-bracket} is itself the
+optimum.  Nor do we identify it with the distinct algebraic number $R_0$
+appearing in earlier computations.  The certified interval is narrow enough
+to distinguish the exact target used here, and the geometric definition
+already suffices to state and prove the optimality result.
+
+\section{How the global proof is organized}
+\label{sec:overview}
+
+A packing has ten radial coordinates $s_i=\norm{p_i}$ and ten center
+directions.  The proof infrastructure first subdivides the allowed radial
+domain by rational midpoint splits.  On each radial box, exact necessary
+conditions determine which cyclic orders and angular-sector assignments
+remain possible.  These assignments form the finite ledger called the
+global radial tree.
+
+At a terminal case, one of the following happens:
+\begin{itemize}
+  \item interval-safe radial inequalities contradict containment or
+        non-overlap;
+  \item lower bounds on pair angles contradict the $2\pi$ angular budget,
+        often through a Farkas multiplier certificate;
+  \item a difference-constraint graph contains a strictly negative directed
+        cycle;
+  \item the assignment has the main seven-circle order and radial range, so
+        the two-sum angle barrier applies;
+  \item the assignment is one of the four alternative masks, so its
+        nine-circle projection is covered by the negative-cycle tree.
+\end{itemize}
+Every split is rational and its children cover the parent box exactly.  Thus
+the finite tree is a cover argument, not a sampling of candidate
+configurations.
+
+The global cap is
+\[
+  \Rcap=8.303468122111490.
+\]
+Because the exact root lies strictly below this cap, it is enough for the
+tree to cover all configurations up to $\Rcap$; no comparison of floating
+approximations is used to bridge a gap.
+
+\section{The main seven-circle angle barrier}
+\label{sec:barrier}
+
+\subsection{Radial and angular necessary conditions}
+
+Consider the seven-circle core
+\[
+  K=\{2,5,6,7,8,9,10\},\qquad
+  W=K\setminus\{10\}=\{2,5,6,7,8,9\}.
+\]
+For a center $p_i$, put $s_i=\norm{p_i}$.  For any two circles with
+$r_i+r_j\le s_i+s_j$ and $|s_i-s_j|<r_i+r_j$, define their necessary
+smaller central angle by
+\begin{equation}
+  \phi_{ij}(s_i,s_j)=
+  \arccos\!\left(
+    \frac{s_i^2+s_j^2-(r_i+r_j)^2}{2s_is_j}
+  \right).
+  \label{eq:phi}
+\end{equation}
+The law of cosines and non-overlap imply that the directed angular gap from
+one center direction to another is at least this smaller angle.  In a
+cyclic order, all directed gaps sum to $2\pi$.
+
+The residual main order is
+\[
+  (10,5,7,9,2,8,6).
+\]
+For $i\in W$ put
+\[
+ a_i(R)=R-r_i,\qquad D_i=r_{10}+r_i.
+\]
+When the six circles in $W$ are at the container wall, the angle between
+circle $10$ at radial coordinate $t=s_{10}$ and circle $i$ is
+\begin{equation}
+  \alpha_i(t,R)=
+  \arccos\!\left(
+    \frac{t^2+a_i(R)^2-D_i^2}{2t\,a_i(R)}
+  \right).
+  \label{eq:alpha}
+\end{equation}
+For two wall circles $i,j\in W$, their necessary angle is
+\begin{equation}
+  \beta_{ij}(R)=
+  2\arcsin\sqrt{\frac{r_ir_j}{a_i(R)a_j(R)}}.
+  \label{eq:beta}
+\end{equation}
+Define
+\begin{align}
+ C(R)&=\beta_{79}(R)+\beta_{92}(R)+\beta_{28}(R)+\beta_{86}(R),\\
+ A(t,R)&=\alpha_5(t,R)+\beta_{57}(R)+C(R)+\alpha_6(t,R),\\
+ B(t,R)&=\alpha_7(t,R)+C(R)+\alpha_6(t,R).
+ \label{eq:AB}
+\end{align}
+
+For the stated order, the directed loop
+$10\to5\to7\to9\to2\to8\to6\to10$ has total angle $2\pi$ and therefore
+requires $A_{\mathrm{radial}}\le2\pi$.  A second loop
+$10\to7\to9\to2\to8\to6\to10$ skips circle $5$ in the angle count, but
+circle $5$ remains present in the packing.  It gives the independent
+necessary inequality $B_{\mathrm{radial}}\le2\pi$.  These two inequalities
+are the key: their dependence on $t$ has opposite signs near the critical
+pair.
+
+\subsection{The exact critical pair}
+
+The following derivative formulas explain how the candidate is isolated.
+For $i\in\{5,6,7\}$ let
+\[
+ b_i=a_i(R)^2-D_i^2,\qquad
+ H_i=4a_i(R)^2t^2-(t^2+b_i)^2.
+\]
+Where the angles are in $(0,\pi)$,
+\begin{equation}
+ \frac{\partial\alpha_i}{\partial t}
+   =\frac{b_i-t^2}{t\sqrt{H_i}},\qquad
+ \frac{\partial\alpha_i}{\partial R}
+   =-\frac{a_i(R)^2+D_i^2-t^2}{a_i(R)\sqrt{H_i}}.
+ \label{eq:alpha-derivatives}
+\end{equation}
+For a wall-wall angle,
+\begin{equation}
+ \frac{\partial\beta_{ij}}{\partial R}
+  =-\left(\frac1{a_i(R)}+\frac1{a_j(R)}\right)
+    \sqrt{\frac{r_ir_j}{a_i(R)a_j(R)-r_ir_j}}.
+ \label{eq:beta-derivative}
+\end{equation}
+Exact sign checks establish $A_t>0$ and $B_t<0$ throughout $t\in I$ when
+$R\in J_R$.  Separate interval checks establish $A_R<0$ and $B_R<0$ for
+$t\in I$ and $\frac{15947}{2000}\le R\le8.30346812212$:
+\begin{equation}
+  A_t>0,\qquad B_t<0,\qquad A_R<0,\qquad B_R<0.
+  \label{eq:root-signs}
+\end{equation}
+For example, $A_t>0$ follows from $(\alpha_5)_t>0$ and
+$(\alpha_6)_t>0$.  The sign of $B_t=(\alpha_7)_t+(\alpha_6)_t$ requires a
+comparison of two positive terms; the verifier reduces it to a quadratic
+polynomial inequality on the squared interval for $t$.  Its leading
+coefficient is negative and its endpoint lower bounds are positive, which
+certifies the sign on the full interval.
+
+To prove existence, write
+\[
+ F(t,R)=A(t,R)-B(t,R)
+       =\alpha_5(t,R)+\beta_{57}(R)-\alpha_7(t,R),
+ \qquad
+ G(t,R)=B(t,R)-2\pi.
+\]
+The exact checker proves opposite signs for $F$ on the lower and upper
+$t$-edges of the rational rectangle, and opposite signs for $G$ on the lower
+and upper $R$-edges.  These are whole-edge sign checks: interval bounds on the
+relevant derivatives account for variation along each edge.  Since $F_t>0$,
+for every $R$ in the rectangle there is exactly one $t(R)$ with $F=0$.
+Continuity and the edge signs for $G$ then give an $R$ with $G=0$ by the
+intermediate value theorem.  This is precisely a solution of
+$A=B=2\pi$.
+
+The solution is unique.  At fixed $R$, $A_t>0$ gives at most one solution
+to $A=2\pi$.  If two simultaneous solutions had $R_1<R_2$, then
+$A(t_1,R_2)<2\pi$ and $B(t_1,R_2)<2\pi$, because both decrease with $R$.
+Restoring $A=2\pi$ at $R_2$ would require increasing $t$, while restoring
+$B=2\pi$ would require decreasing $t$, since $A_t>0$ and $B_t<0$.  Both
+cannot hold at the same $t$.  Thus the pair is unique.  The exact endpoint
+checks further show
+\[
+  t_{\mathrm{crit}}\in J_t,\qquad
+  8.303468122111489\le \Rcrit<8.303468122111490.
+\]
+
+All angle and derivative signs just used are checked without floating-point
+decisions.  The verifier evaluates rational enclosures for square roots,
+uses Machin's identity with alternating arctangent series to enclose $\pi$,
+and uses half-angle arctangent expansions with rational remainder bounds for
+the inverse trigonometric terms.
+
+\subsection{Why the radial coordinates can be replaced by wall values}
+
+The main order cases do not assume that the circles $i\in W$ are at the wall.
+This is important: the theorem does not move disks, and it does not assume
+the older sufficient conditions for physically pushing disks outward.
+
+For $d_{ij}=r_i+r_j$, differentiation of \eqref{eq:phi} gives
+\begin{equation}
+ \frac{\partial\phi_{ij}}{\partial s_i}
+  =-\frac{s_i^2-s_j^2+d_{ij}^2}
+          {2s_i^2s_j\sin\phi_{ij}}.
+ \label{eq:phi-derivative}
+\end{equation}
+The case boxes imply, for $t=s_{10}\in I=[0.8588,1.1265]$ and
+$\frac{15947}{2000}\le R\le\Rcap$,
+\[
+  r_{10}+r_i-t\le s_i\le \Rcap-r_i
+       \qquad(i\in W).
+ \label{eq:main-radial-box}
+\]
+The left inequality follows from
+$r_{10}+r_i\le\norm{p_{10}-p_i}\le s_{10}+s_i$; the right one is
+containment.  The actual verifier rounds the square-root endpoints outward
+to rational bounds before doing its checks.
+
+For most coordinates, \eqref{eq:phi-derivative} has a directly certified
+negative sign in each angular sum.  Three shared coordinates require a
+combined derivative check because their two adjacent pair contributions
+can have opposite signs.  For $(i,g,b)=(9,7,2),(8,6,2),(2,9,8)$, exact
+rational bounds give:
+\begin{center}
+\begin{tabular}{cc}
+\toprule
+coordinate $s_i$ & lower bound for the combined sign expression\\
+\midrule
+$s_9$ & $>3.193809$\\
+$s_8$ & $>0.143756$\\
+$s_2$ & $>0.589640$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The smaller angular sines in the two potentially adverse pairs are bounded
+below by $3/5$; the remaining terms have positive rational lower bounds.
+Consequently both full radial sums are non-increasing in every $s_i$.
+The domains of all angles are also checked throughout the substitutions.
+
+Starting from any feasible packing in the main order, replace its six radial
+coordinates $s_i$ one at a time by $R-r_i$ only inside the angle formulas.
+This is an analytic comparison, not a physical movement.  Since each angular
+sum is non-increasing as any $s_i$ increases, the wall-value sums satisfy
+\[
+  A(t,R)\le A_{\mathrm{radial}}\le2\pi,\qquad
+  B(t,R)\le B_{\mathrm{radial}}\le2\pi.
+ \label{eq:wall-angle-necessary}
+\]
+This is the wall-free angular barrier.
+
+\begin{lemma}[A radius floor for the main core]
+\label{lem:main-radius-floor}
+If a feasible main-core packing has $t=s_{10}\le1.1265$, then
+\[
+ R>\frac{15947}{2000}=7.9735.
+\]
+\end{lemma}
+
 \begin{proof}
-The seven-circle subset $S$ is infeasible at $\rho=7.9$ by the preceding
-certificate.  Any ten-circle packing would restrict to a packing of $S$.
-Therefore the ten-circle problem is infeasible at that radius, and the
-optimal radius is at least $7.9$.
+Non-overlap of circles $9$ and $10$ gives
+$s_9+t\ge r_9+r_{10}=3+\sqrt{10}$.  Containment of circle $9$ gives
+$R\ge3+s_9$.  Since $\sqrt{10}>3.1$ and $t\le1.1265$,
+\[
+ R\ge6+\sqrt{10}-t
+   \ge6+\sqrt{10}-1.1265
+   >6+3.1-1.1265
+   =7.9735.
+\]
 \end{proof}
 
-\section{The feasible upper bound}
+\subsection{Excluding every radius below the critical value}
 
-A Krawczyk-certified active-core root has radius coordinate in the interval
-\begin{equation}
-\displaystyle
-8.3034681221114890787043811875161
-\;\le\;R_{\mathrm{root}}\;\le\;
-8.3034681221114890787043811875163.
-\label{eq:root-radius-interval}
-\end{equation}
-Here $R_{\mathrm{root}}=\widehat R_{\mathrm{root}}$ is the radius coordinate
-of the Krawczyk root.
-We use the finite decimal
-\[
- \Rupper=8.303468122111490
-\]
-as the certified container-radius upper bound.
-Its active seven-circle core consists of circles
-$\{2,5,6,7,8,9,10\}$.  The active wall contacts are
-$\{2,5,6,7,8,9\}$ and the active pair contacts are
-\[
- (5,7),(2,8),(6,8),(2,9),(7,9),(5,10),(6,10),(7,10).
-\]
-To remove the rotational degree of freedom, we impose $y_{10}=0$ and take
-$x_{10}>0$ in the displayed box.  The Krawczyk unknown vector is
-\[
- z=(x_2,y_2,x_5,y_5,x_6,y_6,x_7,y_7,x_8,y_8,x_9,y_9,x_{10},\widehat R),
-\]
-so it has 14 variables.  The square system has the six equations
-\[
- \norm{p_i}^2-(\widehat R-r_i)^2=0\quad(i=2,5,6,7,8,9)
-\]
-and the eight equations
-\[
- \norm{p_i-p_j}^2-(r_i+r_j)^2=0
-\]
-for the eight listed active pairs.  A Krawczyk inclusion on the symmetric
-box of half-width $10^{-65}$ in these 14 variables encloses a unique root.
-The remaining circles $1,3,4$ are
-placed at the listed decimal coordinates and are checked using the
-corresponding interval enclosure.  All 41 inactive wall and pair inequalities
-have strictly positive interval slack in the squared forms of the constraints
-(3)--(4); the smallest reported lower bound is approximately
-$0.0404383472086741$ for the wall constraint of circle $1$.
+Suppose a main-order packing occurs in a tree box.  Its disk-$10$ coordinate
+lies in $I$, so Lemma~\ref{lem:main-radius-floor} puts its radius in the
+certified derivative range.  If $R<\Rcrit$, then by
+\eqref{eq:wall-angle-necessary}, it must satisfy $A(t,R)\le2\pi$ and
+$B(t,R)\le2\pi$.
 
-For reproducibility, the following table gives a decimal presentation of the
-realization used for the upper-bound check.  The coordinates of the seven
-active-core circles are rounded from the corresponding interval enclosure;
-the three rattler coordinates are the fixed decimal coordinates used in the
-extension check.  The radius of circle $i$ is $r_i=\sqrt{i}$.
+If $t\ge t_{\mathrm{crit}}$, then $A_R<0$ on the interval from $R$ to
+$R_{\mathrm{crit}}$, while $A_t>0$ at $R_{\mathrm{crit}}$, so
+\[
+ A(t,R)>A(t,\Rcrit)
+          \ge A(t_{\mathrm{crit}},\Rcrit)=2\pi,
+\]
+a contradiction.  If $t\le t_{\mathrm{crit}}$, then $B_t<0$ and
+$B_R<0$ imply
+\[
+ B(t,R)>B(t,\Rcrit)
+          \ge B(t_{\mathrm{crit}},\Rcrit)=2\pi,
+\]
+also a contradiction.  These two cases cover every value of $t$.  Thus any
+main-order case satisfying the tree's radial hypotheses is impossible below
+$\Rcrit$.
+
+\section{The four exceptional cases: a negative-cycle proof}
+\label{sec:four-cases}
+
+The four remaining assignments have a different large-circle skeleton and
+are not covered by the preceding seven-circle theorem.  Their masks are
+$(5,16,40,2)$ (three assignments) and $(4,16,41,2)$ (one assignment).
+After projecting away circle $1$, their nine-circle order is
+\[
+ P=(10,3,7,5,8,4,6,9,2).
+\]
+The only ambiguity in the relative placement of circles $4$ and $6$ gives
+the second possible order
+\[
+ Q=(10,3,7,5,8,6,4,9,2).
+\]
+The exact certificate covers both orders; the four assignments in the global
+tree project to $P$.
+
+\subsection{From radial boxes to angle-difference constraints}
+
+Fix either order.  For a radial box $s_i\in[\ell_i,u_i]$, containment gives
+$0\le s_i\le\Rcap_+-r_i$, where
+\[
+  \Rcap_+=8.30346812212>\Rcap.
+\]
+Non-overlap also requires $s_i+s_j\ge r_i+r_j$.  This inequality safely
+tightens the lower endpoints of each box.  If any lower endpoint is zero,
+the angle lower bound involving that coordinate is set to zero, which is
+conservative.
+
+For positive radial endpoints, the cosine forced by a pair of circles is
+\[
+ c_{ij}(s_i,s_j)=
+ \frac{s_i^2+s_j^2-(r_i+r_j)^2}{2s_is_j}.
+\]
+On each radial rectangle the verifier bounds this expression above by
+checking its four corners.  The reduction to corners is valid because, with
+one coordinate fixed, this rational function has no interior maximum in the
+other coordinate; any stationary point is a minimum.  Square roots of the
+integer radii are enclosed by rational lower bounds.
+
+For each pair, a nonnegative rational angle tick $q_{ij}$ is stored.  It is
+accepted only after an exact rational Taylor inequality certifies
+$\cos(q_{ij})>c_{ij}$ throughout the box.  Floating-point inverse cosine is
+used only when searching for candidate ticks; it has no role in replay.
+Consequently any feasible angular difference $\Delta_{ij}$ in the fixed
+cyclic order must satisfy
+\[
+  q_{ij}\le \Delta_{ij}\le 2\pi_+-q_{ij},
+\]
+where $\pi_+$ is a rational upper bound for $\pi$ obtained from Machin's
+identity and alternating arctangent series.
+
+Assign the directed edge $j\to i$ weight $-q_{ij}$ and the edge
+$i\to j$ weight $2\pi_+-q_{ij}$.  The angle differences are variables
+satisfying the corresponding difference constraints.  A directed cycle of
+strictly negative total weight is impossible: summing its constraints would
+assert that zero is at most a negative number.
+
+\subsection{Finite certificate}
+
+The initial radial domain is covered by rational boxes.  Each unresolved box
+is bisected at a rational midpoint; the verifier checks that the children
+cover the parent and that no box is duplicated or omitted.  Every leaf has
+a recorded negative cycle whose edge weights are recomputed from the radial
+box and rational angle ticks.
 
 \begin{table}[ht]
 \centering
 \small
-\caption{Centers of the certified upper-bound realization.}
-\label{tab:upper-coordinates}
-\begin{tabular}{c r@{\,}r r}
+\caption{Exact replay of the two nine-circle order certificates.}
+\label{tab:nine-cases}
+\begin{tabular}{lrrrr}
 \toprule
-$i$ & \multicolumn{1}{c}{$x_i$} & \multicolumn{1}{c}{$y_i$} & $r_i$\\
+Order & Nodes & Splits & Negative-cycle leaves & Unresolved\\
 \midrule
-1 & $-3.979411598680$ & $-6.120824420924$ & $\sqrt{1}$\\
-2 & $-6.643004688846$ & $ 1.825463528216$ & $\sqrt{2}$\\
-3 & $ 6.491367788756$ & $-0.773581798891$ & $\sqrt{3}$\\
-4 & $ 5.592388025100$ & $ 2.873904150833$ & $\sqrt{4}$\\
-5 & $ 4.323261823214$ & $-4.257082536523$ & $\sqrt{5}$\\
-6 & $ 1.885281861457$ & $ 5.542091227010$ & $\sqrt{6}$\\
-7 & $-0.356672093417$ & $-5.646463010751$ & $\sqrt{7}$\\
-8 & $-3.266260803898$ & $ 4.394043045277$ & $\sqrt{8}$\\
-9 & $-4.826665378217$ & $-2.197743262753$ & $\sqrt{9}$\\
-10 & $ 1.003716086075$ & $ 0.000000000000$ & $\sqrt{10}$\\
+$P$ & 231 & 115 & 116 & 0\\
+$Q$ & 77 & 38 & 39 & 0\\
+\midrule
+Total & 308 & 153 & 155 & 0\\
 \bottomrule
 \end{tabular}
 \end{table}
+Thus both projected orders are excluded for every $R\le\Rcap_+$, including
+the four global-tree assignments because $\Rcap<\Rcap_+$.
 
-The displayed decimals are for identification and reproduction only; the
-feasibility assertion uses the enclosing intervals rather than these rounded
-values.  In particular, the active equalities are checked on the interval
-core, while all inactive inequalities are checked with strictly positive
-lower slack.
+\section{Composition of the global finite proof}
+\label{sec:composition}
 
-Figure~\ref{fig:upper-configuration} visualizes the same realization.  The
-TikZ coordinates are the displayed center coordinates in Table~\ref{tab:upper-coordinates};
-the common scale changes only the size of the drawing, not the geometry.
-
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}[x=0.62cm,y=0.62cm]
-  \draw[very thick] (0,0) circle (8.303468122111490);
-  \draw[fill=yellow!35,draw=black] (-3.979411598680,-6.120824420924) circle (1.0000);
-  \node at (-3.979411598680,-6.120824420924) {\scriptsize 1};
-  \draw[fill=blue!25,draw=black] (-6.643004688846,1.825463528216) circle (1.4142);
-  \node at (-6.643004688846,1.825463528216) {\scriptsize 2};
-  \draw[fill=green!30,draw=black] (6.491367788756,-0.773581798891) circle (1.7321);
-  \node at (6.491367788756,-0.773581798891) {\scriptsize 3};
-  \draw[fill=orange!35,draw=black] (5.592388025100,2.873904150833) circle (2.0000);
-  \node at (5.592388025100,2.873904150833) {\scriptsize 4};
-  \draw[fill=red!25,draw=black] (4.323261823214,-4.257082536523) circle (2.2361);
-  \node at (4.323261823214,-4.257082536523) {\scriptsize 5};
-  \draw[fill=cyan!25,draw=black] (1.885281861457,5.542091227010) circle (2.4495);
-  \node at (1.885281861457,5.542091227010) {\scriptsize 6};
-  \draw[fill=violet!25,draw=black] (-0.356672093417,-5.646463010751) circle (2.6458);
-  \node at (-0.356672093417,-5.646463010751) {\scriptsize 7};
-  \draw[fill=purple!25,draw=black] (-3.266260803898,4.394043045277) circle (2.8284);
-  \node at (-3.266260803898,4.394043045277) {\scriptsize 8};
-  \draw[fill=magenta!25,draw=black] (-4.826665378217,-2.197743262753) circle (3.0000);
-  \node at (-4.826665378217,-2.197743262753) {\scriptsize 9};
-  \draw[fill=blue!35,draw=black] (1.003716086075,0) circle (3.1623);
-  \node at (1.003716086075,0) {\scriptsize 10};
-\end{tikzpicture}
-\caption{Visualization of the certified upper-bound realization.  The plotted
-centers use the rounded coordinates in Table~\ref{tab:upper-coordinates}; the
-outer circle has radius $\Rupper$.}
-\label{fig:upper-configuration}
-\end{figure}
-
-Thus, conditional on the supplementary interval enclosure and Krawczyk
-certificate, the configuration gives
-\begin{equation}
- \Ropt\le\Rupper.
-\end{equation}
-Because containment is monotone in the container radius, a configuration
-feasible at $R_{\mathrm{root}}$ is also feasible at the larger finite-decimal
-radius $\Rupper$.
-This is a feasible-witness statement, not an optimality claim.
-
-\section{Conclusion and open problems}
-
-Combining the certified lower bound with the feasible witness gives
+The compressed certificate \path{certificates/skeleton-radial-tree-v27.json.gz}
+is a complete rational-split tree for the radial domain up to $\Rcap$.  Its
+replay checks
 \[
- \boxed{7.9\le \Ropt\le
- 8.303468122111490.}
+  2{,}401\ \text{nodes},\qquad
+  1{,}200\ \text{splits},\qquad
+  1{,}201\ \text{leaves}.
 \]
-The next proof-critical tasks are a global exclusion for every radius below
-$\Rupper$, complete treatment of minimal positive stress supports including
-degenerate cases, and rigorous extension tests for circles not contained in a
-candidate stressed support.  The current result does not assert
-$\Ropt=\Rupper$; the displayed upper bound is not claimed to be optimal.
+The associated angular ledgers account for $14{,}757{,}888$ sector
+assignments.  Before adding the final geometric theorems, the ledgers had
+closed $14{,}757{,}691$ assignments and left $197$ open.  The remaining
+assignments divide exactly as follows:
+\begin{itemize}
+  \item $193$ main-order cases satisfy the wall-free barrier hypotheses;
+  \item Four masks project to order $P$; the negative-cycle replay closes
+        them.
+\end{itemize}
+Their common core order is $(10,5,7,9,2,8,6)$, and each disk-$10$ radial
+interval is contained in $[0.8588,1.1265]$.
+The masks are $(5,16,40,2)$ in three cases and $(4,16,41,2)$ in one.
+The composition verifier also reclassifies $145$ core-order terminal models
+and $2$ full-order terminal witnesses through the same seven-circle angle
+barrier.  This removes their dependence on the previous local terminal rule.
+Each of these $147$ cases has the same disk-$10$ interval, so
+Lemma~\ref{lem:main-radius-floor} supplies the radius range required by the
+barrier.  After these links are replayed, all $14{,}757{,}888$ sector
+assignments are closed and no residual case remains.
+
+\begin{proof}[Proof of Theorem~\ref{thm:global}]
+Let $R<\Rcrit$.  Since $\Rcrit<\Rcap$, every putative packing belongs to
+the certified radial-tree domain.  Every sector assignment is closed either
+by the original exact radial/angular checks, by the main-order barrier, by
+the alternative nine-circle certificate, or by the independent
+reclassification of the 147 local terminals.  Thus no packing exists below
+$\Rcrit$.  Section~\ref{sec:witness} constructs a packing at $\Rcrit$, so
+$\Ropt=\Rcrit$.
+\end{proof}
+
+\section{A matching ten-circle packing}
+\label{sec:witness}
+
+At $(t_{\mathrm{crit}},\Rcrit)$, put circle $10$ at radial distance
+$t_{\mathrm{crit}}$ and put each $i\in W$ at its wall radius
+$a_i(\Rcrit)=\Rcrit-r_i$.  Use the following polar angles:
+\begin{align*}
+ \theta_{10}&=0,\\
+ \theta_5&=\alpha_5,\\
+ \theta_7&=\alpha_5+\beta_{57}=\alpha_7,\\
+ \theta_9&=\theta_7+\beta_{79},\\
+ \theta_2&=\theta_9+\beta_{92},\\
+ \theta_8&=\theta_2+\beta_{28},\\
+ \theta_6&=\theta_8+\beta_{86}=2\pi-\alpha_6.
+\end{align*}
+The identities $\alpha_5+\beta_{57}=\alpha_7$ and
+$\alpha_7+C+\alpha_6=2\pi$ are exactly the two root equations.  They make
+the eight pairs
+\[
+ (10,5),(10,7),(10,6),(5,7),(7,9),(9,2),(2,8),(8,6)
+\]
+tangent.  The remaining 13 pairs within the seven-circle core are
+strictly separated throughout the certified root rectangle.
+
+Place the three other centers at the following fixed rational coordinates:
+\[
+ p_1=(-3.9798,\;6.1148),\qquad
+ p_3=(6.4777,\;0.8849),\qquad
+ p_4=(5.5222,\;-2.7574).
+\]
+(The terminating decimals here denote exact rationals.)  The witness replay
+checks all 37 non-contact pairs among the ten circles and verifies strict
+container inclusion for circles $1,3,4$ and circle $10$, uniformly over the
+rational enclosure of $(t_{\mathrm{crit}},\Rcrit)$.  The six circles in $W$
+are on the wall, and all remaining inequalities have positive certified
+slack.  Hence this is an actual feasible configuration at the exact root,
+not merely a rounded numerical picture.
+
+\section{Reproducibility and trust boundary}
+\label{sec:verification}
+
+The complete composition is replayed from the repository root with
+\begin{quote}\small\ttfamily
+uv run --locked --no-sync python \textbackslash\\
+\hspace*{1em}\path{tools/verify_global_optimality_completion.py}
+\end{quote}
+The first command checks the tree, case linkage, root theorem, witness,
+alternative-order certificate, local radius implication, and input hashes,
+then writes a JSON report under \path{artifacts/}.
+
+All decisive arithmetic in these replayers is integer or rational arithmetic.
+Square roots are enclosed with integer square-root bounds; the trigonometric
+inequalities are reduced to rational Taylor bounds and rational enclosures of
+$\pi$.  Floating-point routines may help generate candidate split points or
+angle ticks, but the verifier rechecks the accepted claims using exact
+inequalities.  This separates fast certificate discovery from the smaller
+checking computation.
+
+The trust boundary is explicit.  This is a computer-assisted proof whose
+soundness depends on the correctness of the Python verifiers, the Python
+runtime's integer and \texttt{Fraction} semantics, and the certificate inputs
+whose hashes the composition checker records.  The proof is not formalized
+end-to-end in Lean.  In particular, references to old Lean developments or
+the MPFI generator do not substitute for the exact replay used here.
+
+The repository's global-optimality completion note and the
+\path{proof/global_completion/} directory contain the individual theorem
+proofs and certificate details.  The composition report records SHA-256
+hashes for the tree, certificates, and verifier sources so a replay can be
+tied to the checked inputs.
+
+\section{Conclusion and remaining identifications}
+
+The finite tree and its geometric terminal theorems give a global lower bound
+at the exact angle-defined value $\Rcrit$.  The root construction supplies a
+ten-circle packing at the same value.  Therefore the minimum container radius
+is exactly $\Rcrit$, as claimed in Theorem~\ref{thm:global}.
+
+The result does not require an algebraic description of the optimum.  A
+separate task would be to prove that $\Rcrit$ equals the previously computed
+algebraic root $R_0$; overlapping decimal enclosures alone would not prove
+that identity.  The exact coupled-angle definition is already a complete
+specification of the optimum.
 
 \end{document}

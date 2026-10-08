@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Compose the exact ten-disk global optimality proof certificates.
 
-All theorem premises are replayed locally. The result checks the 7.9 lower
-certificate, the v27 exhaustive tree, both attached geometric theorems, and
-the exact 10-disk upper witness. It then maps every v27 open/local terminal
-model to one of the attached angle-barrier or nine-circle impossibility
-theorems.
+All theorem premises are replayed locally. The result checks the v27
+exhaustive tree, both attached geometric theorems, and the exact 10-disk
+upper witness. It then maps every v27 open/local terminal model to one of the
+attached angle-barrier or nine-circle impossibility theorems.
 """
 from __future__ import annotations
 
@@ -39,6 +38,7 @@ from proof.large_four_certificate import rational  # noqa: E402
 U_MAIN = F("8.303468122111490")
 U_ALT = F("8.30346812212")
 T_RANGE = (F("0.8588"), F("1.1265"))
+MAIN_RADIUS_FLOOR = F(6) + F(31, 10) - T_RANGE[1]
 CORE = frozenset((2, 5, 6, 7, 8, 9, 10))
 MAIN_ORDER = (10, 5, 7, 9, 2, 8, 6)
 ALT_ORDERS = {
@@ -63,6 +63,12 @@ def sha256(path: Path) -> str:
 def require_main_order(order: tuple[int, ...], radial10: tuple[F, F]) -> None:
     assert tuple(label for label in order if label in CORE) == MAIN_ORDER, order
     assert radial10[0] >= T_RANGE[0] and radial10[1] <= T_RANGE[1], radial10
+    # Non-overlap of disks 9 and 10 gives s_9 + t >= 3 + sqrt(10);
+    # containment gives R >= 3 + s_9. Since sqrt(10) > 31/10 and
+    # t <= 1.1265, every such packing has R > 15947/2000.
+    assert F(31, 10) ** 2 < F(10)
+    assert MAIN_RADIUS_FLOOR == F(15947, 2000)
+    assert MAIN_RADIUS_FLOOR > F(79, 10)
 
 
 def replay_tree_and_connect(data: dict) -> dict:
@@ -182,6 +188,7 @@ def replay_tree_and_connect(data: dict) -> dict:
         "local_core_order_models_reclassified": local_core_models,
         "local_full_order_witnesses_reclassified": local_full_witnesses,
         "main_and_local_orders_fit_barrier_range": True,
+        "strict_main_order_radius_lower_bound": f">{MAIN_RADIUS_FLOOR}",
         "all_alternate_orders_are_in_the_nine_circle_certificate": True,
     }
 
@@ -189,13 +196,6 @@ def replay_tree_and_connect(data: dict) -> dict:
 def run_all() -> dict:
     angle_dir = ROOT / "proof/global_completion/angle_barrier"
     four_dir = ROOT / "proof/global_completion/four_cases"
-
-    # Exact 7.9 lower bound. This Fraction-only verifier independently checks
-    # all 46,080 records; no MPFI headers or numerical library are used.
-    from tools.verify_fixed_order_rational_certificate import verify as verify_fixed_order
-    fixed_order = verify_fixed_order()
-    assert fixed_order["status"] == "CERTIFIED_EXACT_RATIONAL"
-    assert fixed_order["records"] == 46_080
 
     # The attachment's monotonicity checker runs all rational sign/corner
     # inequalities as top-level assertions.
@@ -234,13 +234,11 @@ def run_all() -> dict:
 
     inputs = [
         ROOT / "certificates/skeleton-radial-tree-v27.json.gz",
-        ROOT / "certificates/fixed-order-radial-partition7-mpfi-7.9.dat.gz",
         ROOT / "proof/skeleton_radial_tree.py",
         ROOT / "proof/skeleton_cover.py",
         ROOT / "proof/skeleton_local_terminal.py",
         ROOT / "proof/large_four_certificate.py",
         ROOT / "tools/verify_global_optimality_completion.py",
-        ROOT / "tools/verify_fixed_order_rational_certificate.py",
         ROOT / "GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md",
         *sorted(p for p in (ROOT / "proof/global_completion").rglob("*")
                 if p.is_file() and p.suffix != ".pyc"),
@@ -254,7 +252,6 @@ def run_all() -> dict:
         "alternate_nine_certificate_scope": str(U_ALT),
         "strict_root_below_tree_cap": True,
         "exact_ten_disk_upper_witness": "verified; 37 non-contact pairs separated and 3 extra centers strictly contained",
-        "lower_bound_certificate_7_9": fixed_order,
         "global_tree_and_case_linkage": tree_summary,
         "theorem_applications": theorem_applications,
         "input_sha256": hashes,

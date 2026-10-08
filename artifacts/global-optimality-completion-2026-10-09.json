@@ -9,17 +9,6 @@
   "alternate_nine_certificate_scope": "207586703053/25000000000",
   "strict_root_below_tree_cap": true,
   "exact_ten_disk_upper_witness": "verified; 37 non-contact pairs separated and 3 extra centers strictly contained",
-  "lower_bound_certificate_7_9": {
-    "status": "CERTIFIED_EXACT_RATIONAL",
-    "certificate": "certificates/fixed-order-radial-partition7-mpfi-7.9.dat.gz",
-    "orders": 360,
-    "radial_boxes_per_order": 128,
-    "records": 46080,
-    "exact_angle_ticks_checked": 144,
-    "minimum_angle_tick": "0",
-    "minimum_farkas_cycle_margin_over_2pi_upper": "8060403330056991198016472214480407/122990138271000000000000000000000000",
-    "minimum_farkas_column_slack": "1/1000000000000"
-  },
   "global_tree_and_case_linkage": {
     "v27_tree_status_before_completion": "UNKNOWN",
     "tree_coverage_verified": true,
@@ -43,6 +32,7 @@
     "local_core_order_models_reclassified": 145,
     "local_full_order_witnesses_reclassified": 2,
     "main_and_local_orders_fit_barrier_range": true,
+    "strict_main_order_radius_lower_bound": ">15947/2000",
     "all_alternate_orders_are_in_the_nine_circle_certificate": true
   },
   "theorem_applications": {
@@ -53,14 +43,12 @@
   },
   "input_sha256": {
     "certificates/skeleton-radial-tree-v27.json.gz": "6d06da15ecc745b21b29ec775f0c673581649211a2394594c3304c7dba5b9c69",
-    "certificates/fixed-order-radial-partition7-mpfi-7.9.dat.gz": "b774d37954faa1b42769b6c8311b626866028ddbf8bc23ce3cdee3241093c62a",
     "proof/skeleton_radial_tree.py": "a4ac347248264794e907b2a5a2f1fbb0949f693bb888e1194428d4a214a2bc1f",
     "proof/skeleton_cover.py": "ccb483bffadafc5c9129f35a20fc0600fc2489cf5b86e84d2a820e76f257442d",
     "proof/skeleton_local_terminal.py": "9f3a551eb44d044c72955374dad5c394b39e9b2661133157f77a213a4cd8d322",
     "proof/large_four_certificate.py": "98685ee4fdd03fe829f5531e284b340c37f2914d8100d82225aa2210b5495d0c",
-    "tools/verify_global_optimality_completion.py": "2a22dcf456909f6a642a76a98f7a7d029d07a19f6ea0182338d1d63ceb2a2772",
-    "tools/verify_fixed_order_rational_certificate.py": "dcff7419f40d4a2e92ec66e8cfc867b7a90fd394f395cce1cce857e3fab2f891",
-    "GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md": "836de8e4e02c7490c0c69878c0089a8db97d410a1540478143d9ab2124a449e3",
+    "tools/verify_global_optimality_completion.py": "400eba536f62ea8e26e11ef830eca40f6fa0cb56c93ef6650a5bb88628b2adb8",
+    "GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md": "fb6bdec3a0a81423a44bf4b88abb59d9e383809cc32e5329d8181fa168f75a4f",
     "proof/global_completion/angle_barrier/angle_barrier_theorem_proof_2026-10-08.md": "0021c78dab9b3495a10f3cdcc4277532a29bd7235fdaba1e713582efda1f08e8",
     "proof/global_completion/angle_barrier/certified_angle_root.py": "746fa4cf24c5236c00ece9ef1115daa3541ca64025cb63344617fbab1edd40c1",
     "proof/global_completion/angle_barrier/radial_angle_barrier_strengthening_2026-10-08.md": "5ced4db51b22c6c82a1ebf7f21967b467fddb80e8f0582f4790e07a46a4cca0d",
