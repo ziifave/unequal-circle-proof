@@ -1,0 +1,28 @@
+{"new_splits": 25, "nodes": 51, "frontier": 20, "seconds": 1.4832104099914432}
+{"new_splits": 50, "nodes": 101, "frontier": 34, "seconds": 3.0952924760058522}
+{"new_splits": 75, "nodes": 151, "frontier": 43, "seconds": 4.75958559801802}
+{"new_splits": 100, "nodes": 201, "frontier": 54, "seconds": 6.639250087086111}
+{"new_splits": 125, "nodes": 251, "frontier": 65, "seconds": 8.605193598079495}
+{"new_splits": 150, "nodes": 301, "frontier": 76, "seconds": 11.015403390978463}
+{"new_splits": 175, "nodes": 351, "frontier": 95, "seconds": 13.556687557022087}
+{"new_splits": 200, "nodes": 401, "frontier": 109, "seconds": 16.07901068299543}
+{"new_splits": 225, "nodes": 451, "frontier": 124, "seconds": 18.603973636985756}
+{"new_splits": 250, "nodes": 501, "frontier": 129, "seconds": 21.283933032071218}
+{"new_splits": 275, "nodes": 551, "frontier": 121, "seconds": 23.921636834042147}
+{"new_splits": 300, "nodes": 601, "frontier": 127, "seconds": 26.57294789806474}
+{
+  "status": "UNKNOWN",
+  "coverage_verified": true,
+  "nodes": 601,
+  "splits": 300,
+  "leaves": 301,
+  "excluded_leaves": 174,
+  "unknown_leaves": 127,
+  "unknown_leaf_sector_cases": 47481,
+  "closed_leaf_sector_cases": 3651207,
+  "max_depth": 17,
+  "order_groups_closed": 0,
+  "angular_models_verified": 0,
+  "all_leaves_closed": false,
+  "global_optimality_proved": false
+}

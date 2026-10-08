@@ -1,0 +1,209 @@
+{
+  "status": "UNKNOWN",
+  "coverage_verified": true,
+  "radial_cells": 16,
+  "covered_cases": 196608,
+  "closed_cases": 164304,
+  "unknown_cases": 32304,
+  "per_cycle": [
+    {
+      "order": [
+        10,
+        7,
+        8,
+        9
+      ],
+      "closed": 54624,
+      "unknown": 10912
+    },
+    {
+      "order": [
+        10,
+        7,
+        9,
+        8
+      ],
+      "closed": 54720,
+      "unknown": 10816
+    },
+    {
+      "order": [
+        10,
+        8,
+        7,
+        9
+      ],
+      "closed": 54960,
+      "unknown": 10576
+    }
+  ],
+  "cells": [
+    {
+      "index": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "closed": 4768,
+      "unknown": 7520
+    },
+    {
+      "index": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        1,
+        0,
+        1,
+        0
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "closed": 5376,
+      "unknown": 6912
+    },
+    {
+      "index": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "closed": 12288,
+      "unknown": 0
+    },
+    {
+      "index": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "closed": 9264,
+      "unknown": 3024
+    },
+    {
+      "index": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "closed": 9728,
+      "unknown": 2560
+    },
+    {
+      "index": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "closed": 0,
+      "unknown": 12288
+    }
+  ],
+  "order_groups_checked": 0,
+  "order_groups_closed": 0,
+  "angular_models_verified": 0,
+  "all_leaves_closed": false,
+  "global_optimality_proved": false,
+  "certificate_sha256": "604179caf33b0f505b50b5bdb7195ad06aadf383bdf7f3922f97f2e6d1125faa",
+  "verifier_sha256": "78532d8b598d0d23843705aa080a2f79ae9a5840ecd86f624175dd483923a676"
+}

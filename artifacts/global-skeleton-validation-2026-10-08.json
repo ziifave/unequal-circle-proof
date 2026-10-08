@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-08",
+  "command": "PYTHONDONTWRITEBYTECODE=1 uv run --locked --no-sync python -m unittest tests.test_large_four_certificate tests.test_skeleton_cover tests.test_skeleton_radial_tree",
+  "tests_run": 45,
+  "result": "OK",
+  "independent_replays": [
+    "large-four-skeleton-v1-standalone",
+    "skeleton-cover-coarse-v1",
+    "skeleton-cover-radial2-v1",
+    "skeleton-cover-radial4-v1",
+    "skeleton-cover-radial4-allpair-v1",
+    "skeleton-radial-tree-v1"
+  ],
+  "global_optimality_proved": false
+}
