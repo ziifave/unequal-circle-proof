@@ -1,0 +1,38 @@
+PASS: circle_content_lower_bounds.py
+s [0, 0, 0, 0] P4 [0, 1, 2, 3, 4, 5, 6, 7, 8] H [0, 1, 0, 1, 0]
+   guaranteed content-based factor 0
+8 P2P3P4H contents [0, 0, 8, 0] P4 [8, 8, 8, 8, 8, 10, 12, 14, 16] H [0, 0, 0, 0, 0]
+   guaranteed content-based factor 32
+9 P2P3P4H contents [2, 4, 8, 0] P4 [8, 8, 8, 8, 8, 10, 12, 14, 16] H [0, 0, 0, 0, 0]
+   guaranteed content-based factor 32
+minus10 P2P3P4H contents [0, 0, 0, 0] P4 [0, 0, 0, 0, 0, 0, 0, 0, 0] H [0, 0, 0, 0, 0]
+   guaranteed content-based factor 0
+P4 VALUATION CONDITIONS: PASS
+PASS: circle_local_field.py
+at 5 H coefficient valuations ≥ [4, 4, 4, 4, 4]
+EXACT VALUATION CONDITIONS: PASS
+at 6 H coefficient valuations ≥ [0, 1, 2, 3, 4]
+EXACT VALUATION CONDITIONS: PASS
+at 7 H coefficient valuations ≥ [0, 1, 2, 3, 4]
+EXACT VALUATION CONDITIONS: PASS
+at minus10 H coefficient valuations ≥ [2, 2, 2, 2, 2]
+EXACT VALUATION CONDITIONS: PASS
+PASS: circle_degree_leading_mod.py
+modulus 10391
+P4limit degree 8 Hlimit degree 4
+resultant of leading polynomials nonzero? True
+leading resultant mod p 5395
+PASS: circle_modular_certificate.py
+k= 16 gcd_degree= 0 is_x= False
+k= 56 gcd_degree= 0 is_x= False
+k= 112 gcd_degree= 112 is_x= True
+RABIN IRREDUCIBILITY TEST: PASS, degree=112, F_10391
+PASS: circle_radius_root_interval_certificate.py
+415794383101216140682864899268E-34
+closure(high) bounds: 2.084136213044623000255174037861066464762783736845E-33 2.084136213044623000255174037861066464762783736845E-33
+derivative on [low,high] bounds: 2.975221373731214984496753476171186756327896544249E+1 2.975221373731214984496753476171189401334243909296E+1
+low strictly negative? True
+high strictly positive? True
+derivative strictly positive? True
+CERTIFIED unique real zero of closure in given rational interval (assuming elementary construction).
+PASS: independent 16-conjugate recomputation, all 120 pairwise gcds

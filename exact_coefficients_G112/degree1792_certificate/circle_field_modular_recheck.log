@@ -1,0 +1,21 @@
+conjugate 0 degree 112 irreducible True
+conjugate 1 degree 112 irreducible False
+conjugate 2 degree 112 irreducible False
+conjugate 3 degree 112 irreducible False
+conjugate 4 degree 112 irreducible False
+conjugate 5 degree 112 irreducible False
+conjugate 6 degree 112 irreducible False
+conjugate 7 degree 112 irreducible False
+conjugate 8 degree 112 irreducible False
+conjugate 9 degree 112 irreducible False
+conjugate 10 degree 112 irreducible False
+conjugate 11 degree 112 irreducible False
+conjugate 12 degree 112 irreducible False
+conjugate 13 degree 112 irreducible False
+conjugate 14 degree 112 irreducible False
+conjugate 15 degree 112 irreducible False
+ALL 120 CONJUGATE PAIRS COPRIME
+16 GALOIS EMBEDDINGS RECOVERED FROM K-BASIS COEFFICIENTS
+MONIC DEGREE-112 POLYNOMIAL OVER K / p, VERIFIED
+NORM degree 1792 SHA256 3f8be8e86fc0cf4d80724f7c032c34d5662ac044a8e9bfb24f165481456fa07f
+OUTPUT /mnt/data/circle_degree112_mod_10391.json SIZE 33111
