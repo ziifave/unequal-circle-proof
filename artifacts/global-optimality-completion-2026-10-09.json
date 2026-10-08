@@ -79,8 +79,8 @@
     "README.md": "c85f4ce4ba446f88e4a2232482d716c06054543e0e6226f75d85c33e5f5461b3",
     "pyproject.toml": "57531dcdc01624a290f41004c08f06b916fc52cc0895023d6db180025a75edf6",
     "uv.lock": "74cb6e3f7e5990736878e7a6116afd8c2db0422dab67bed534a1265b378343a2",
-    "paper/main.tex": "fe9ecbc2af22f6de7a844ecac550efdbde0cf606f95fc428c978fbf04d971f14",
-    "paper/main.pdf": "381b3d92d885041ba27bfb339332ac7e0dcbc65c0c6f6044665b6d1be12cdec4",
+    "paper/main.tex": "be53fef9e656d7ccd7a7896c582d0efd92d604b0007cdc44901519ffb451d278",
+    "paper/main.pdf": "73fb94beb1cf150cac191084de680c0d41411284ed7698596d60126ad6f8ca0a",
     "paper/README.md": "c0f5ef8f63580a21ac9b67361a33d3937d5eaae4f4cd7cbe84b1ff59bfd4307b",
     "proof/global_completion/angle_barrier/angle_barrier_theorem_proof_2026-10-08.md": "0021c78dab9b3495a10f3cdcc4277532a29bd7235fdaba1e713582efda1f08e8",
     "proof/global_completion/angle_barrier/certified_angle_root.py": "746fa4cf24c5236c00ece9ef1115daa3541ca64025cb63344617fbab1edd40c1",
@@ -89,7 +89,7 @@
     "proof/global_completion/four_cases/certify_alternative_nine.py": "381134123a1e95677a74e2db9c18380b34b6b597d5c2d2ab76c8413843cc267e",
     "proof/global_completion/four_cases/make_nine_circle_certificate.py": "a93c7ed1280f0ce03af223371c0a0dd69239c504eb0be137fd833ea22a2c2963",
     "proof/global_completion/four_cases/nine_circle_cycle_certificate.json": "fb984a20d095382f8854ef31a448f9024d48fee1f42eb007f7e90885e3a3017c",
-    "proof/global_completion/four_cases/remaining_four_cases_proof_2026-10-09.md": "233394a875a90d6b2251e5c35d4416b0b7c9695c3a8f465105455a3252688c63",
-    "proof/global_completion/four_cases/verify_nine_circle_certificate.py": "5bacd546422e13a220dbee712aca9e3058423d432960d0cb5b310ca304563d47"
+    "proof/global_completion/four_cases/remaining_four_cases_proof_2026-10-09.md": "650cf4800ecc9f06de32ce99a3ec47111242f7693d2e69683989d5626342a724",
+    "proof/global_completion/four_cases/verify_nine_circle_certificate.py": "56be77b275ab88c13ce85a12d3b84eead7645163d37ed43eea461500c66d0d1a"
   }
 }

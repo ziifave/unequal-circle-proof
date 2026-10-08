@@ -16,9 +16,11 @@ ORDERS=((10,3,7,5,8,4,6,9,2),(10,3,7,5,8,6,4,9,2))
 def atan_n(x,n):
     return sum(((-1)**k)*F(1,(2*k+1)*x**(2*k+1)) for k in range(n))
 
-# Pure-rational proof of pi < pi_upper: Machin's arctangent identity
-# (5+i)^4*(239-i)=114244*(1+i), with the argument π/4,
-# so 16atan(1/5)-4atan(1/239)=π.
+# Pure-rational upper bound for pi from Machin's identity
+# (5+i)^4*(239-i)=114244*(1+i), so 16atan(1/5)-4atan(1/239)=pi.
+# atan_n(x,n) sums k=0,...,n-1. Thus n=7 ends the 1/5 series at its
+# positive k=6 term (an upper bound), while n=2 ends the 1/239 series at
+# its negative k=1 term (a lower bound). The signed combination is above pi.
 assert (476*239+480)==(480*239-476)==114244
 PI_UP=16*atan_n(5,7)-4*atan_n(239,2)
 assert F(3)<PI_UP<F(355,113)

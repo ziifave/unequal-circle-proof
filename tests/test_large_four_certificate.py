@@ -7,6 +7,7 @@ import unittest
 from proof.large_four_certificate import (
     canonical_cycles, halfplane_witness, pi_bounds, verify_certificate, verify_frontier,
 )
+from proof.global_completion.four_cases.verify_nine_circle_certificate import PI_UP
 from tools.certify_large_four_skeleton import build_certificate
 
 
@@ -37,6 +38,10 @@ class LargeFourCertificateTests(unittest.TestCase):
         self.certificate["pi_upper"] = "3.14"
         with self.assertRaisesRegex(ValueError, "pi upper"):
             verify_certificate(self.certificate)
+
+    def test_nine_circle_pi_upper_exceeds_independent_rational_upper_bound(self):
+        _, independently_verified_upper = pi_bounds()
+        self.assertGreaterEqual(PI_UP, independently_verified_upper)
 
     def test_invalid_square_root_witness_is_rejected(self):
         self.certificate["sqrt_enclosures"][0]["lo"] = "2.7"
