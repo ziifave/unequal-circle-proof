@@ -39,10 +39,10 @@ exclusion below is for hypothetical packings with \(R<R_{\rm crit}\); the
 matching witness makes the boundary value \(R=R_{\rm crit}\) feasible. Its
 original angular ledgers closed 14,757,691 sector cases and left 197 open:
 
-- 193 main cases have seven-disk core order \((10,5,7,9,2,8,6)\). Only these
-  cases have disk-10 radial intervals in \([0.8588,1.1265]\), and the
-  attached angle-barrier theorem applies to them without moving disks or
-  assuming a wall-push condition.
+- 193 main cases have seven-disk core order \((10,5,7,9,2,8,6)\) and disk-10
+  radial intervals in \([0.8588,1.1265]\). The attached angle-barrier
+  theorem applies to them without moving disks or assuming a wall-push
+  condition.
 - Four cases have masks \((5,16,40,2)\) (three cases) or \((4,16,41,2)\) (one
   case). Their order after deleting disk 1 is
   \((10,3,7,5,8,4,6,9,2)\), covered by the exact nine-circle negative-cycle
