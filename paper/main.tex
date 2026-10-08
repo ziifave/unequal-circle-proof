@@ -644,8 +644,11 @@ on $[0,\pi]$, every feasible smaller central angle is then at least
 $q_{ij}$.  If a radial interval allows a center at the origin, its incident
 ticks are set to zero rather than assigning a direction that may not exist.
 
-For a proposed cyclic order, lift the center angles to an increasing sequence
-$\theta_0<\cdots<\theta_{n-1}<\theta_0+2\pi$.  If the label at position $a$
+For a proposed cyclic order, resolve any equal-angle labels in an arbitrary
+order within each tied block, and lift the angles to a weakly increasing
+sequence $\theta_0\le\cdots\le\theta_{n-1}<\theta_0+2\pi$.  A pair with
+equal directions has zero certified lower tick, so this tie-breaking does
+not change its difference constraints.  If the label at position $a$
 precedes the label at position $b$, the necessary pair-angle bounds give
 \[
   q_{ab}\le\theta_b-\theta_a\le2\pi_+-q_{ab}.
@@ -748,11 +751,15 @@ $s_2$ & $>0.589640$\\
 The smaller angular sines in the two potentially adverse pairs $(9,2)$ and
 $(2,8)$ are bounded below by $3/5$; the remaining terms have positive
 rational lower bounds.  For the individual terms, the checker certifies
-$X_{ij}>0$ on the same radial rectangles.  It also verifies
-$s_i+s_j>r_i+r_j$ and $|s_i-s_j|<r_i+r_j$ for every angle used, throughout
-each interpolation from the original $s_i$ to $R-r_i$.  Thus every angle
-remains real and continuous during this analytic substitution, and both full
-radial sums are non-increasing in every $s_i$.
+$X_{ij}>0$ on the same radial rectangles.  For every adjacent pair, the
+initial feasible packing satisfies $s_i+s_j\ge r_i+r_j$ by non-overlap and
+the triangle inequality.  Each substitution increases a radial coordinate,
+so this weak inequality persists throughout the interpolation.  The exact
+box check separately proves $|s_i-s_j|<r_i+r_j$ throughout.  Thus the angle
+remains defined in $[0,\pi)$; when $s_i+s_j=r_i+r_j$ it equals $0$, and the
+monotonicity conclusion extends to that endpoint by continuity from the
+interior.  Both full radial sums are therefore non-increasing in every
+$s_i$.
 
 Starting from any feasible packing in the main order, replace its six radial
 coordinates $s_i$ one at a time by $R-r_i$ only inside the angle formulas.
