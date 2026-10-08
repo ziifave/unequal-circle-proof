@@ -510,31 +510,39 @@ finite tree closures and the two geometric barriers combine.
                 text width=4.0cm,inner sep=4pt},
     widebox/.style={draw,rounded corners,align=center,minimum height=9mm,
                     text width=5.1cm,inner sep=4pt},
-    arrow/.style={-{Stealth[length=2mm]},thick}
+    arrow/.style={-{Stealth[length=2mm,width=1.5mm]},thick,
+                  shorten >=2pt,shorten <=2pt}
   }
   \node[widebox] (tree) at (0,0) {Complete rational radial tree\\
     coverage through $U$; 2,401 nodes; 1,201 leaves};
-  \node[box] (closed) at (-4.0,-1.7) {Earlier tree closures\\
+  \node[box] (closed) at (-4.8,-1.8) {Earlier tree closures\\
     14,757,691 assignments\\includes local-terminal records};
-  \node[box] (residual) at (4.0,-1.7) {197 residual assignments\\
+  \node[box] (residual) at (4.8,-1.8) {197 residual assignments\\
     all sector masks expanded};
-  \node[box] (local) at (-4.0,-3.9) {147 included local-terminal records\\
+  \node[box] (local) at (-4.8,-4.0) {147 included local-terminal records\\
     rechecked with the main angle barrier};
-  \node[widebox] (main) at (-1.8,-5.9) {193 residual main-order cases\\
+  \node[widebox] (main) at (-1.8,-6.0) {193 residual main-order cases\\
     plus 147 reclassified records\\main seven-circle barrier};
-  \node[widebox] (exception) at (4.0,-5.9) {4 exceptional masks\\
+  \node[widebox] (exception) at (4.8,-6.0) {4 exceptional masks\\
     nine-circle orders $P,Q$ excluded\\by negative-cycle certificates};
-  \node[widebox] (done) at (1.0,-8.0) {No packing for $R< R_{\mathrm{crit}}$\\
+  \node[widebox] (done) at (1.5,-8.2) {No packing for $R< R_{\mathrm{crit}}$\\
     exact witness at $R=R_{\mathrm{crit}}$};
-  \draw[arrow] (tree.south west) -- (closed.north east);
-  \draw[arrow] (tree.south east) -- (residual.north west);
-  \draw[arrow,dashed] (closed.south) -- node[right,font=\scriptsize,fill=white,
-    inner sep=1pt] {included subset} (local.north);
-  \draw[arrow] (residual.south west) -- (main.north east);
+  \draw[arrow] ([xshift=-1.35cm]tree.south) --
+    ([xshift=1.35cm]closed.north);
+  \draw[arrow] ([xshift=1.35cm]tree.south) --
+    ([xshift=-1.35cm]residual.north);
+  \draw[arrow,dashed] (closed.south) --
+    node[right=2pt,font=\scriptsize,fill=white,inner sep=1.5pt]
+      {included subset} (local.north);
+  \draw[arrow] ([xshift=-1.2cm]residual.south) --
+    ([xshift=1.5cm]main.north);
   \draw[arrow] (residual.south) -- (exception.north);
-  \draw[arrow] (local.south east) -- (main.north west);
-  \draw[arrow] (main.south east) -- (done.north west);
-  \draw[arrow] (exception.south west) -- (done.north east);
+  \draw[arrow] ([xshift=1.1cm]local.south) --
+    ([xshift=-1.4cm]main.north);
+  \draw[arrow] ([xshift=1.5cm]main.south) --
+    ([xshift=-1.0cm]done.north);
+  \draw[arrow] ([xshift=-1.5cm]exception.south) --
+    ([xshift=1.0cm]done.north);
 \end{tikzpicture}
 \caption{The finite lower-bound proof. The dashed arrow marks the 147
 local-terminal records as a subset of the earlier closure count; they are
