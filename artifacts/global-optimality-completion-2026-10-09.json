@@ -20,11 +20,16 @@
     "tree_nodes": 2401,
     "tree_splits": 1200,
     "tree_leaves": 1201,
+    "canonical_skeleton_classes_per_leaf": 3,
+    "sector_masks_per_skeleton": 4096,
+    "sector_assignments_per_leaf": 12288,
     "total_sector_cases": 14757888,
+    "tree_coverage_radius_scope": "R <= 830346812211149/100000000000000",
+    "theorem_exclusion_radius_scope": "R < Rcrit",
     "closed_sector_cases_before_new_theorems": 14757691,
     "unresolved_sector_cases_before_new_theorems": 197,
-    "unresolved_sector_cases_after_theorem_connection": 0,
-    "all_sector_cases_closed_after_theorem_connection": 14757888,
+    "unexcluded_sector_cases_after_theorem_connection_for_R_below_Rcrit": 0,
+    "all_sector_cases_excluded_for_R_below_Rcrit": 14757888,
     "main_order_residual_assignments": 193,
     "alternate_nine_circle_residual_assignments": 4,
     "alternate_masks": {
@@ -34,6 +39,15 @@
     "alternate_nine_orders": {
       "10/3/7/5/8/4/6/9/2": 4
     },
+    "alternate_seven_circle_core_order": [
+      10,
+      7,
+      5,
+      8,
+      6,
+      9,
+      2
+    ],
     "projected_alternate_nine_orders": [
       "10/3/7/5/8/4/6/9/2",
       "10/3/7/5/8/6/4/9/2"
@@ -60,13 +74,13 @@
     "proof/skeleton_cover.py": "ccb483bffadafc5c9129f35a20fc0600fc2489cf5b86e84d2a820e76f257442d",
     "proof/skeleton_local_terminal.py": "9f3a551eb44d044c72955374dad5c394b39e9b2661133157f77a213a4cd8d322",
     "proof/large_four_certificate.py": "98685ee4fdd03fe829f5531e284b340c37f2914d8100d82225aa2210b5495d0c",
-    "tools/verify_global_optimality_completion.py": "1d62e2afea5e13c2105c0336fc87da9fa35867381f6981d93386a21ef464d277",
-    "GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md": "c4c634035c3b7af36847fc3507329e3202621c94e873cf74edc4e3c37c4012d5",
-    "README.md": "e4bd6b276601e3e5e543f710ca62d6abe73738e7f173a9c8b4ec6459acd6a49e",
+    "tools/verify_global_optimality_completion.py": "9d945de83db1673083d586ee18476013496d05af852499002742dc43eeb6d58c",
+    "GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md": "55d01714de6fa470bcda4b5af4d8210e260cca85718545f2b61ab96fe43168ae",
+    "README.md": "c85f4ce4ba446f88e4a2232482d716c06054543e0e6226f75d85c33e5f5461b3",
     "pyproject.toml": "57531dcdc01624a290f41004c08f06b916fc52cc0895023d6db180025a75edf6",
     "uv.lock": "74cb6e3f7e5990736878e7a6116afd8c2db0422dab67bed534a1265b378343a2",
-    "paper/main.tex": "994863f7faa93329f2b716cf6ded379ab10f6d5f586afb930ee109b1af8c43b4",
-    "paper/main.pdf": "cc9a8ef1093cb2d467748b832acb5abd6a12f07be3c2e882c9deef7196ae9153",
+    "paper/main.tex": "8ad050a1bf30cad4b699c6d0294323805c23f342bbf53636e84640cf27697a7f",
+    "paper/main.pdf": "ba8ac12d890dee0be7f19b353bc92150ab9a21bb69b30abb763207b38a355c04",
     "paper/README.md": "c0f5ef8f63580a21ac9b67361a33d3937d5eaae4f4cd7cbe84b1ff59bfd4307b",
     "proof/global_completion/angle_barrier/angle_barrier_theorem_proof_2026-10-08.md": "0021c78dab9b3495a10f3cdcc4277532a29bd7235fdaba1e713582efda1f08e8",
     "proof/global_completion/angle_barrier/certified_angle_root.py": "746fa4cf24c5236c00ece9ef1115daa3541ca64025cb63344617fbab1edd40c1",

@@ -12,8 +12,10 @@ defined by two angular equations. The certified enclosure is
 The lower bound is a complete rational radial and angular case analysis. Its
 remaining cases are closed by a seven-circle angle barrier and exact
 negative-cycle certificates for the exceptional orders. A matching ten-circle
-configuration proves attainability. The proof and its computational trust
-boundary are described in the [English manuscript](paper/main.pdf), with
+configuration proves attainability. The case tree covers radii up to its
+certified cap; the exclusion rules rule out every packing with radius below
+`R_crit`, while the constructed packing exists at `R_crit`. The proof and its
+computational trust boundary are described in the [English manuscript](paper/main.pdf), with
 source at [paper/main.tex](paper/main.tex).
 
 ## Reproduce the proof

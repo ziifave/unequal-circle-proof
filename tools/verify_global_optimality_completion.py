@@ -46,6 +46,7 @@ T_RANGE = (F("0.8588"), F("1.1265"))
 MAIN_RADIUS_FLOOR = F(6) + F(31, 10) - T_RANGE[1]
 CORE = frozenset((2, 5, 6, 7, 8, 9, 10))
 MAIN_ORDER = (10, 5, 7, 9, 2, 8, 6)
+ALT_CORE_ORDER = (10, 7, 5, 8, 6, 9, 2)
 ALT_ORDERS = {
     (10, 3, 7, 5, 8, 4, 6, 9, 2),
     (10, 3, 7, 5, 8, 6, 4, 9, 2),
@@ -158,6 +159,11 @@ def replay_tree_and_connect(data: dict) -> dict:
                         projected_alt_order_types.update(projected_nine_orders)
                         assert all(set(candidate) == set(range(2, 11))
                                    for candidate in projected_nine_orders)
+                        assert all(
+                            tuple(label for label in candidate if label in CORE)
+                            == ALT_CORE_ORDER
+                            for candidate in projections
+                        )
                         alternate_projected_order_checks += len(projections)
                         nine_order = tuple(label for label in order if label != 1)
                         assert nine_order in projected_nine_orders
@@ -201,7 +207,12 @@ def replay_tree_and_connect(data: dict) -> dict:
     assert target_t_boxes >= 193
     assert (projected_order_checks, main_projected_order_checks,
             alternate_projected_order_checks) == (790, 772, 18)
-    total_sector_cases = 3 * 4**6 * report["leaves"]
+    skeleton_classes = len(canonical_cycles())
+    masks_per_skeleton = len(assignment_masks())
+    assert skeleton_classes == 3
+    assert masks_per_skeleton == 4**6
+    assignments_per_leaf = skeleton_classes * masks_per_skeleton
+    total_sector_cases = assignments_per_leaf * report["leaves"]
     assert report["closed_leaf_sector_cases"] + report["unknown_leaf_sector_cases"] == total_sector_cases
 
     return {
@@ -210,17 +221,23 @@ def replay_tree_and_connect(data: dict) -> dict:
         "tree_nodes": report["nodes"],
         "tree_splits": report["splits"],
         "tree_leaves": report["leaves"],
+        "canonical_skeleton_classes_per_leaf": skeleton_classes,
+        "sector_masks_per_skeleton": masks_per_skeleton,
+        "sector_assignments_per_leaf": assignments_per_leaf,
         "total_sector_cases": total_sector_cases,
+        "tree_coverage_radius_scope": f"R <= {U_MAIN}",
+        "theorem_exclusion_radius_scope": "R < Rcrit",
         "closed_sector_cases_before_new_theorems": report["closed_leaf_sector_cases"],
         "unresolved_sector_cases_before_new_theorems": report["unknown_leaf_sector_cases"],
-        "unresolved_sector_cases_after_theorem_connection": 0,
-        "all_sector_cases_closed_after_theorem_connection": total_sector_cases,
+        "unexcluded_sector_cases_after_theorem_connection_for_R_below_Rcrit": 0,
+        "all_sector_cases_excluded_for_R_below_Rcrit": total_sector_cases,
         "main_order_residual_assignments": main_cases,
         "alternate_nine_circle_residual_assignments": alt_cases,
         "alternate_masks": {"/".join(map(str, key)): value
                             for key, value in sorted(alt_mask_counts.items())},
         "alternate_nine_orders": {"/".join(map(str, key)): value
                                   for key, value in sorted(alt_order_counts.items())},
+        "alternate_seven_circle_core_order": list(ALT_CORE_ORDER),
         "projected_alternate_nine_orders": ["/".join(map(str, order))
                                             for order in sorted(projected_alt_order_types)],
         "local_core_order_models_reclassified": local_core_models,
@@ -263,9 +280,8 @@ def run_all() -> dict:
     tree_summary = replay_tree_and_connect(tree_data)
     assert F(tree_data["container_radius_upper"]) == U_MAIN
 
-    # Every remaining leaf/order is now covered: prior negative-cycle and
-    # radial contradictions, 193 + 145 + 2 applications of the radial angle
-    # barrier, and four alternative cases covered by the 9-circle theorem.
+    # For a hypothetical packing with R < Rcrit, every leaf/order is covered
+    # by the prior exact checks, the angle barrier, or the nine-circle theorem.
     theorem_applications = {
         "main_residual_angle_barrier": 193,
         "local_core_angle_barrier": 145,
