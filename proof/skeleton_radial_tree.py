@@ -89,6 +89,7 @@ def verify(data: dict) -> dict:
     seen, frontier = set(), []
     leaves = excluded = splits = unknown_cases = closed_cases = 0
     order_groups_closed = angular_models_verified = depth_max = 0
+    pair_distance_models_closed = 0
     core_order_leaves = core_order_models = 0
     local_order_models_closed = local_terminal_leaves = 0
     local_order_groups_closed = local_order_terminal_leaves = 0
@@ -123,6 +124,7 @@ def verify(data: dict) -> dict:
         closed_cases += report["closed_cases"]
         unknown_cases += report["unknown_cases"]
         order_groups_closed += report["order_groups_closed"]
+        pair_distance_models_closed += report.get("pair_distance_models_closed", 0)
         local_order_groups_closed += report.get("local_order_groups_closed", 0)
         angular_models_verified += report["angular_models_verified"]
         if report["unknown_cases"]:
@@ -144,6 +146,7 @@ def verify(data: dict) -> dict:
             "leaves": leaves, "excluded_leaves": excluded, "unknown_leaves": len(frontier),
             "unknown_leaf_sector_cases": unknown_cases, "closed_leaf_sector_cases": closed_cases,
             "max_depth": depth_max, "order_groups_closed": order_groups_closed,
+            "pair_distance_models_closed": pair_distance_models_closed,
             "local_order_groups_closed": local_order_groups_closed,
             "local_order_terminal_leaves": local_order_terminal_leaves,
             "core_order_leaves": core_order_leaves,

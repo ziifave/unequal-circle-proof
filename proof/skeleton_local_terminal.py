@@ -133,8 +133,12 @@ def _floyd_bounds(order: tuple, weights: tuple, skeleton: tuple) -> list[tuple[i
 
 def order_is_local(order: tuple, weights: tuple, bounds: dict,
                     roots: dict, local: dict | None) -> bool:
-    """True only if the entire core angle/radius box is inside local delta."""
-    if local is None or set(order) != set(CORE):
+    """True only if the entire core projection is inside local delta.
+
+    Keep non-core labels in the difference-constraint graph: their pairwise
+    angle bounds can tighten the projected angles of the active core.
+    """
+    if local is None or not set(CORE).issubset(order):
         return False
     delta = local["delta"]
     root_box = local["root_box_reflected"]
@@ -162,8 +166,9 @@ def order_is_local(order: tuple, weights: tuple, bounds: dict,
     for candidate, target in zip(coord_box, root_box[:-1]):
         if _farthest_interval_distance(candidate, target) > delta:
             return False
-    # Containment of disk 2 gives R >= |p_2|+sqrt(2); the outer cap gives R<=U.
-    radius_box = (bounds[2][0] + roots[2][0], Q("8.303468122111490"))
+    # Each disk gives R >= |p_i|+r_i; the outer cap gives R<=U.
+    radius_lower = max(bounds[i][0] + roots[i][0] for i in bounds)
+    radius_box = (radius_lower, Q("8.303468122111490"))
     if _farthest_interval_distance(radius_box, root_box[-1]) > delta:
         return False
     return True

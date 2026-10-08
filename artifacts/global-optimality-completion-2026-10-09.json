@@ -1,0 +1,74 @@
+{
+  "status": "GLOBAL_OPTIMALITY_CERTIFIED",
+  "claim": "The optimal container radius for disks of radii sqrt(1),...,sqrt(10) equals the exact angle-root Rcrit.",
+  "critical_radius_bracket": [
+    "8303468122111489/1000000000000000",
+    "830346812211149/100000000000000"
+  ],
+  "global_tree_upper_scope": "830346812211149/100000000000000",
+  "alternate_nine_certificate_scope": "207586703053/25000000000",
+  "strict_root_below_tree_cap": true,
+  "exact_ten_disk_upper_witness": "verified; 37 non-contact pairs separated and 3 extra centers strictly contained",
+  "lower_bound_certificate_7_9": {
+    "status": "CERTIFIED_EXACT_RATIONAL",
+    "certificate": "certificates/fixed-order-radial-partition7-mpfi-7.9.dat.gz",
+    "orders": 360,
+    "radial_boxes_per_order": 128,
+    "records": 46080,
+    "exact_angle_ticks_checked": 144,
+    "minimum_angle_tick": "0",
+    "minimum_farkas_cycle_margin_over_2pi_upper": "8060403330056991198016472214480407/122990138271000000000000000000000000",
+    "minimum_farkas_column_slack": "1/1000000000000"
+  },
+  "global_tree_and_case_linkage": {
+    "v27_tree_status_before_completion": "UNKNOWN",
+    "tree_coverage_verified": true,
+    "tree_nodes": 2401,
+    "tree_splits": 1200,
+    "tree_leaves": 1201,
+    "total_sector_cases": 14757888,
+    "closed_sector_cases_before_new_theorems": 14757691,
+    "unresolved_sector_cases_before_new_theorems": 197,
+    "unresolved_sector_cases_after_theorem_connection": 0,
+    "all_sector_cases_closed_after_theorem_connection": 14757888,
+    "main_order_residual_assignments": 193,
+    "alternate_nine_circle_residual_assignments": 4,
+    "alternate_masks": {
+      "4/16/41/2": 1,
+      "5/16/40/2": 3
+    },
+    "alternate_nine_orders": {
+      "10/3/7/5/8/4/6/9/2": 4
+    },
+    "local_core_order_models_reclassified": 145,
+    "local_full_order_witnesses_reclassified": 2,
+    "main_and_local_orders_fit_barrier_range": true,
+    "all_alternate_orders_are_in_the_nine_circle_certificate": true
+  },
+  "theorem_applications": {
+    "main_residual_angle_barrier": 193,
+    "local_core_angle_barrier": 145,
+    "local_full_order_angle_barrier": 2,
+    "alternate_nine_circle_theorem": 4
+  },
+  "input_sha256": {
+    "certificates/skeleton-radial-tree-v27.json.gz": "6d06da15ecc745b21b29ec775f0c673581649211a2394594c3304c7dba5b9c69",
+    "certificates/fixed-order-radial-partition7-mpfi-7.9.dat.gz": "b774d37954faa1b42769b6c8311b626866028ddbf8bc23ce3cdee3241093c62a",
+    "proof/skeleton_radial_tree.py": "a4ac347248264794e907b2a5a2f1fbb0949f693bb888e1194428d4a214a2bc1f",
+    "proof/skeleton_cover.py": "ccb483bffadafc5c9129f35a20fc0600fc2489cf5b86e84d2a820e76f257442d",
+    "proof/skeleton_local_terminal.py": "9f3a551eb44d044c72955374dad5c394b39e9b2661133157f77a213a4cd8d322",
+    "proof/large_four_certificate.py": "98685ee4fdd03fe829f5531e284b340c37f2914d8100d82225aa2210b5495d0c",
+    "tools/verify_global_optimality_completion.py": "2a22dcf456909f6a642a76a98f7a7d029d07a19f6ea0182338d1d63ceb2a2772",
+    "tools/verify_fixed_order_rational_certificate.py": "dcff7419f40d4a2e92ec66e8cfc867b7a90fd394f395cce1cce857e3fab2f891",
+    "GLOBAL_OPTIMALITY_COMPLETION_2026-10-09.md": "836de8e4e02c7490c0c69878c0089a8db97d410a1540478143d9ab2124a449e3",
+    "proof/global_completion/angle_barrier/angle_barrier_theorem_proof_2026-10-08.md": "0021c78dab9b3495a10f3cdcc4277532a29bd7235fdaba1e713582efda1f08e8",
+    "proof/global_completion/angle_barrier/certified_angle_root.py": "746fa4cf24c5236c00ece9ef1115daa3541ca64025cb63344617fbab1edd40c1",
+    "proof/global_completion/angle_barrier/radial_angle_barrier_strengthening_2026-10-08.md": "5ced4db51b22c6c82a1ebf7f21967b467fddb80e8f0582f4790e07a46a4cca0d",
+    "proof/global_completion/angle_barrier/verify_radial_angle_monotonicity.py": "04e601f94976abae0fce29b591367df2dc8d148fa70e7b94ad0657e9cb4c101a",
+    "proof/global_completion/four_cases/certify_alternative_nine.py": "381134123a1e95677a74e2db9c18380b34b6b597d5c2d2ab76c8413843cc267e",
+    "proof/global_completion/four_cases/make_nine_circle_certificate.py": "a93c7ed1280f0ce03af223371c0a0dd69239c504eb0be137fd833ea22a2c2963",
+    "proof/global_completion/four_cases/nine_circle_cycle_certificate.json": "fb984a20d095382f8854ef31a448f9024d48fee1f42eb007f7e90885e3a3017c",
+    "proof/global_completion/four_cases/remaining_four_cases_proof_2026-10-09.md": "233394a875a90d6b2251e5c35d4416b0b7c9695c3a8f465105455a3252688c63",
+    "proof/global_completion/four_cases/verify_nine_circle_certificate.py": "5bacd546422e13a220dbee712aca9e3058423d432960d0cb5b310ca304563d47"
+  }
+}

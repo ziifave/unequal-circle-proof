@@ -165,8 +165,67 @@ def full_order_graph(order: tuple, weights: tuple, skeleton: tuple) -> list:
     return edges
 
 
+def verify_pair_distance_witness(witness: dict, order: tuple, weights: tuple,
+                                 skeleton: tuple, bounds: dict,
+                                 roots: dict) -> None:
+    """Replay a radial-box contradiction using an order-implied angle cap."""
+    require(isinstance(witness, dict) and witness.get("kind") == "PAIR_DISTANCE",
+            "invalid pair-distance witness")
+    pair = witness.get("pair")
+    require(isinstance(pair, list) and len(pair) == 2
+            and all(type(label) is int and label in order for label in pair)
+            and pair[0] != pair[1], "invalid pair-distance labels")
+    edges = full_order_graph(order, weights, skeleton)
+    count = len(order)
+    infinity = 10 ** 30
+    distance = [[infinity] * count for _ in range(count)]
+    for i in range(count):
+        distance[i][i] = 0
+    for u, v, cap in edges:
+        distance[u][v] = min(distance[u][v], cap)
+    for k in range(count):
+        for i in range(count):
+            if distance[i][k] == infinity:
+                continue
+            for j in range(count):
+                if distance[k][j] != infinity:
+                    distance[i][j] = min(distance[i][j],
+                                         distance[i][k] + distance[k][j])
+    require(all(distance[i][i] >= 0 for i in range(count)),
+            "pair-distance witness uses an inconsistent angular graph")
+    positions = {label: i for i, label in enumerate(order)}
+    first, second = pair
+    if positions[first] > positions[second]:
+        first, second = second, first
+    u, v = positions[first], positions[second]
+    gap_lower = max(0, -distance[v][u])
+    _, pi_upper = pi_ticks()
+    period_upper = 2 * pi_upper
+    gap_upper = min(period_upper, distance[u][v])
+    require(0 <= gap_lower <= gap_upper <= period_upper,
+            "invalid directed angular gap interval")
+    # The shortest angular separation is at most each directed arc bound.
+    short_angle_upper = min(pi_upper, gap_upper, period_upper - gap_lower)
+    cosine_lo = max(Q(-1), cosine_lower(Q(short_angle_upper, SCALE)))
+    i, j = first, second
+    a_lo, a_hi = bounds[i]
+    b_lo, b_hi = bounds[j]
+    distance_squared_upper = max(
+        a * a + b * b - 2 * a * b * cosine_lo
+        for a in (a_lo, a_hi) for b in (b_lo, b_hi))
+    required_squared_lower = (roots[i][0] + roots[j][0]) ** 2
+    require(witness.get("angle_short_upper_ticks") == short_angle_upper,
+            "pair-distance angular cap mismatch")
+    require(rational(witness.get("max_distance_squared_upper"))
+            == distance_squared_upper,
+            "pair-distance upper bound mismatch")
+    require(distance_squared_upper < required_squared_lower,
+            "pair-distance upper bound does not exclude contact")
+
+
 def verify_order_group(group: dict, skeleton: tuple, masks: tuple, weights: tuple,
-                       local_classifier=None) -> bool:
+                       local_classifier=None, bounds: dict | None = None,
+                       roots: dict | None = None) -> bool:
     """Return true for an excluded group, false for a verified angular model."""
     orders = list(projected_orders(skeleton, masks))
     if group.get("kind") == "ALL_ORDERS_EXCLUDED":
@@ -176,15 +235,20 @@ def verify_order_group(group: dict, skeleton: tuple, masks: tuple, weights: tupl
         for order, witness in zip(orders, witnesses):
             verify_cycle(full_order_graph(order, weights, skeleton), witness)
         return True
-    if group.get("kind") == "ALL_ORDERS_LOCAL_OR_EXCLUDED":
+    if group.get("kind") in {"ALL_ORDERS_LOCAL_OR_EXCLUDED", "ALL_ORDERS_CERTIFIED"}:
         witnesses = group.get("witnesses")
         require(isinstance(witnesses, list) and len(witnesses) == len(orders),
                 "missing projected order witness")
         for order, witness in zip(orders, witnesses):
             if witness is None:
-                core_order = tuple(label for label in order if label not in (1, 3, 4))
-                require(local_classifier is not None and local_classifier(core_order),
+                require(local_classifier is not None and local_classifier(order),
                         "projected order is neither excluded nor locally certified")
+            elif isinstance(witness, dict):
+                require(group.get("kind") == "ALL_ORDERS_CERTIFIED"
+                        and bounds is not None and roots is not None,
+                        "pair-distance witness lacks radial context")
+                verify_pair_distance_witness(witness, order, weights, skeleton,
+                                             bounds, roots)
             else:
                 verify_cycle(full_order_graph(order, weights, skeleton), witness)
         return True
@@ -298,7 +362,8 @@ def core_closed_sector_assignments(cycles: list, core_closed: list[bool],
                 "incomplete sector ledger for active-core projection")
         fully_closed_masks = {
             tuple(group.get("masks", [])) for group in record.get("order_groups", [])
-            if group.get("kind") in {"ALL_ORDERS_EXCLUDED", "ALL_ORDERS_LOCAL_OR_EXCLUDED"}
+            if group.get("kind") in {"ALL_ORDERS_EXCLUDED", "ALL_ORDERS_LOCAL_OR_EXCLUDED",
+                                      "ALL_ORDERS_CERTIFIED"}
         }
         for masks, outcome in zip(assignment_masks(), outcomes):
             if outcome != -1:
@@ -450,6 +515,7 @@ def verify_angular_cover(cell: dict, bounds: dict, roots: dict,
     closed = opened = 0
     order_groups_checked = order_groups_closed = angular_models_verified = 0
     local_order_groups_closed = 0
+    pair_distance_models_closed = 0
     cycles = canonical_cycles()
     per_cycle = [{"order": list(order), "closed": 0, "unknown": 0} for order in cycles]
     require(cell.get("kind") == "ANGLE_COVER", "invalid radial-cell kind")
@@ -502,16 +568,24 @@ def verify_angular_cover(cell: dict, bounds: dict, roots: dict,
                     require(key in pending_groups and key not in seen_groups,
                             "invalid or duplicate order group")
                     seen_groups.add(key)
-                    excluded = verify_order_group(group, order, key, weights,
-                                                  local_classifier=local_classifier)
+                    excluded = verify_order_group(
+                        group, order, key, weights,
+                        local_classifier=local_classifier, bounds=bounds, roots=roots)
                     order_groups_checked += 1
                     if excluded:
                         count = pending_groups[key]
                         rejected += count
                         pending -= count
                         order_groups_closed += 1
-                        if group.get("kind") == "ALL_ORDERS_LOCAL_OR_EXCLUDED":
+                        if (group.get("kind") == "ALL_ORDERS_LOCAL_OR_EXCLUDED"
+                                or (group.get("kind") == "ALL_ORDERS_CERTIFIED"
+                                    and any(witness is None
+                                            for witness in group.get("witnesses", [])))):
                             local_order_groups_closed += 1
+                        pair_distance_models_closed += sum(
+                            isinstance(witness, dict)
+                            and witness.get("kind") == "PAIR_DISTANCE"
+                            for witness in group.get("witnesses", []))
                     else:
                         angular_models_verified += 1
                 require(seen_groups == set(pending_groups), "missing order group")
@@ -525,6 +599,7 @@ def verify_angular_cover(cell: dict, bounds: dict, roots: dict,
             "order_groups_checked": order_groups_checked,
             "order_groups_closed": order_groups_closed,
             "local_order_groups_closed": local_order_groups_closed,
+            "pair_distance_models_closed": pair_distance_models_closed,
             "angular_models_verified": angular_models_verified}
 
 
