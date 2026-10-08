@@ -16,14 +16,16 @@ ORDERS=((10,3,7,5,8,4,6,9,2),(10,3,7,5,8,6,4,9,2))
 def atan_n(x,n):
     return sum(((-1)**k)*F(1,(2*k+1)*x**(2*k+1)) for k in range(n))
 
-# Pure-rational upper bound for pi from Machin's identity
+# A common rational upper bound is used by the skeleton and nine-circle
+# verifiers.  The Machin value below certifies pi < 3927/1250 exactly.
 # (5+i)^4*(239-i)=114244*(1+i), so 16atan(1/5)-4atan(1/239)=pi.
 # atan_n(x,n) sums k=0,...,n-1. Thus n=7 ends the 1/5 series at its
 # positive k=6 term (an upper bound), while n=2 ends the 1/239 series at
 # its negative k=1 term (a lower bound). The signed combination is above pi.
 assert (476*239+480)==(480*239-476)==114244
-PI_UP=16*atan_n(5,7)-4*atan_n(239,2)
-assert F(3)<PI_UP<F(355,113)
+MACHIN_PI_UP=16*atan_n(5,7)-4*atan_n(239,2)
+PI_UP=F(3927,1250)
+assert F(3)<MACHIN_PI_UP<PI_UP
 
 rootlo={i:F(isqrt(i*S*S),S) for i in range(1,11)}
 for i,r in rootlo.items():

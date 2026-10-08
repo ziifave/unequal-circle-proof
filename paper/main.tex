@@ -109,6 +109,7 @@ guarantees; here we determine the exact minimum radius for one prescribed
 ten-circle instance using a finite global certificate.
 
 \section{Problem and exact statement}
+\label{sec:global-result}
 
 \subsection{Feasibility and the candidate value}
 
@@ -150,7 +151,7 @@ paper.
 For ten circles of radii $1,\sqrt2,\ldots,\sqrt{10}$ in a circular
 container,
 \[
-  \boxed{\Ropt=\Rcrit.}
+  \boxed{\Ropt=\Rcrit}.
 \]
 More precisely, no packing exists for any $R<\Rcrit$, and a packing exists
 at $R=\Rcrit$.
@@ -236,6 +237,14 @@ pair.
 
 \subsection{The exact critical pair}
 
+For the global angular barrier, set
+\[
+  I=[0.8588,1.1265].
+\]
+This is the certified range of the radial coordinate $t=s_{10}$ and is
+distinct from the narrower root interval $J_t$ in
+Section~\ref{sec:global-result}.
+
 The following derivative formulas explain how the candidate is isolated.
 For $i\in\{5,6,7\}$ let
 \[
@@ -257,23 +266,30 @@ For a wall-wall angle,
     \sqrt{\frac{r_ir_j}{a_i(R)a_j(R)-r_ir_j}}.
  \label{eq:beta-derivative}
 \end{equation}
-Exact sign checks establish $A_t>0$ and $B_t<0$ throughout $t\in I$ when
-$R\in J_R$.  Separate interval checks establish $A_R<0$ and $B_R<0$ for
-$t\in I$ and $\frac{15947}{2000}\le R\le8.30346812212$:
+The sign certificates have different scopes.  At the critical radius, they
+prove $A_t(t,\Rcrit)>0$ and $B_t(t,\Rcrit)<0$ for every $t\in I$.  The
+radial derivatives satisfy $A_R(t,R)<0$ and $B_R(t,R)<0$ for every
+$t\in I$ and $R\in[7.9,8.30346812212]$.  Thus the derivative signs used
+below hold on the stated intervals; the global case reduction supplies the
+stronger lower bound $R>15947/2000$ for the main-order cases.
 \begin{equation}
-  A_t>0,\qquad B_t<0,\qquad A_R<0,\qquad B_R<0.
-  \label{eq:root-signs}
+\begin{aligned}
+  A_t(t,\Rcrit)&>0, & B_t(t,\Rcrit)&<0 &&(t\in I),\\
+  A_R(t,R)&<0, & B_R(t,R)&<0
+    &&(t\in I,\ 7.9\le R\le8.30346812212).
+\end{aligned}
+\label{eq:root-signs}
 \end{equation}
-For example, $A_t>0$ follows from $(\alpha_5)_t>0$ and
-$(\alpha_6)_t>0$.  To see the less immediate sign $B_t<0$, put
-$z=t^2$, $b_i=a_i^2-D_i^2$, and
-$H_i=4a_i^2z-(z+b_i)^2$.  Then
+For example, $A_t(t,\Rcrit)>0$ follows from
+$(\alpha_5)_t(t,\Rcrit)>0$ and $(\alpha_6)_t(t,\Rcrit)>0$.  To see the
+less immediate sign $B_t(t,\Rcrit)<0$, abbreviate $a_i=a_i(\Rcrit)$ and put
+$z=t^2$, $b_i=a_i^2-D_i^2$, and $H_i=4a_i^2z-(z+b_i)^2$.  Then
 \[
- B_t=-\frac{z-b_7}{t\sqrt{H_7}}
+ B_t(t,\Rcrit)=-\frac{z-b_7}{t\sqrt{H_7}}
        +\frac{b_6-z}{t\sqrt{H_6}}.
 \]
-Here $z-b_7>0$ and $b_6-z>0$ on the certified rectangle.  Squaring the
-positive terms shows that $B_t<0$ follows from
+Here $z-b_7>0$ and $b_6-z>0$ for $t\in I$.  Squaring the positive terms
+shows that $B_t(t,\Rcrit)<0$ follows from
 \begin{align*}
  (z-b_7)^2H_6-(b_6-z)^2H_7&=4zQ(z),\\
  Q(z)&=(D_6^2-D_7^2)z^2
@@ -343,7 +359,9 @@ the inverse trigonometric terms.
 
 At $(t_{\mathrm{crit}},\Rcrit)$, put circle $10$ at radial distance
 $t_{\mathrm{crit}}$ and put each $i\in W$ at its wall radius
-$a_i(\Rcrit)=\Rcrit-r_i$.  Use the following polar angles:
+$a_i(\Rcrit)=\Rcrit-r_i$.  In the following display,
+$\alpha_i=\alpha_i(t_{\mathrm{crit}},\Rcrit)$ and
+$\beta_{ij}=\beta_{ij}(\Rcrit)$; the polar angles are:
 \begin{align*}
  \theta_{10}&=0,\\
  \theta_5&=\alpha_5,\\
@@ -416,7 +434,8 @@ uses rounded root coordinates and is illustrative only.}
 
 The eight active contacts within the core have a compact graph description.
 The seven edges of the cyclic chain follow the order used by the angular
-barrier, and the additional chord is the contact $(10,7)$.
+barrier, and the additional chord is the contact $(10,7)$.  The contact graph
+is shown in Figure~\ref{fig:core-contacts}.
 
 \begin{figure}[ht]
 \centering
@@ -456,10 +475,8 @@ At a terminal case, one of the following happens:
 \begin{itemize}
   \item interval-safe radial inequalities contradict containment or
         non-overlap;
-  \item lower bounds on pair angles contradict the $2\pi$ angular budget,
-        often through a Farkas multiplier certificate;
-  \item a difference-constraint graph contains a strictly negative directed
-        cycle;
+  \item exact angular constraints contradict the $2\pi$ budget, witnessed
+        by a certified negative cycle in a difference-constraint graph;
   \item the assignment has the main seven-circle order and radial range, so
         the two-sum angle barrier applies;
   \item the assignment is one of the four alternative masks, so its
@@ -512,8 +529,9 @@ acceptance check uses the four-corner lemma below and a rational cosine
 Taylor lower bound.  The verifier expands all $4!=24$ possible linear orders
 of these directions along a putative semicircle.  In every order, the sum of
 the three consecutive pair bounds exceeds
-$33019/10000=3.3019$, whereas the rational upper bound
-$\pi_+=3927/1250=3.1416$ satisfies $\pi<\pi_+$.  The strict margin is
+$33019/10000=3.3019$, whereas the common rational upper bound
+$\pi_+^{\mathrm{coarse}}=3927/1250=3.1416$ satisfies
+$\pi<\pi_+^{\mathrm{coarse}}$.  The strict margin is
 $1603/10000$.  Four directions lying in a closed semicircle would have a
 linear order whose three consecutive angular gaps sum to at most $\pi$,
 contradicting these lower bounds.
@@ -546,7 +564,7 @@ sector.  If a small-circle center is the origin, assign it arbitrarily:
 the corresponding radial interval includes zero, every incident angular
 lower bound is set to zero, and the checker deletes that label only when
 testing projected orders.  Thus this convention does not exclude a
-configuration.
+configuration.  Figure~\ref{fig:four-sectors} illustrates this assignment.
 
 Rooting the cyclic order at circle $10$ and identifying mirror images leaves
 exactly $(4-1)!/2=3$ skeleton classes.  The verifier uses representatives
@@ -644,14 +662,23 @@ on $[0,\pi]$, every feasible smaller central angle is then at least
 $q_{ij}$.  If a radial interval allows a center at the origin, its incident
 ticks are set to zero rather than assigning a direction that may not exist.
 
+For the global-tree replay, the directed millionth enclosure is
+\[
+  \pi_-^{\mathrm{tree}}=\frac{3141592}{10^6}
+  <\pi<
+  \pi_+^{\mathrm{tree}}=\frac{3141593}{10^6}.
+\]
+
 For a proposed cyclic order, resolve any equal-angle labels in an arbitrary
 order within each tied block, and lift the angles to a weakly increasing
 sequence $\theta_0\le\cdots\le\theta_{n-1}<\theta_0+2\pi$.  A pair with
 equal directions has zero certified lower tick, so this tie-breaking does
-not change its difference constraints.  If the label at position $a$
-precedes the label at position $b$, the necessary pair-angle bounds give
+not change its difference constraints.  Write $i_a$ for the label at
+position $a$.  If position $a$ precedes position $b$, the necessary
+pair-angle bounds give
 \[
-  q_{ab}\le\theta_b-\theta_a\le2\pi_+-q_{ab}.
+  q_{i_a i_b}\le\theta_b-\theta_a
+      \le2\pi_+^{\mathrm{tree}}-q_{i_a i_b}.
 \]
 The four large-circle skeleton adds the fact that its four consecutive gaps
 are below $\pi$.  These are difference constraints of the form
@@ -681,7 +708,8 @@ In a smaller number of cases, the angular constraints imply a rational upper
 bound $\Gamma_{ij}<\pi$ on the smaller angle between a pair.  If
 $c^-\le\cos(\Gamma_{ij})$ is the rational Taylor lower bound, then the
 actual smaller angle $\gamma_{ij}$ satisfies
-$\cos(\gamma_{ij})\ge c^-$.  Throughout the radial box this gives
+$\cos(\gamma_{ij})\ge c^-$.  For each disk $k$, write
+$I_k=[\ell_k,u_k]$ for its radial interval.  Throughout the box this gives
 \[
   \norm{p_i-p_j}^2
   \le \max_{x\in I_i,y\in I_j}
@@ -853,14 +881,15 @@ used only when searching for candidate ticks; it has no role in replay.
 Consequently any feasible angular difference $\Delta_{ij}$ in the fixed
 cyclic order must satisfy
 \[
-  q_{ij}\le \Delta_{ij}\le 2\pi_+-q_{ij},
+  q_{ij}\le \Delta_{ij}\le 2\pi_+^{\mathrm{coarse}}-q_{ij},
 \]
-where $\pi_+$ is a rational upper bound for $\pi$ obtained from Machin's
-identity and alternating arctangent series.
+where $\pi_+^{\mathrm{coarse}}=3927/1250=3.1416$ is the same rational upper
+bound used in the four-large-circle lemma.  The nine-circle replay verifies
+$\pi<\pi_+^{\mathrm{coarse}}$ by an exact Machin-series bound.
 
 The four-corner bound and negative-cycle criterion from
 Section~\ref{sec:box-rules} apply to these ticks.  The certificate replays
-every listed cycle with its exact edge weights; the following table
+every listed cycle with its exact edge weights; Table~\ref{tab:nine-cases}
 summarizes the two trees.
 
 \subsection{Finite certificate}
@@ -893,12 +922,13 @@ of order $P$, the recorded simple cycle is
 $4\to8\to5\to7\to3\to10\to9\to6\to4$.  Its angle ticks and edge weights
 are shown in Table~\ref{tab:negative-cycle-example}.  The edge $10\to9$ is
 the unique edge oriented forward in the chosen linear lift and has weight
-$2\pi_+-q$; the other edges have weight $-q$.  Hence the exact cycle sum is
+$2\pi_+^{\mathrm{coarse}}-q$; the other edges have weight $-q$.  Hence the
+exact cycle sum is
 \[
-  2\pi_+-\frac{354613}{50000}
-  <-0.80906<0,
+  2\pi_+^{\mathrm{coarse}}-\frac{354613}{50000}
+  =-\frac{40453}{50000}=-0.80906<0,
 \]
-using the rational bound $\pi_+<3.1416$.  This is one of the 116 leaves in
+using the shared rational upper bound.  This is one of the 116 leaves in
 the $P$ tree, not a numerical approximation to an angular cycle.
 
 \begin{table}[ht]
@@ -912,7 +942,7 @@ Edge & $q$ & Weight & Edge & $q$ & Weight\\
 \midrule
 $4\to8$ & $1.02792$ & $-q$ & $8\to5$ & $0.90299$ & $-q$\\
 $5\to7$ & $0.85614$ & $-q$ & $7\to3$ & $0.36964$ & $-q$\\
-$3\to10$ & $1.16698$ & $-q$ & $10\to9$ & $1.26172$ & $2\pi_+-q$\\
+$3\to10$ & $1.16698$ & $-q$ & $10\to9$ & $1.26172$ & $2\pi_+^{\mathrm{coarse}}-q$\\
 $9\to6$ & $1.01613$ & $-q$ & $6\to4$ & $0.49074$ & $-q$\\
 \bottomrule
 \end{tabular}
@@ -1015,6 +1045,9 @@ checker constructs the whole projection set for each residual mask and
 verifies the required restrictions for every member; it does not infer them
 from the single order stored with an angular model.
 \end{proof}
+
+Figure~\ref{fig:proof-flow} summarizes how the finite tree closures and the
+two geometric barriers combine.
 
 For the $197$ residual sector assignments, the replay checks $790$ projected
 orders in total.  All $772$ projections in the main-order groups restrict to
