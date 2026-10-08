@@ -3,7 +3,10 @@ from copy import deepcopy
 from fractions import Fraction as Q
 import unittest
 
-from proof.skeleton_cover import LABELS, global_radial_bounds, parse_roots
+from proof.skeleton_cover import (
+    CASES_PER_CYCLE, LABELS, core_closed_sector_assignments, core_order_classes,
+    core_order_refinements, global_radial_bounds, parse_roots, verify_core_orders,
+)
 from proof.skeleton_radial_tree import split_bounds, verify
 from tools.certify_large_four_skeleton import build_certificate
 from tools.certify_skeleton_radial_tree import explore, new_tree
@@ -83,6 +86,41 @@ class SkeletonRadialTreeTests(unittest.TestCase):
 
     def test_zero_budget_keeps_all_unresolved_leaves(self):
         self.assertEqual(explore(deepcopy(self.tree), 0), self.tree)
+
+    def test_active_core_orders_cover_all_reflections_and_sector_orders(self):
+        classes = core_order_classes(())
+        orders = {order for _, order in classes}
+        self.assertEqual(len(classes), 360)
+        self.assertEqual(len(orders), 360)
+        # The known root reflected into canonical skeleton order
+        # (10,7,9,8) has this projected core order.
+        self.assertIn((10, 5, 7, 9, 2, 8, 6), orders)
+
+    def test_active_core_models_are_replayed_and_incomplete_ones_rejected(self):
+        weights = tuple(tuple(0 for _ in range(11)) for _ in range(11))
+        record = core_order_refinements(weights)
+        report = verify_core_orders(record, weights)
+        self.assertEqual(report["orders"], 360)
+        self.assertEqual(report["models"], 360)
+        self.assertFalse(report["all_orders_excluded"])
+        record["outcomes"].pop()
+        with self.assertRaisesRegex(ValueError, "order ledger"):
+            verify_core_orders(record, weights)
+
+    def test_closed_core_orders_cover_the_corresponding_full_sector_cases(self):
+        records = [{"kind": "SECTOR_CASES", "outcomes": [-1] * CASES_PER_CYCLE}
+                   for _ in range(3)]
+        self.assertEqual(core_closed_sector_assignments(records, [True] * 360),
+                         3 * CASES_PER_CYCLE)
+        self.assertEqual(core_closed_sector_assignments(records, [False] * 360), 0)
+
+    def test_full_order_closures_are_not_counted_twice(self):
+        weights = tuple(tuple(0 for _ in range(11)) for _ in range(11))
+        records = [{"kind": "SECTOR_CASES", "outcomes": [-1] * CASES_PER_CYCLE,
+                    "order_groups": [{"masks": [0, 0, 0, 0],
+                                      "kind": "ALL_ORDERS_LOCAL_OR_EXCLUDED"}]}
+                   for _ in range(3)]
+        self.assertEqual(core_closed_sector_assignments(records, [True] * 360, weights), 0)
 
 
 if __name__ == "__main__":

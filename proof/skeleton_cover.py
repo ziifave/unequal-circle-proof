@@ -165,7 +165,8 @@ def full_order_graph(order: tuple, weights: tuple, skeleton: tuple) -> list:
     return edges
 
 
-def verify_order_group(group: dict, skeleton: tuple, masks: tuple, weights: tuple) -> bool:
+def verify_order_group(group: dict, skeleton: tuple, masks: tuple, weights: tuple,
+                       local_classifier=None) -> bool:
     """Return true for an excluded group, false for a verified angular model."""
     orders = list(projected_orders(skeleton, masks))
     if group.get("kind") == "ALL_ORDERS_EXCLUDED":
@@ -174,6 +175,18 @@ def verify_order_group(group: dict, skeleton: tuple, masks: tuple, weights: tupl
                 "missing projected order witness")
         for order, witness in zip(orders, witnesses):
             verify_cycle(full_order_graph(order, weights, skeleton), witness)
+        return True
+    if group.get("kind") == "ALL_ORDERS_LOCAL_OR_EXCLUDED":
+        witnesses = group.get("witnesses")
+        require(isinstance(witnesses, list) and len(witnesses) == len(orders),
+                "missing projected order witness")
+        for order, witness in zip(orders, witnesses):
+            if witness is None:
+                core_order = tuple(label for label in order if label not in (1, 3, 4))
+                require(local_classifier is not None and local_classifier(core_order),
+                        "projected order is neither excluded nor locally certified")
+            else:
+                verify_cycle(full_order_graph(order, weights, skeleton), witness)
         return True
     require(group.get("kind") == "ANGLE_MODEL", "invalid order-group kind")
     order = tuple(group.get("order", []))
@@ -184,6 +197,145 @@ def verify_order_group(group: dict, skeleton: tuple, masks: tuple, weights: tupl
     require(all(values[v] <= values[u] + c for u, v, c in full_order_graph(order, weights, skeleton)),
             "angular model violates a difference constraint")
     return False
+
+
+def core_order_classes(weights: tuple) -> tuple[tuple[tuple[int, ...], tuple[int, ...]], ...]:
+    """All cyclic orders of the seven active-core centres modulo reflection.
+
+    Disk 2 can have zero radial lower bound in the global domain. Its zero
+    angle weights then make its assigned sector/order arbitrary, so this
+    projection still covers a centre at the origin.
+    """
+    result = []
+    for skeleton in canonical_cycles():
+        for assignment in product(range(4), repeat=3):
+            groups = [[] for _ in range(4)]
+            for label, sector in zip((2, 5, 6), assignment):
+                groups[sector].append(label)
+            for choices in product(*(permutations(group) for group in groups)):
+                order = tuple(label for k in range(4)
+                              for label in ((skeleton[k],) + choices[k]))
+                result.append((tuple(skeleton), order))
+    require(len(result) == 360 and len({order for _, order in result}) == 360,
+            "active-core cyclic orders do not form a complete quotient")
+    return tuple(result)
+
+
+@lru_cache(maxsize=1)
+def core_order_sector_map() -> dict:
+    """Map each core triple of sector choices to its complete order indices."""
+    mapping = {}
+    for index, (skeleton, order) in enumerate(core_order_classes(())):
+        positions = {label: k for k, label in enumerate(order)}
+        sectors = []
+        for label in (2, 5, 6):
+            sector = max(k for k in range(4) if positions[skeleton[k]] < positions[label])
+            sectors.append(sector)
+        mapping.setdefault((skeleton, tuple(sectors)), []).append(index)
+    require(len(mapping) == 3 * 4 ** 3, "active-core sector projection is incomplete")
+    return mapping
+
+
+def verify_core_orders(record: dict, weights: tuple,
+                       local_classifier=None) -> dict:
+    """Verify every active-core cyclic order; return whether all are impossible."""
+    classes = core_order_classes(weights)
+    outcomes, cycles, models = (record.get("outcomes"), record.get("cycles"),
+                                record.get("models"))
+    require(isinstance(outcomes, list) and len(outcomes) == len(classes),
+            "incomplete active-core order ledger")
+    require(isinstance(cycles, list) and isinstance(models, list),
+            "missing active-core order witnesses")
+    used_cycles, used_models = set(), set()
+    local_models = 0
+    closed_orders = []
+    for (skeleton, order), outcome in zip(classes, outcomes):
+        edges = full_order_graph(order, weights, skeleton)
+        require(type(outcome) is int, "invalid active-core order outcome")
+        if outcome < 0:
+            require(-len(models) <= outcome < 0,
+                    "invalid active-core order outcome")
+            model_id = -outcome - 1
+            model = models[model_id]
+            require(model.get("order") == list(order), "active-core model has wrong order")
+            potentials = model.get("potentials")
+            require(isinstance(potentials, list) and len(potentials) == len(order)
+                    and all(type(value) is int for value in potentials),
+                    "invalid active-core angular potentials")
+            require(all(potentials[v] <= potentials[u] + weight
+                        for u, v, weight in edges),
+                    "active-core angular model violates a difference constraint")
+            used_models.add(model_id)
+            if local_classifier is not None and local_classifier(order):
+                local_models += 1
+                closed_orders.append(True)
+            else:
+                closed_orders.append(False)
+        else:
+            require(outcome < len(cycles), "invalid active-core cycle outcome")
+            verify_cycle(edges, cycles[outcome])
+            used_cycles.add(outcome)
+            closed_orders.append(True)
+    require(used_cycles == set(range(len(cycles))), "unused active-core cycle witness")
+    require(used_models == set(range(len(models))), "unused active-core angular model")
+    return {"all_orders_excluded": not models, "all_orders_closed":
+            not models or (local_classifier is not None and local_models == len(models)),
+            "orders": len(classes), "models": len(models), "cycles": len(cycles),
+            "local_models_closed": local_models, "closed_orders": closed_orders}
+
+
+def core_closed_sector_assignments(cycles: list, core_closed: list[bool],
+                                   weights: tuple | None = None) -> int:
+    """Count open six-disk sector cases covered by closed core-order classes."""
+    order_classes = core_order_classes(())
+    sector_map = core_order_sector_map()
+    closed = 0
+    for record, skeleton in zip(cycles, canonical_cycles()):
+        if record.get("kind") != "SECTOR_CASES":
+            continue
+        outcomes = record.get("outcomes", [])
+        require(isinstance(outcomes, list) and len(outcomes) == CASES_PER_CYCLE,
+                "incomplete sector ledger for active-core projection")
+        fully_closed_masks = {
+            tuple(group.get("masks", [])) for group in record.get("order_groups", [])
+            if group.get("kind") in {"ALL_ORDERS_EXCLUDED", "ALL_ORDERS_LOCAL_OR_EXCLUDED"}
+        }
+        for masks, outcome in zip(assignment_masks(), outcomes):
+            if outcome != -1:
+                continue
+            if weights is not None and effective_masks(weights, masks) in fully_closed_masks:
+                continue
+            sectors = tuple(next(k for k, mask in enumerate(masks)
+                                 if mask & (1 << (label - 1)))
+                            for label in (2, 5, 6))
+            indices = sector_map[(tuple(skeleton), sectors)]
+            if all(core_closed[index] for index in indices):
+                closed += 1
+    return closed
+
+
+def core_order_refinements(weights: tuple) -> dict:
+    """Discover witnesses for all cyclic orders of the active seven disks."""
+    cycles, models, outcomes = [], [], []
+    for skeleton, order in core_order_classes(weights):
+        edges = full_order_graph(order, weights, skeleton)
+        witness = negative_cycle(len(order), edges)
+        if witness is not None:
+            verify_cycle(edges, witness)
+            outcomes.append(len(cycles))
+            cycles.append(list(witness))
+            continue
+        values = [0] * len(order)
+        for _ in order:
+            for u, v, bound in edges:
+                values[v] = min(values[v], values[u] + bound)
+        shift = values[0]
+        values = [value - shift for value in values]
+        if not all(values[v] <= values[u] + bound for u, v, bound in edges):
+            raise ValueError("failed to construct active-core angular model")
+        outcomes.append(-len(models) - 1)
+        models.append({"order": list(order), "potentials": values})
+    return {"outcomes": outcomes, "cycles": cycles, "models": models}
 
 
 @lru_cache(maxsize=4)
@@ -292,10 +444,12 @@ def verify_cycle(edges: list, cycle: list | tuple) -> None:
     require(sum(weight for _, _, weight in chosen) < 0, "cycle is not strictly negative")
 
 
-def verify_angular_cover(cell: dict, bounds: dict, roots: dict) -> dict:
+def verify_angular_cover(cell: dict, bounds: dict, roots: dict,
+                         local_classifier=None) -> dict:
     """Replay one angular ledger on bounds derived by a coverage verifier."""
     closed = opened = 0
     order_groups_checked = order_groups_closed = angular_models_verified = 0
+    local_order_groups_closed = 0
     cycles = canonical_cycles()
     per_cycle = [{"order": list(order), "closed": 0, "unknown": 0} for order in cycles]
     require(cell.get("kind") == "ANGLE_COVER", "invalid radial-cell kind")
@@ -348,13 +502,16 @@ def verify_angular_cover(cell: dict, bounds: dict, roots: dict) -> dict:
                     require(key in pending_groups and key not in seen_groups,
                             "invalid or duplicate order group")
                     seen_groups.add(key)
-                    excluded = verify_order_group(group, order, key, weights)
+                    excluded = verify_order_group(group, order, key, weights,
+                                                  local_classifier=local_classifier)
                     order_groups_checked += 1
                     if excluded:
                         count = pending_groups[key]
                         rejected += count
                         pending -= count
                         order_groups_closed += 1
+                        if group.get("kind") == "ALL_ORDERS_LOCAL_OR_EXCLUDED":
+                            local_order_groups_closed += 1
                     else:
                         angular_models_verified += 1
                 require(seen_groups == set(pending_groups), "missing order group")
@@ -367,6 +524,7 @@ def verify_angular_cover(cell: dict, bounds: dict, roots: dict) -> dict:
     return {"closed_cases": closed, "unknown_cases": opened, "per_cycle": per_cycle,
             "order_groups_checked": order_groups_checked,
             "order_groups_closed": order_groups_closed,
+            "local_order_groups_closed": local_order_groups_closed,
             "angular_models_verified": angular_models_verified}
 
 

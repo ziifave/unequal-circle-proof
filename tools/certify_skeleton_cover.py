@@ -14,7 +14,7 @@ from proof.skeleton_cover import (
     canonical_cycles, cell_bounds, cosine_lower, cosine_upper, negative_cycle,
     pair_sum_contradiction, parse_roots, partition_spec, pi_ticks,
     propagate_radial, sector_graph, sector_spans, spans_for_case,
-    verify, verify_angles, verify_cycle,
+    verify, verify_angles, verify_cycle, core_order_refinements,
     effective_masks, full_order_graph, projected_orders,
 )
 
@@ -46,7 +46,8 @@ def discover_angles(bounds: dict, roots: dict) -> list[int]:
     return result
 
 
-def order_refinements(order: tuple, weights: tuple, outcomes: list) -> list[dict]:
+def order_refinements(order: tuple, weights: tuple, outcomes: list,
+                      local_classifier=None) -> list[dict]:
     groups = sorted({effective_masks(weights, masks)
                      for masks, outcome in zip(assignment_masks(), outcomes) if outcome == -1})
     records = []
@@ -55,6 +56,14 @@ def order_refinements(order: tuple, weights: tuple, outcomes: list) -> list[dict
         for candidate in projected_orders(order, masks):
             edges = full_order_graph(candidate, weights, order)
             witness = negative_cycle(len(candidate), edges)
+            if witness is not None:
+                verify_cycle(edges, witness)
+                witnesses.append(list(witness))
+                continue
+            core_order = tuple(label for label in candidate if label not in (1, 3, 4))
+            if local_classifier is not None and local_classifier(core_order):
+                witnesses.append(None)
+                continue
             if witness is None:
                 # Produce an actual feasible point of the RELAXATION. It is
                 # neither a Cartesian placement nor a packing certificate.
@@ -69,10 +78,10 @@ def order_refinements(order: tuple, weights: tuple, outcomes: list) -> list[dict
                 records.append({"masks": list(masks), "kind": "ANGLE_MODEL",
                                 "order": list(candidate), "potentials": values})
                 break
-            verify_cycle(edges, witness)
-            witnesses.append(list(witness))
         else:
-            records.append({"masks": list(masks), "kind": "ALL_ORDERS_EXCLUDED",
+            kind = ("ALL_ORDERS_LOCAL_OR_EXCLUDED" if any(
+                witness is None for witness in witnesses) else "ALL_ORDERS_EXCLUDED")
+            records.append({"masks": list(masks), "kind": kind,
                             "witnesses": witnesses})
     return records
 

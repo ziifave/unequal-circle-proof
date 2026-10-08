@@ -192,6 +192,17 @@ class SkeletonCoverTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "missing projected order"):
             verify_order_group(group, skeleton, masks, weights)
 
+    def test_local_or_excluded_order_group_requires_local_replay(self):
+        weights = tuple(tuple(0 for _ in range(11)) for _ in range(11))
+        skeleton, masks = (10, 7, 8, 9), (3, 0, 0, 0)
+        orders = list(projected_orders(skeleton, masks))
+        group = {"kind": "ALL_ORDERS_LOCAL_OR_EXCLUDED",
+                 "witnesses": [None] * len(orders)}
+        with self.assertRaisesRegex(ValueError, "neither excluded nor locally certified"):
+            verify_order_group(group, skeleton, masks, weights)
+        self.assertTrue(verify_order_group(group, skeleton, masks, weights,
+                                           local_classifier=lambda order: True))
+
     def test_known_witness_all_pair_group_is_retained(self):
         cell = next(c for c in self.allpair["cells"] if c["index"] == [1, 1, 1, 0])
         record = cell["cycles"][1]

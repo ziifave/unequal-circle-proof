@@ -1,10 +1,108 @@
 # 大域最適性証明：作業記録・方針・再開手順
 
-2026-10-08 の保存時点。まずこの文書を読むこと。
+2026-10-08 更新。**この文書のv12節が最新状態**であり、下記の元v1記録は
+設計経緯として読むこと。
 
-**最適性等式 `R*=R0` は未証明。** 今回は四大円の幾何補題を認証し、
-それを入口に、全10円配置を覆う台帳と再開可能な動径分割木を実装した。
-最新の木は初期領域からの被覆と各排除を独立replayできるが、127葉が未解決。
+**最適性等式 `R*=R0` はまだ未証明。** v12木は全初期領域を被覆し、葉ごとの
+不可能性・局所下界証明を独立replayできる。未解決は193葉、19,929個の
+「半径箱×骨格×扇形割当」ケース。
+
+## 最新checkpoint：v12
+
+探索半径の安全な上限は `U=8.303468122111490`、既知候補は
+`R0≈8.3034681221114890787043811875...`。大域方針はU以下の全配置を覆い、
+各ケースを不可能性または認証済み局所下界で閉じること。U内の全配置を
+不可能として排除する必要はない。
+
+独立replayの結果は次の通り。
+
+| 項目 | v12 |
+|---|---:|
+| 二分割 / ノード / 葉 | 980 / 1,961 / 981 |
+| 全セクターケースを閉じた葉 | 788 |
+| 未解決葉 | 193 |
+| 最大木深さ | 310 |
+| 箱×配置ケース（閉 / 全） | 12,034,599 / 12,054,528 |
+| 箱×配置ケースの閉鎖率 | 99.834676% |
+| 順序群の負閉路・局所終端 | 6,601群 / うち局所終端2群 |
+| 局所順序終端で全ケースを閉じた葉 | 1 |
+
+半径箱をまたいで同じ離散パターンを重複計上しない場合は、3種類の反射商骨格と
+`4^6` 個のセクター割当からなる12,288種類中、6,300種類（51.269531%）を
+全半径領域で閉じた。5,988種類は少なくとも1つの未解決半径箱に残る。
+したがって99.834676%は葉ごとの延べケース率、51.269531%は重複なしの
+大域パターン率であり、意味が異なる。
+
+v12は候補を含む局所枝も閉じた。全10円の候補動径を含む葉はv11時点のnode 1744
+で、全順序群のうち1群を局所定理、残りを負閉路で閉じる。v12はこの葉を保持する。
+局所半径区間の幅をみるとき、角度順序ごとの座標区間全体が局所半径
+`delta >= 5.8599087798744e-5` に入ることを有理数で判定する。
+
+局所下界は [artifacts/local-optimality-constants.json](artifacts/local-optimality-constants.json)
+にある認証済み局所定理を前提とする。今回のreplayは定数のスカラー条件と
+根箱・包含判定を検査するが、元の局所証明の全線形代数をこの大域replay内で
+再生成してはいない。局所定理の元証明も最終成果に含めて確認すること。
+
+証明書: [skeleton-radial-tree-v12-global-refinement.json](certificates/skeleton-radial-tree-v12-global-refinement.json)
+
+独立replay: [skeleton-radial-tree-v12-global-refinement-replay.json](artifacts/skeleton-radial-tree-v12-global-refinement-replay.json)
+
+SHA-256: 証明書 `446d0172c59d25dd35cc1807e35d2a7a09743c6fc3138433cdbb03d8a354f4dd`、
+検証器 `30090a9dd14cb3c5580a28a69106926d8d34aaa2116aebca0f32bda4f0de2ee4`。
+対象ファイル一覧のmanifest: [skeleton-radial-tree-v12-global-refinement-manifest.json](artifacts/skeleton-radial-tree-v12-global-refinement-manifest.json)
+
+### v12を再検証・再開する
+
+リポジトリ直下で実行する。
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run --locked --no-sync python -m proof.skeleton_radial_tree \
+  certificates/skeleton-radial-tree-v12-global-refinement.json \
+  --output artifacts/skeleton-radial-tree-v12-global-refinement-replay.json
+
+PYTHONDONTWRITEBYTECODE=1 uv run --locked --no-sync python -m tools.certify_skeleton_radial_tree \
+  --resume certificates/skeleton-radial-tree-v12-global-refinement.json \
+  --local-certificate artifacts/local-optimality-constants.json \
+  --all-pair-orders --splits 100 \
+  --output certificates/skeleton-radial-tree-v13.json \
+  --report artifacts/skeleton-radial-tree-v13-report.json
+
+PYTHONDONTWRITEBYTECODE=1 uv run --with pytest --locked python -m pytest -q
+```
+
+`--all-pair-orders` は、各葉の未解決セクターケースが64以下のとき、円1〜6の
+セクター内全順序を検査する。各順序は負閉路で排除するか、コアの座標射影全体が
+局所 `delta` 近傍内にあることを確認して閉じる。その他の順序が残れば葉は未解決の
+まま保持される。既知候補の全10動径は探索の優先順位にだけ使い、箱の除外や
+局所判定には使わない。
+
+v12時点のテストは66件と8件のサブテストが通過。検証器は証明書の被覆・各葉の
+排除・負閉路・局所射影をreplayする。`UNKNOWN` と `global_optimality_proved=false`
+を維持しており、最適性証明達成とは扱わない。
+
+### v12の主な実装ファイル
+
+| 役割 | ファイル |
+|---|---|
+| 角度・全配置台帳・360コア順序・閉路replay | [proof/skeleton_cover.py](proof/skeleton_cover.py) |
+| 適応木の独立検証・葉ごとの局所終端 | [proof/skeleton_radial_tree.py](proof/skeleton_radial_tree.py) |
+| コアの有理角度区間から局所近傍を検査 | [proof/skeleton_local_terminal.py](proof/skeleton_local_terminal.py) |
+| 木の生成・再開・順序精密化 | [tools/certify_skeleton_radial_tree.py](tools/certify_skeleton_radial_tree.py) |
+| 全対順序の証明書生成 | [tools/certify_skeleton_cover.py](tools/certify_skeleton_cover.py) |
+| 回帰テスト | `tests/test_skeleton_cover.py`, `tests/test_skeleton_radial_tree.py` |
+| v12証明書・replay | 上記証明書とreplayリンク |
+| 方針・証明の入口 | [GLOBAL_PROOF_STRATEGY_2026-10-08.md](GLOBAL_PROOF_STRATEGY_2026-10-08.md), [LARGE_FOUR_SKELETON_STATUS.md](LARGE_FOUR_SKELETON_STATUS.md) |
+
+### 次に進めること
+
+1. v12から再開し、局所近傍に隣接する半径箱と大域的な残存箱を細分する。
+2. 未解決5,988種類の配置パターンを、円1,3,4の挿入可能性・動径角度相関・順序別
+   局所包含でさらに減らす。木の延べ未解決ケースと重複なしパターンを分けて追う。
+3. 異なる局所根や局所 `delta` 外で残る配置があれば、別証明を加える。
+4. 全981葉の後続木がすべて不可能性または局所下界で閉じたら、完全被覆を独立replayし、
+   はじめて `R*=R0` と結論する。
+
+## 元v1時点の設計・検証記録（履歴）
 
 ## 目標と採用する方針
 
