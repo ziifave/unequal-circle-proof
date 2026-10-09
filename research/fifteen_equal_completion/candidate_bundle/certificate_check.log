@@ -1,0 +1,5 @@
+independently checked 6+9 special cases: 3 assignments x 3 radius-zero branches = 9 leaves
+independently checked 000100100010101 {'roots': 47, 'nodes': 1641, 'cycles': 844, 'sums': 0, 'local': 0}
+independently checked 000100100100101 {'roots': 38, 'nodes': 646, 'cycles': 342, 'sums': 0, 'local': 0}
+independently checked 001001001001001 {'roots': 1181, 'nodes': 56573, 'cycles': 28846, 'sums': 0, 'local': 31}
+all exact subdivision certificate leaves verified with rational arithmetic

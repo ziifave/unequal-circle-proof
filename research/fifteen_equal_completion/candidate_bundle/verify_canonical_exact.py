@@ -39,12 +39,18 @@ if __name__=='__main__':
   a=line.strip().split('\t')
   if len(a)>=6 and a[0]=='UNKNOWN' and a[2]==PATTERN:data=a;break
  assert data is not None
+ assignments=[x for x in data[5].split(',') if x]
+ assert int(data[3])==int(data[4])==len(assignments)==1181,(data[3:])
+ assert len(assignments)==len(set(assignments))
+ assert all(len(x)==len(IPOS) and x.isdigit() for x in assignments)
  print('START',PATTERN,'coarse boxes',data[3],flush=True)
  results={'coarse_boxes':0,'nodes':0,'cycles':0,'sums':0,'locals':0,'maxdepth':0}
- for j,ass in enumerate(x for x in data[5].split(',') if x):
+ for j,ass in enumerate(assignments):
   r=run(ass,max_nodes=1000000)
   results['coarse_boxes']+=1
   results['nodes']+=r['NODES'];results['cycles']+=r['CYCLE'];results['sums']+=r['SUM'];results['locals']+=r['LOCAL'];results['maxdepth']=max(results['maxdepth'],r['MAXDEPTH'])
   if (j+1)%200==0:print('PROGRESS',j+1,'nodes',results['nodes'],'local leaves',results['locals'],'elapsed',round(time.time()-t,2),flush=True)
+ expected={'coarse_boxes':1181,'nodes':56573,'cycles':28846,'sums':0,'locals':31,'maxdepth':23}
+ assert results==expected,('canonical exact-tree count mismatch',results,expected)
  print('COMPLETE',results,'elapsed',round(time.time()-t,2),'cache',ang.cache_info(),flush=True)
  with open('canonical_exact_report.json','w') as f:json.dump(results,f,indent=2)

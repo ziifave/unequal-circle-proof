@@ -1,0 +1,4 @@
+generated 000100100010101 {'nodes': 1641, 'cycles': 844, 'sums': 0, 'local': 0}
+generated 000100100100101 {'nodes': 646, 'cycles': 342, 'sums': 0, 'local': 0}
+generated 001001001001001 {'nodes': 56573, 'cycles': 28846, 'sums': 0, 'local': 31}
+certificate roots 1266 special leaves 9 totals {'nodes': 58860, 'cycles': 30032, 'sums': 0, 'local': 31} bytes 3796825 seconds 5.96

@@ -12,10 +12,16 @@ def coslo(q):
  return s-x**19/F(121645100408832000)
 
 def cmax(x,y):
+ # The first radial type represents 0 < r <= 1/2; the exact center r=0
+ # is a separate discrete case with all its angular edges disabled.
+ # For a positive radius tending to 0, when the other upper endpoint is
+ # at most 2, c(r,s) is increasing in both variables on [0,2]^2, so the
+ # corner at the two upper endpoints is a valid upper bound. If the other
+ # interval extends above 2, disable the angular edge conservatively.
  if x[0]==0 or y[0]==0:
   p=x if x[0]==0 else y
   oth=y if x[0]==0 else x
-  if oth[1]<=2 and oth[0]>0:
+  if oth[1]<=2 and oth[1]>0:
    a=p[1];b=oth[1]
    return (a*a+b*b-4)/(2*a*b)
   return F(1)

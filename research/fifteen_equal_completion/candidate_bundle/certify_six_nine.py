@@ -14,10 +14,9 @@ def coslo(q):
 def cmax(x,y):
  if x[1]+y[1]<2:return None
  if x[0]==0 or y[0]==0:
-  p=x if x[0]==0 else y;oth=y if x[0]==0 else x
-  if oth[1]<=2 and oth[0]>0:
-   a=p[1];b=oth[1]
-   return (a*a+b*b-4)/(2*a*b)
+  # A closed subdivision touching zero also contains the exact origin, whose
+  # polar angle is undefined. Disable this pair's angular edge; separate
+  # positive-only bin tables use a one-sided limit in build_bounds3/4.py.
   return F(1)
  return max((a*a+b*b-4)/(2*a*b) for a in x for b in y)
 
@@ -69,15 +68,39 @@ def cycle(rad):
 
 if __name__=='__main__':
  mask='001001001001011';ipos=[i for i,x in enumerate(mask) if x=='1']
- for a in ['636808','646808','656808']:
-  for z in [0,1]:
+ matches=[]
+ for line in open('full_residuals.txt'):
+  fields=line.rstrip('\n').split('\t')
+  if len(fields)>=6 and fields[0]=='UNKNOWN' and fields[2]==mask:
+   matches.append(fields)
+ assert len(matches)==1,('expected one generated 6+9 residual row',len(matches))
+ row=matches[0]
+ assignments=[x for x in row[5].split(',') if x]
+ assert int(row[3])==int(row[4])==len(assignments)==3,(row[3:])
+ assert len(assignments)==len(set(assignments))
+ assert all(len(a)==len(ipos) and a.isdigit() for a in assignments)
+ checked=0
+ for assignment in assignments:
+  digits=list(map(int,assignment))
+  small=[j for j,t in enumerate(digits) if t==0]
+  assert len(small)==1,('expected a unique [0,1/2] bin',assignment)
+  split_j=small[0]
+  for z in [0,1,2]:
    rad=[B[11]]*15
    for j,p in enumerate(ipos):
-    t=int(a[j]);rad[p]=B[t]
-    if t==0:rad[p]=(F(0),F(1,4)) if z==0 else (F(1,4),F(1,2))
+    t=digits[j];rad[p]=B[t]
+    if j==split_j:
+     if z==0:rad[p]=(F(0),F(1,4)) # positive radii 0 < r <= 1/4
+     elif z==1:rad[p]=(F(1,4),F(1,2))
+     else:rad[p]=(F(0),F(0)) # exact center; no angular edges
    c=cycle(rad)
-   print(a,'small half',z,'=>',c['reason'],'weight numerator',c.get('weight_numerator'),'cycle length',c.get('length'), 'pair', c.get('pair'))
+   if z==0:expected='PAIR_SUM'
+   elif z==1:expected='NEGATIVE_CYCLE'
+   else:expected=('PAIR_SUM','NEGATIVE_CYCLE')
+   assert (c['reason']==expected if isinstance(expected,str) else c['reason'] in expected),(assignment,z,c)
+   print(assignment,'small case',z,'=>',c['reason'],'weight numerator',c.get('weight_numerator'),'cycle length',c.get('length'), 'pair', c.get('pair'))
    if c['reason']=='NEGATIVE_CYCLE':
     print('  edges:', [(u,v,w) for u,v,w,t in c['edges']])
-   assert c['reason']!='UNKNOWN'
- print('ALL SIX SUBBOXES CLOSED BY EXACT FRACTIONS')
+   checked+=1
+ assert checked==9
+ print('ALL NINE GENERATED SIX+NINE LEAVES CLOSED BY EXACT FRACTIONS')

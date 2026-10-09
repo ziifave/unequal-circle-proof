@@ -6,8 +6,11 @@
 #include <numeric>
 #include <algorithm>
 using namespace std;
+// The residual list uses the same owner-bin convention as stage 4: each
+// cutpoint belongs to its right half-open bin. Type 0 is positive radii below
+// 1/2; label 13 is the exact origin and receives no polar-angle edges.
 constexpr int Q[12][12]={
-  {0, 8700, 8700, 6746, 6142, 5883, 4896, 4047, 0, 0, 0, 0},
+  {8700, 8700, 8700, 6746, 6142, 5883, 4896, 4047, 0, 0, 0, 0},
   {8700, 8700, 5105, 4784, 4585, 4488, 4077, 3690, 3228, 2344, 1738, 0},
   {8700, 5105, 4086, 3923, 3818, 3767, 3541, 3321, 3105, 2889, 2720, 0},
   {6746, 4784, 3923, 3780, 3688, 3642, 3442, 3245, 3051, 2856, 2744, 0},
@@ -32,7 +35,7 @@ static bool noNeg(){
   Edge e[255];int ne=0;
   for(int i=0;i<N-1;i++)e[ne++]={i+1,i,0};
   for(int i=0;i<N;i++)for(int j=i+1;j<N;j++){
-    const int q=(label[i]==12||label[j]==12)?0:Q[label[i]][label[j]];
+    const int q=(label[i]>=12||label[j]>=12)?0:Q[label[i]][label[j]];
     e[ne++]={j,i,-q};e[ne++]={i,j,TWOPI-q};
   }
   int d[N]={};
@@ -47,12 +50,14 @@ static bool noNeg(){
   return false;
 }
 void rec(int depth,int small,int high,int high2,Result& r){
+  // A disk centered exactly at the origin requires every other center norm >= 2.
+  for(int p:innerpos)if(label[p]==13)for(int q:innerpos)if(q!=p && label[q]<8)return;
 
   if(small>1||high+(nInner-depth)<nInner-4||high2+(nInner-depth)<max(0,nInner-5))return;
   if(small==1){
     // if the unique small center is in [0,0.5), no circle in [1,1.5) can coexist.
     bool zero=false,mone=false;
-    for(int i=0;i<N;i++){zero |= label[i]==0;mone |= label[i]==2;}
+    for(int i=0;i<N;i++){zero |= label[i]==0||label[i]==13;mone |= label[i]==2;}
     if(zero && mone)return;
   }
   if(depth>=3 && !noNeg()){r.cyclic++;return;}
@@ -60,7 +65,7 @@ void rec(int depth,int small,int high,int high2,Result& r){
     r.boxes++;
     if(noNeg()){
       r.viable++;r.any=true;
-      for(int j=0;j<nInner;j++)r.witness+=char('0'+label[innerpos[j]]);
+      for(int j=0;j<nInner;j++)r.witness+=label[innerpos[j]]==13?'A':char('0'+label[innerpos[j]]);
       r.witness+=",";
     }else r.cyclic++;
     return;
@@ -69,7 +74,10 @@ void rec(int depth,int small,int high,int high2,Result& r){
   for(int t=0;t<11;t++){
     label[p]=t;
     rec(depth+1,small+(t<=1),high+(t>=5),high2+(t>=8),r);
-
+    if(t==0){
+      label[p]=13; // exact radius zero; this center has no polar angle
+      rec(depth+1,small+1,high,high2,r);
+    }
   }
   label[p]=12;
 }

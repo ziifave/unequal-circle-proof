@@ -18,10 +18,11 @@ Expected summary:
 
 - 760 I/O bracelet orbit classes, of which 382 are eliminated by coarse integer negative cycles, leaving 378 for refinement.
 - 378 enter finer radial classification; 23 survive the first and 4 survive the second.
-- 6I+9O orbit: exactly 3 surviving coarse interval boxes; after a bisection, all 6 leaf boxes close.
+- 6I+9O orbit: exactly 3 surviving coarse interval boxes; the positive-radius halves and separate exact-origin case give 9 certified leaves.
 - 5I+10O noncanonical orbit A: 47 coarse interval boxes, all closed in 1,641 search nodes.
 - 5I+10O noncanonical orbit B: 38 coarse interval boxes, all closed in 646 search nodes.
 - 5I+10O canonical orbit: 1,181 coarse interval boxes, 56,573 nodes, 28,846 negative-cycle leaves and 31 leaves in [1.68,1.72]^5.
 - Local derivative inequality excludes all those remaining five-radius tuples other than the symmetric candidate, whose tangencies force minimum container radius R0.
+- `make_exact_certificate.py` serializes the 1,266 fine-subdivision trees plus the nine 6+9 endpoint leaves to `exact_subdivision_certificate.json`. `check_exact_certificate.py` independently checks their splits, rational angular edge weights, negative cycles, pair-sum exclusions, and local-box leaves. The tree checker starts from the residual roots emitted by `enumerate_residual.cpp`; the earlier finite enumerations are checked by exhaustive replay and their count/set assertions.
 
 The code includes exhaustive search and mathematically justified early-pruning predicates. The accompanying prose is a proof *sketch*, not a substitute for a fully refereed manuscript or an independently checked implementation. Treat any claimed proof of this previously open problem with appropriately high skepticism until independently validated.
