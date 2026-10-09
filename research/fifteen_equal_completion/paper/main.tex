@@ -61,7 +61,7 @@ The finite computations and the separate certificate checker were successfully r
 
 Packing congruent disks in a circle is equivalent to maximizing the minimum distance among a fixed number of points in a disk. Graham proved the small cases through seven points, and Pirl treated the circle-packing cases through ten. Later computational work by Graham, Lubachevsky, Nurmela, and Ostergård tabulated best-known configurations and described the configurations for 12 through 20 disks as conjecturally optimal; their 15-disk entry is the familiar five-inner, ten-outer arrangement \cite{Graham1968,Pirl1969,GrahamEtAl1998}. Ekanayake and LaFountain subsequently proved the 14-disk case and reported that the proved cases then known were $N\le14$ and $N=19$ \cite{EF2024}. Thus the candidate addressed here is historically important, but its status must be stated carefully: the theorem below is supported by the explicit certificate and replay in this manuscript and still calls for independent checking.
 
-Our proof strategy does not assume that a minimizing packing has fivefold symmetry. It first moves the outer centers to the container wall, then enumerates every cyclic inner/outer word and every compatible radial bin using necessary angular inequalities. The finite stage uses exact integer difference constraints and rational interval subdivision; only the final surviving cyclic type is handled by a local analytic inequality. This combines a global finite reduction with a symmetry-free local argument. The finite certificate only rejects a radial box when a necessary condition fails; a surviving box is not treated as evidence that a packing exists.
+Our proof strategy does not assume that a minimizing packing has fivefold symmetry. It first replaces every outer center by a wall center at the same polar angle, then enumerates every cyclic inner/outer word and every compatible radial bin using necessary angular inequalities. The finite stage uses exact integer difference constraints and rational interval subdivision; only the final surviving cyclic type is handled by a local analytic inequality. This combines a global finite reduction with a symmetry-free local argument. The finite certificate only rejects a radial box when a necessary condition fails; a surviving box is not treated as evidence that a packing exists.
 
 \section{Problem and main result}
 
@@ -160,21 +160,21 @@ For fixed $y$,
 \]
 Its numerator is strictly increasing in $x$, so the derivative can change sign only from negative to positive. Thus an interior critical point in the $x$ direction is a minimum, and a maximum occurs at an endpoint. Apply the same argument in $y$.
 \end{proof}
-\begin{lemma}[Pushing outer centers to the wall]\label{lem:push}
-Suppose \eqref{eq:feas} holds with $R\le R_0$. Each outer center can be moved radially to distance $b_0$, with its polar angle fixed, without creating an overlap.
+\begin{lemma}[Replacing outer centers by wall centers]\label{lem:push}
+Suppose \eqref{eq:feas} holds with $R\le R_0$. Simultaneously replace every outer center of radius $r$ by a center of radius $b_0$ at the same polar angle. The resulting configuration is feasible. This is a statement about the final configuration; it does not assert that a continuous motion between the two configurations stays feasible.
 \end{lemma}
 \begin{proof}
-An inner--outer pair has radii $x<L\le y\le b_0$. During the move, its squared distance has derivative
+For an inner--outer pair, let $x<L\le y\le b_0$ be the inner and outer radii before replacement. Its squared distance at fixed angular difference is increasing in the outer radius, since
 \[
  \frac{d}{dy}\bigl(x^2+y^2-2xy\cos\Delta\bigr)=2(y-x\cos\Delta)>0,
 \]
-so its distance cannot decrease. For an outer--outer pair, \cref{lem:corners} and $L=b_0-4/b_0$ show that
+so the pair remains separated after the outer radius is replaced by $b_0$. For an outer--outer pair, \cref{lem:corners} and $L=b_0-4/b_0$ show that
 \[
 \max_{L\le x,y\le b_0}c(x,y)=c(b_0,b_0),
 \]
-with equality also at $(L,b_0)$ and $(b_0,L)$. Its original angular separation therefore meets the required separation when both centers are moved to radius $b_0$.
+with equality also at $(L,b_0)$ and $(b_0,L)$. Feasibility before replacement gives $\cos\Delta\le c(x,y)\le c(b_0,b_0)$, so this pair is also separated in the resulting configuration.
 \end{proof}
-The two cases in this radial move are summarized in \cref{fig:wall-push}.
+The two pairwise checks establishing feasibility after this replacement are summarized in \cref{fig:wall-push}.
 
 \begin{figure}[htbp]
 \centering
@@ -219,7 +219,7 @@ The two cases in this radial move are summarized in \cref{fig:wall-push}.
 \end{tikzpicture}
 \caption{At the boundary radii, the same angular gap is sufficient.}
 \end{subfigure}
-\caption{Schematic of the wall-pushing argument. The left panel is monotonicity of squared distance; the right panel summarizes \cref{lem:corners}. The dashed pair is illustrative, not a pointwise distance comparison throughout simultaneous motion.}
+\caption{Schematic of the wall-replacement argument. The left panel shows the inner--outer distance comparison; the right panel summarizes \cref{lem:corners}. The dashed pair is illustrative; the claim concerns feasibility of the initial and final configurations.}
 \label{fig:wall-push}
 \end{figure}
 
@@ -428,7 +428,7 @@ For the canonical word $(I,O,O)^5$, 1,181 coarse radial boxes generate 56,573 se
 \]
 The local argument below excludes every point of that cube except the candidate radius vector. It does not assume that the five radii or the packing are symmetric.
 
-The complete data tables, branch rules, generated reports, and one-command replay are in the repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/dbc19b12b351bebaff1f249459b6da53bf409a8b/research/fifteen_equal_completion/candidate_bundle}{candidate-bundle snapshot pinned to commit \texttt{dbc19b12}}. The run script asserts the orbit counts, survivor identities, and finite-tree counts. It emits a 3.8 MB JSON certificate containing 1,266 exact subdivision roots, then \texttt{check\_exact\_certificate.py} independently verifies each bisection cover, pair-sum leaf, negative-cycle edge and weight, and local-region leaf using rational arithmetic. The checker also verifies the nine $6I+9O$ endpoint leaves. It compares its roots with \texttt{full\_residuals.txt}; completeness of the earlier coarse enumerations is established by exhaustive replay and count/set assertions, not by the serialized trees alone.
+The complete data tables, branch rules, generated reports, and one-command replay are in the repository’s \href{https://github.com/ziifave/unequal-circle-proof/tree/e6cbd71af7708115fd13c7d59fa56cb819ca555c/research/fifteen_equal_completion/candidate_bundle}{candidate-bundle snapshot pinned to commit \texttt{e6cbd71}}. Stage zero emits a compressed certificate, \texttt{stage0\_certificate.json.gz}: for every excluded binary dihedral class, it records a negative cycle for every radial type assignment not already ruled out by the stated rank constraints. The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 classes, checks the complete assignment coverage for each excluded class, verifies every integer cycle, and binds all retained/excluded labels to the list used by later stages. The run script also emits a 3.8 MB subdivision certificate containing 1,266 exact roots; \texttt{check\_exact\_certificate.py} independently verifies every bisection cover, pair-sum leaf, negative-cycle edge and weight, and local-region leaf using rational arithmetic. It checks that the three $6I+9O$ assignments in the special-case certificate are exactly those in \texttt{full\_residuals.txt}, and verifies all nine endpoint leaves. Stage counts and survivor identities are asserted during replay.
 
 \section{The local angular barrier}\label{sec:local}
 
@@ -514,7 +514,7 @@ Since $d_0>c_0>0$, $\max\{-c_0\sigma_i,d_0\sigma_i\}\ge c_0|\sigma_i|$. The odd-
 \]
 implies $\sum_i|\sigma_i|\ge\frac25\sum_i|\delta_i|$. Moreover $|\delta_i|\le11/500$ throughout the local cube. Hence
 \begin{align*}
- \sum_i\max(h_i,k_i)
+\sum_i\max(h_i,k_i)
  &\ge 2\pi+c_0\sum_i|\sigma_i|-5\sum_i\delta_i^2\\
  &\ge 2\pi+\left(\frac25c_0-5\cdot\frac{11}{500}\right)\sum_i|\delta_i|\\
 &>2\pi+\frac{29}{500}\sum_i|\delta_i|.
