@@ -51,7 +51,7 @@ We study the minimum radius of a circle containing fifteen pairwise interior-dis
   R_0=1+\sqrt{1+\bigl(2+\cot(\pi/5)\bigr)^2}
      =4.521356964706164\ldots
 \]
-and a computer-assisted candidate lower-bound certificate. A radial threshold reduces every putative packing with radius at most $R_0$ to four possible inner/outer counts. For each of the 760 dihedral classes of their cyclic binary words, an integer difference-constraint test either excludes the class or passes it to exact rational interval refinement. Refinement leaves one cyclic type, $(I,O,O)^5$, and confines its five inner-center radii to $[1.68,1.72]$. An explicit local angular inequality then forces the candidate radius vector and excludes every smaller container. The certificate uses integer and rational arithmetic, including an explicit Taylor remainder bound for the trigonometric table. The repository contains a serialized subdivision certificate, a separate rational checker, and a one-command replay.
+and a candidate computer-assisted certificate for the matching lower bound. A radial threshold reduces every putative packing with radius at most $R_0$ to four possible inner/outer counts. For each of the 760 dihedral classes of their cyclic binary words, an integer difference-constraint test either excludes the class or passes it to exact rational interval refinement. Refinement leaves one cyclic type, $(I,O,O)^5$, and confines its five inner-center radii to $[1.68,1.72]$. An explicit local angular inequality then forces the candidate radius vector and excludes every smaller container. The certificate uses integer and rational arithmetic, including an explicit Taylor remainder bound for the trigonometric table. The repository contains a serialized subdivision certificate, a separate rational checker, and a one-command replay.
 \end{abstract}
 
 \paragraph{Verification status.}
@@ -168,7 +168,7 @@ For fixed $y$,
 Its numerator is strictly increasing in $x$, so the derivative can change sign only from negative to positive. Thus an interior critical point in the $x$ direction is a minimum, and a maximum occurs at an endpoint. Apply the same argument in $y$.
 \end{proof}
 \begin{lemma}[Replacing outer centers by wall centers]\label{lem:push}
-Suppose \eqref{eq:feas} holds with $R\le R_0$. Simultaneously replace every outer center of radius $r$ by a center of radius $b_0$ at the same polar angle. The resulting configuration is feasible. This is a statement about the final configuration; it does not assert that a continuous motion between the two configurations stays feasible.
+Suppose a configuration satisfies \eqref{eq:feas} for some $R\le R_0$. Simultaneously replace every outer center of radius $r$ by a center of radius $b_0$ at the same polar angle. The resulting configuration satisfies all pairwise non-overlap constraints and is feasible in a container of radius $R_0$. This is a statement about the final configuration; it does not assert that a continuous motion between the two configurations stays feasible.
 \end{lemma}
 \begin{proof}
 For an inner--outer pair, let $x<L\le y\le b_0$ be the inner and outer radii before replacement. Its squared distance at fixed angular difference is increasing in the outer radius, since
@@ -211,7 +211,7 @@ The threshold and the surviving count ranges are sketched in \cref{fig:radial-sh
 \label{fig:radial-shells}
 \end{figure}
 
-Write $s_{(1)}\le\cdots\le s_{(15)}$ for the fifteen center radii in nondecreasing order. The standard small-packing bounds $s_{(5)}\ge a_0>5/3$ and $s_{(6)}\ge2$ are also used in the radial interval enumeration. They follow by applying the known exact five- and six-disk packing radii to the five and six innermost centers. Consequently, among $k$ inner centers at least $k-4$ have radius at least $5/3$, and at least $k-5$ have radius at least $2$.
+Write $s_{(1)}\le\cdots\le s_{(15)}$ for the fifteen center radii in nondecreasing order. The standard small-packing bounds $s_{(5)}\ge a_0>5/3$ and $s_{(6)}\ge2$ \cite{Graham1968} are also used in the radial interval enumeration. They follow by applying the known exact five- and six-disk packing radii to the five and six innermost centers. Consequently, among $k$ inner centers at least $k-4$ have radius at least $5/3$, and at least $k-5$ have radius at least $2$.
 
 \section{Angular difference constraints}\label{sec:angular}
 
@@ -489,7 +489,7 @@ This contradicts \eqref{eq:budget} unless every $\delta_i=0$.
 \label{fig:local-penalty}
 \end{figure}
 
-If every $a_i=a_0$ but $R<R_0$, each original outer radius is strictly below $b_0$. Its required inner--outer angle is then strictly larger than the candidate value, so the five-gap sum is strictly larger than $2\pi$, again a contradiction. Thus no packing with $R<R_0$ exists in the final surviving class.
+If every $a_i=a_0$ but $R<R_0$, each original outer radius is strictly below $b_0$. Its required inner--outer angle is then strictly larger than the candidate value, so the five-gap sum is strictly larger than $2\pi$, again a contradiction. Thus no packing with $R<R_0$ exists in the final surviving class. Combining the explicit construction, the finite reduction, and the local angular rigidity lemma completes the proof of \cref{thm:main}.
 
 \section{Conclusion and reproducibility}\label{sec:conclusion}
 
