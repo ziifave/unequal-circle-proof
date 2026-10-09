@@ -113,7 +113,7 @@ theorem reversePathGap7_eq
       2 * Real.pi - (theta b - theta a) := by
   simp [reversePathGap7, pathGap7_eq_theta_sub theta hab]
 
-theorem centerAngle_polar_reverse_sub
+theorem centerAngle_polar_reverse_sub_gap7
     {a b α β : ℝ} (ha : 0 < a) (hb : 0 < b)
     (hlo : 0 ≤ 2 * Real.pi - (β - α))
     (hhi : 2 * Real.pi - (β - α) ≤ Real.pi) :
@@ -143,7 +143,7 @@ theorem touch_angle_le_reversePathGap7
     pointNorm_polarPoint (le_of_lt hb)
   by_cases hsmall : 2 * Real.pi - (theta j - theta i) ≤ Real.pi
   · have hnonneg : 0 ≤ 2 * Real.pi - (theta j - theta i) := by linarith
-    have hcenter := centerAngle_polar_reverse_sub ha hb hnonneg hsmall
+    have hcenter := centerAngle_polar_reverse_sub_gap7 ha hb hnonneg hsmall
     have htouch := touch_angle_le_center_angle ha hb hpa hpb hsep
     rw [hcenter] at htouch
     rw [reversePathGap7_eq theta hij]

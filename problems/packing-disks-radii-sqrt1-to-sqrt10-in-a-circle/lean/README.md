@@ -357,12 +357,26 @@ The remaining global work is to show that every candidate packing in the
 certificate's terminal cases satisfies this obstruction's hypotheses and to
 replay/assemble the full radial tree and the main-order angle-barrier cases.
 
+`CirclePacking/MainOrderProjection.lean` decodes the two effective masks used
+by the main residual cases, enumerates all four local orders per mask, and
+proves that both families project to the seven-disk order `(10, 5, 7, 9, 2,
+8, 6)`. It also transfers a pairwise angular order on the full sector order
+to that core order. `CirclePacking/MainAngleNecessary.lean` proves that the
+two geometric barrier expressions are each at most `2π` for a wall-pushed
+core in this order, using only pair separation and the complete cyclic angle
+sum. The second inequality uses the direct arc from disk 10 to disk 7 while
+retaining disk 5 in the packing hypotheses. The Python verifier reports 193
+main residual occurrences with these mask types. Exact-root and derivative
+formalization, wall-push applicability for every radial leaf, and replaying
+the radial tree remain outstanding.
+
 The two alternate nine-circle certificates, their geometric soundness, the
-finite P/Q order projection, and the rational path-angle obstruction are
-replayed by Lean. The radial tree, the
-main-order angle-barrier certificates, and the derivation of the required
+finite P/Q and main-core order projections, the main-order geometric
+necessary-angle inequalities, and the rational four-large-disk path-angle
+obstruction are replayed by Lean. The exact root and derivative argument,
+radial tree, wall-push applicability, and derivation of the required
 sector-order hypotheses from the global terminal cases are still checked only
-by the exact Python composition verifier. This remains a partial Lean
+by the Python composition verifier. This remains a partial Lean
 formalization, not yet a Lean proof of global optimality. Build the focused
 global entry point with `lake build CirclePacking.GlobalOptimality`.
 

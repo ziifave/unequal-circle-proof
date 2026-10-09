@@ -14,6 +14,9 @@ import CirclePacking.NineCircleCertificate
 import CirclePacking.NineCircleGeometry
 import CirclePacking.NineCirclePackingSoundness
 import CirclePacking.AlternateOrderProjection
+import CirclePacking.LargeFourSemicircle
+import CirclePacking.MainOrderProjection
+import CirclePacking.MainAngleNecessary
 
 /-!
 # Lean entry point for the global optimality proof
@@ -85,9 +88,16 @@ enumerates all sector-local permutations, proves each projection after
 deleting disk 1 is P or Q, and composes that result with the existing packing
 exclusions. Thus, once the angular argument identifies the four sector lists
 and proves their monotone order, either Lean P/Q theorem excludes that case.
-Deriving those sector lists and their monotone angular order from the exported
-radial-tree terminal hypotheses, replaying the main-order exclusions, and the
-final global assembly remain outstanding.
+`CirclePacking/MainOrderProjection.lean` does the corresponding finite step
+for the two main residual masks: all sector permutations project to the fixed
+seven-disk core order `(10, 5, 7, 9, 2, 8, 6)`, and pairwise order transfers
+from the full interleave to the core. `CirclePacking/MainAngleNecessary.lean`
+now proves the two geometric necessary inequalities `A(t,R) ≤ 2π` and
+`B(t,R) ≤ 2π` from pairwise separation for a wall-pushed core in that order,
+including the route that skips disk 5 in its angular accounting. The exact
+root and derivative-sign proof, wall-push applicability for each radial box,
+deriving sector masks and monotone order from the exported radial-tree leaves,
+and the final global assembly remain outstanding.
 -/
 
 namespace CirclePacking
