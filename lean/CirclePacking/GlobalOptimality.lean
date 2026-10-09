@@ -65,9 +65,11 @@ dependency. `NineCircleCertificateSoundness.lean` now connects these checks
 to edge angle bounds and proves that any checked cycle leaf is impossible for
 a normalized polar configuration inside its radial box. The tree exclusion
 theorem now composes the leaf contradiction through the recursive split tree,
-assuming contractor preservation and ordered endpoints. Proving those
-invariants from packing geometry, instantiating the theorem on the checked
-tree, and formalizing the main-order exclusions remain outstanding.
+deriving contractor preservation from pairwise separation, radius lower
+bounds, and the triangle inequality; endpoint ordering follows from box
+membership. Establishing the normalized-polar hypotheses from an arbitrary
+packing, instantiating the theorem on the checked tree, and formalizing the
+main-order exclusions remain outstanding.
 -/
 
 namespace CirclePacking

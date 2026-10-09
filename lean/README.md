@@ -147,20 +147,22 @@ disks are pairwise separated in the certified cyclic order.
 
 `nineReplayTree_excludes_scaled_configuration` now composes this leaf result
 through an arbitrary replayed split tree. It follows the configuration into
-one child at every cut and through each contractor, provided the contractor
-preserves box membership and the boxes retain ordered endpoints. The remaining
-bridge is to prove those contractor and interval invariants from the
-nine-circle geometry and concrete certificate, then instantiate this theorem
-on the checked tree.
+one child at every cut. The theorem derives contractor preservation from
+pairwise separation, radius lower bounds, and the triangle inequality: each
+contractor lower bound is at most the corresponding scaled center radius, and
+the finite maximum used by the checker preserves that inequality. Box endpoint
+ordering follows from membership itself. The remaining bridge is to establish
+the normalized-polar hypotheses for an arbitrary packing and instantiate the
+theorem on the concrete checked tree.
 
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
 non-overlap turns this into a directed angle-gap bound; and summing those
 bounds around any closed walk contradicts a strictly negative total. The
-remaining nine-circle work is to derive contractor preservation and ordered
-box invariants from an arbitrary packing, instantiate the recursive theorem
-on the replayed tree, and cover the main-order angle-barrier cases. The
-concrete radial tree and those main-order cases also remain to be replayed.
+remaining nine-circle work is to establish the normalized-polar hypotheses
+from an arbitrary packing, instantiate the recursive theorem on the replayed
+tree, and cover the main-order angle-barrier cases. The concrete radial tree
+and those main-order cases also remain to be replayed.
 
 The radial tree, angle-barrier certificates, and the analytic connection for
 the alternate nine-circle cycle are therefore not yet fully replayed by Lean.

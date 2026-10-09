@@ -550,7 +550,7 @@ noncomputable def nineScaledBoxContains (scale : ℝ) (box : NineRadialBox)
       radial i ≤ (box[i.1]!.2 : ℝ) / scale
 
 theorem nineSetHi_getElem
-    {box : NineRadialBox} {axis cut : ℕ} (haxis : axis < 9)
+    {box : NineRadialBox} {axis cut : ℕ}
     (hsize : box.size = 9) (i : Fin 9) :
     (nineSetHi box axis cut)[i.1]! =
       if axis = i.1 then (box[i.1]!.1, cut) else box[i.1]! := by
@@ -563,7 +563,7 @@ theorem nineSetHi_getElem
     rw [← getElem!_pos box i.1 hi]
 
 theorem nineSetLo_getElem
-    {box : NineRadialBox} {axis cut : ℕ} (haxis : axis < 9)
+    {box : NineRadialBox} {axis cut : ℕ}
     (hsize : box.size = 9) (i : Fin 9) :
     (nineSetLo box axis cut)[i.1]! =
       if axis = i.1 then (cut, box[i.1]!.2) else box[i.1]! := by
@@ -586,14 +586,14 @@ theorem nineSetHi_preserves_scaledBoxContains
   · have hi : i = ⟨axis, haxis⟩ := Fin.ext h
     subst i
     have hp := hcontains ⟨axis, haxis⟩
-    have hmodify := nineSetHi_getElem (cut := cut) haxis hsize ⟨axis, haxis⟩
-    simp only [if_pos rfl] at hmodify
+    have hmodify := nineSetHi_getElem (cut := cut) hsize ⟨axis, haxis⟩
+    simp only at hmodify
     rw [hmodify]
     constructor
     · exact hp.1
     · exact hcut
   · have hp := hcontains i
-    have hmodify := nineSetHi_getElem (cut := cut) haxis hsize i
+    have hmodify := nineSetHi_getElem (cut := cut) hsize i
     have hnot : axis ≠ i.1 := fun heq => h heq.symm
     rw [if_neg hnot] at hmodify
     rw [hmodify]
@@ -610,18 +610,195 @@ theorem nineSetLo_preserves_scaledBoxContains
   · have hi : i = ⟨axis, haxis⟩ := Fin.ext h
     subst i
     have hp := hcontains ⟨axis, haxis⟩
-    have hmodify := nineSetLo_getElem (cut := cut) haxis hsize ⟨axis, haxis⟩
-    simp only [if_pos rfl] at hmodify
+    have hmodify := nineSetLo_getElem (cut := cut) hsize ⟨axis, haxis⟩
+    simp only at hmodify
     rw [hmodify]
     constructor
     · exact hcut
     · exact hp.2
   · have hp := hcontains i
-    have hmodify := nineSetLo_getElem (cut := cut) haxis hsize i
+    have hmodify := nineSetLo_getElem (cut := cut) hsize i
     have hnot : axis ≠ i.1 := fun heq => h heq.symm
     rw [if_neg hnot] at hmodify
     rw [hmodify]
     exact hp
+
+theorem nineScaledBoxContains_ordered
+    {scale : ℝ} {box : NineRadialBox} {radial : Fin 9 → ℝ}
+    (hscale : 0 < scale)
+    (hcontains : nineScaledBoxContains scale box radial) :
+    ∀ i : Fin 9, box[i.1]!.1 ≤ box[i.1]!.2 := by
+  intro i
+  have hbounds := hcontains i
+  have hradial : (box[i.1]!.1 : ℝ) / scale ≤
+      (box[i.1]!.2 : ℝ) / scale := hbounds.1.trans hbounds.2
+  have hordered : (box[i.1]!.1 : ℝ) ≤ (box[i.1]!.2 : ℝ) :=
+    (div_le_div_iff_of_pos_right hscale).mp hradial
+  exact_mod_cast hordered
+
+theorem nineContractPair_lowerBound
+    {scale : ℝ} {radii : Array ℕ} {box : NineRadialBox}
+    {theta radial diskRadius : Fin 9 → ℝ}
+    (hscale : 0 < scale)
+    (hcontains : nineScaledBoxContains scale box radial)
+    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradiusLower : ∀ i : Fin 9,
+      (radii[i.1]! : ℝ) / scale ≤ diskRadius i)
+    (hseparated : ∀ i j : Fin 9, i ≠ j →
+      (diskRadius i + diskRadius j) ^ 2 ≤ pointNorm
+        ((polarPoint (radial i) (theta i)).1 -
+            (polarPoint (radial j) (theta j)).1,
+         (polarPoint (radial i) (theta i)).2 -
+            (polarPoint (radial j) (theta j)).2) ^ 2)
+    (i j : Fin 9) (hne : i ≠ j) :
+    ((radii[i.1]! + radii[j.1]! : ℕ) : ℝ) -
+        (box[j.1]!.2 : ℝ) ≤ scale * radial i := by
+  have hscale0 : 0 ≤ scale := le_of_lt hscale
+  have hradiusPos (k : Fin 9) : 0 ≤ diskRadius k := by
+    have hnonneg : 0 ≤ (radii[k.1]! : ℝ) / scale :=
+      div_nonneg (Nat.cast_nonneg _) hscale0
+    exact hnonneg.trans (hradiusLower k)
+  have hdist : diskRadius i + diskRadius j ≤ pointNorm
+      ((polarPoint (radial i) (theta i)).1 -
+          (polarPoint (radial j) (theta j)).1,
+       (polarPoint (radial i) (theta i)).2 -
+          (polarPoint (radial j) (theta j)).2) :=
+    (sq_le_sq₀ (add_nonneg (hradiusPos i) (hradiusPos j))
+      (pointNorm_nonneg _)).mp (hseparated i j hne)
+  have hnormI : pointNorm (polarPoint (radial i) (theta i)) = radial i :=
+    pointNorm_polarPoint (le_of_lt (hradialPos i))
+  have hnormJ : pointNorm (polarPoint (radial j) (theta j)) = radial j :=
+    pointNorm_polarPoint (le_of_lt (hradialPos j))
+  have htri := pointNorm_triangle
+    (polarPoint (radial i) (theta i)) (polarPoint (radial j) (theta j))
+  have hcenters : diskRadius i + diskRadius j ≤ radial i + radial j := by
+    rw [← hnormI, ← hnormJ]
+    exact hdist.trans htri
+  have hri : (radii[i.1]! : ℝ) ≤ scale * diskRadius i := by
+    simpa [mul_comm] using (div_le_iff₀ hscale).mp (hradiusLower i)
+  have hrj : (radii[j.1]! : ℝ) ≤ scale * diskRadius j := by
+    simpa [mul_comm] using (div_le_iff₀ hscale).mp (hradiusLower j)
+  have hscaledCenters :
+      ((radii[i.1]! + radii[j.1]! : ℕ) : ℝ) ≤
+        scale * (radial i + radial j) := by
+    calc
+      ((radii[i.1]! + radii[j.1]! : ℕ) : ℝ) ≤
+        scale * (diskRadius i + diskRadius j) := by
+        simpa [Nat.cast_add, mul_add] using add_le_add hri hrj
+      _ ≤ scale * (radial i + radial j) :=
+        mul_le_mul_of_nonneg_left hcenters hscale0
+  have hupper := (le_div_iff₀ hscale).mp (hcontains j).2
+  nlinarith
+
+theorem nineContractCoordinate_le_scaled_radial
+    {scale : ℝ} {radii : Array ℕ} {box : NineRadialBox}
+    {theta radial diskRadius : Fin 9 → ℝ}
+    (hscale : 0 < scale)
+    (hcontains : nineScaledBoxContains scale box radial)
+    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradiusLower : ∀ i : Fin 9,
+      (radii[i.1]! : ℝ) / scale ≤ diskRadius i)
+    (hseparated : ∀ i j : Fin 9, i ≠ j →
+      (diskRadius i + diskRadius j) ^ 2 ≤ pointNorm
+        ((polarPoint (radial i) (theta i)).1 -
+            (polarPoint (radial j) (theta j)).1,
+         (polarPoint (radial i) (theta i)).2 -
+            (polarPoint (radial j) (theta j)).2) ^ 2)
+    (i : Fin 9) :
+    (nineContractCoordinate radii box i.1 : ℝ) ≤ scale * radial i := by
+  let update : ℕ → ℕ → ℕ := fun lower j =>
+    if i.1 == j then lower else
+      max lower (radii[i.1]! + radii[j]! - (box[j]!).2)
+  have hfold : ∀ (entries : List ℕ) (initial : ℕ),
+      (initial : ℝ) ≤ scale * radial i →
+      (∀ j, j ∈ entries → i.1 ≠ j →
+        ((radii[i.1]! + radii[j]! - (box[j]!).2 : ℕ) : ℝ) ≤
+          scale * radial i) →
+      ((entries.foldl update initial : ℕ) : ℝ) ≤ scale * radial i := by
+    intro entries
+    induction entries with
+    | nil =>
+        intro initial hinitial _
+        simpa using hinitial
+    | cons j rest ih =>
+        intro initial hinitial hvalues
+        simp only [List.foldl_cons]
+        apply ih
+        · by_cases hij : i.1 = j
+          · simpa [update, hij] using hinitial
+          · have hvalue := hvalues j (by simp) hij
+            have hmax : ((max initial
+                (radii[i.1]! + radii[j]! - (box[j]!).2) : ℕ) : ℝ) ≤
+                  scale * radial i := by
+              exact_mod_cast (max_le hinitial hvalue)
+            simpa [update, hij] using hmax
+        · intro k hk hne
+          exact hvalues k (by simp [hk]) hne
+  have hbaseLower : (box[i.1]!.1 : ℝ) ≤ scale * radial i := by
+    simpa [mul_comm] using (div_le_iff₀ hscale).mp (hcontains i).1
+  have hbaseNonneg : 0 ≤ scale * radial i :=
+    mul_nonneg (le_of_lt hscale) (le_of_lt (hradialPos i))
+  have hbase : ((max 0 (box[i.1]!.1) : ℕ) : ℝ) ≤ scale * radial i := by
+    exact_mod_cast (max_le hbaseNonneg hbaseLower)
+  have hvalues : ∀ j, j ∈ List.range 9 → i.1 ≠ j →
+      ((radii[i.1]! + radii[j]! - (box[j]!).2 : ℕ) : ℝ) ≤
+        scale * radial i := by
+    intro j hj hne
+    have hjlt : j < 9 := List.mem_range.mp hj
+    let jFin : Fin 9 := ⟨j, hjlt⟩
+    have hneq : i ≠ jFin := by
+      intro heq
+      apply hne
+      simpa [jFin] using congrArg Fin.val heq
+    have hraw := nineContractPair_lowerBound hscale hcontains hradialPos
+      hradiusLower hseparated i jFin hneq
+    have hraw' : ((radii[i.1]! + radii[j]! : ℕ) : ℝ) -
+        (box[j]!.2 : ℝ) ≤ scale * radial i := by
+      simpa [jFin] using hraw
+    by_cases hupper : (box[j]!).2 ≤ radii[i.1]! + radii[j]!
+    · rw [Nat.cast_sub hupper]
+      exact hraw'
+    · have hzero : radii[i.1]! + radii[j]! - (box[j]!).2 = 0 := by
+        omega
+      simp [hzero]
+      exact le_of_lt (mul_pos hscale (hradialPos i))
+  have hresult := hfold (List.range 9) (max 0 (box[i.1]!.1)) hbase hvalues
+  simpa [nineContractCoordinate, update] using hresult
+
+theorem nineContract_getElem
+    {radii : Array ℕ} {box : NineRadialBox} (i : Fin 9) :
+    (nineContract radii box)[i.1]! =
+      (nineContractCoordinate radii box i.1, box[i.1]!.2) := by
+  unfold nineContract
+  rw [getElem!_pos _ i.1 (by simp)]
+  simp
+
+theorem nineContract_preserves_scaledBoxContains
+    {scale : ℝ} {radii : Array ℕ} {box : NineRadialBox}
+    {theta radial diskRadius : Fin 9 → ℝ}
+    (hscale : 0 < scale)
+    (hcontains : nineScaledBoxContains scale box radial)
+    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradiusLower : ∀ i : Fin 9,
+      (radii[i.1]! : ℝ) / scale ≤ diskRadius i)
+    (hseparated : ∀ i j : Fin 9, i ≠ j →
+      (diskRadius i + diskRadius j) ^ 2 ≤ pointNorm
+        ((polarPoint (radial i) (theta i)).1 -
+            (polarPoint (radial j) (theta j)).1,
+         (polarPoint (radial i) (theta i)).2 -
+            (polarPoint (radial j) (theta j)).2) ^ 2) :
+    nineScaledBoxContains scale (nineContract radii box) radial := by
+  intro i
+  have hget := nineContract_getElem (radii := radii) (box := box) i
+  rw [hget]
+  constructor
+  · have hcoordinate := nineContractCoordinate_le_scaled_radial
+      hscale hcontains hradialPos hradiusLower hseparated i
+    have hcoordinate' : (nineContractCoordinate radii box i.1 : ℝ) ≤
+        radial i * scale := by
+      simpa [mul_comm] using hcoordinate
+    exact (div_le_iff₀ hscale).2 hcoordinate'
+  · exact (hcontains i).2
 
 theorem nineReplayTree_excludes_scaled_configuration
     {cert : NineCircleCertificate} {tree : NineCycleTree}
@@ -630,12 +807,6 @@ theorem nineReplayTree_excludes_scaled_configuration
     (hsize : box.size = 9)
     (hscale : 0 < (cert.scale : ℝ))
     (hcontains : nineScaledBoxContains (cert.scale : ℝ) box radial)
-    (hcontractor : ∀ currentBox,
-      nineScaledBoxContains (cert.scale : ℝ) currentBox radial →
-        nineScaledBoxContains (cert.scale : ℝ)
-          (nineContract cert.radiiLower currentBox) radial)
-    (hboxOrdered : ∀ (currentBox : NineRadialBox), ∀ i : Fin 9,
-      currentBox[i.1]!.1 ≤ currentBox[i.1]!.2)
     (hradialPos : ∀ i : Fin 9, 0 < radial i)
     (hradiusLower : ∀ i : Fin 9,
       (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤ diskRadius i)
@@ -649,12 +820,20 @@ theorem nineReplayTree_excludes_scaled_configuration
     (hthetaLo : ∀ i : Fin 9, 0 ≤ theta i)
     (hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi) :
     False := by
+  have hcontractor : ∀ currentBox,
+      nineScaledBoxContains (cert.scale : ℝ) currentBox radial →
+        nineScaledBoxContains (cert.scale : ℝ)
+          (nineContract cert.radiiLower currentBox) radial := by
+    intro currentBox hcurrent
+    exact nineContract_preserves_scaledBoxContains hscale hcurrent
+      hradialPos hradiusLower hseparated
   induction tree generalizing box with
   | leaf edges =>
       change nineLeafSpec cert (nineContract cert.radiiLower box) edges at htree
+      have hleafContains := hcontractor box hcontains
       exact nineLeafSpec_excludes_polar_configuration htree hscale
-        (hboxOrdered _)
-        (hcontractor box hcontains)
+        (nineScaledBoxContains_ordered hscale hleafContains)
+        hleafContains
         hradialPos hradiusLower hseparated hsorted hthetaLo hthetaHi
   | split axis cut left right ihLeft ihRight =>
       simp only [nineReplayTreeSpec] at htree
