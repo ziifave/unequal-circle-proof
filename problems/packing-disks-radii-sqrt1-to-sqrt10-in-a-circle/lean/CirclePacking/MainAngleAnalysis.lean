@@ -908,6 +908,26 @@ theorem mainBarrierB_antitone_t_on_ranges
   · have hlt : t₁ < t₂ := lt_of_le_of_ne h12 heq
     exact (hanti ht₁ ht₂ hlt).le
 
+theorem mainBarrierB_strictAnti_t_on_ranges
+    {R t₁ t₂ : ℝ} (hR : R ∈ mainBarrierRadiusRange)
+    (ht₁ : t₁ ∈ mainBarrierTRange) (ht₂ : t₂ ∈ mainBarrierTRange)
+    (h12 : t₁ < t₂) : mainBarrierB t₂ R < mainBarrierB t₁ R := by
+  let f : ℝ → ℝ := fun s => mainBarrierB s R
+  have hcont : ContinuousOn f mainBarrierTRange := by
+    intro s hs
+    have hderiv := mainBarrierB_deriv_neg_on_ranges hR hs
+    have hdiff : DifferentiableAt ℝ f s :=
+      differentiableAt_of_deriv_ne_zero (by
+        change deriv (fun x : ℝ => mainBarrierB x R) s ≠ 0
+        exact ne_of_lt hderiv)
+    exact hdiff.continuousAt.continuousWithinAt
+  have hanti : StrictAntiOn f mainBarrierTRange := by
+    apply strictAntiOn_of_deriv_neg (convex_Icc 0.8588 1.1265) hcont
+    intro s hs
+    apply mainBarrierB_deriv_neg_on_ranges hR
+    exact interior_subset hs
+  exact hanti ht₁ ht₂ h12
+
 theorem mainBarrierA_strictAnti_R_on_ranges
     {t R₁ R₂ : ℝ} (ht : t ∈ mainBarrierTRange)
     (hR₁ : R₁ ∈ mainBarrierGlobalRadiusRange)
@@ -1083,6 +1103,74 @@ theorem mainBarrierA_mono_t_on_ranges
   have h6 := mainAlpha6_mono_t_on_ranges hR ht₁ ht₂ h12
   unfold mainBarrierA
   linarith
+
+private theorem main_angle_no_two_roots_if_radius_lt
+    {t₁ t₂ R₁ R₂ : ℝ}
+    (hR₁ : R₁ ∈ mainBarrierRadiusRange)
+    (hR₂ : R₂ ∈ mainBarrierRadiusRange)
+    (ht₁ : t₁ ∈ mainBarrierTRange)
+    (ht₂ : t₂ ∈ mainBarrierTRange)
+    (hR₁₂ : R₁ < R₂)
+    (hA₁ : mainBarrierA t₁ R₁ = 2 * Real.pi)
+    (hB₁ : mainBarrierB t₁ R₁ = 2 * Real.pi)
+    (hA₂ : mainBarrierA t₂ R₂ = 2 * Real.pi)
+    (hB₂ : mainBarrierB t₂ R₂ = 2 * Real.pi) : False := by
+  have hR₁global : R₁ ∈ mainBarrierGlobalRadiusRange := by
+    constructor
+    · linarith [hR₁.1]
+    · exact hR₁.2
+  have hR₂global : R₂ ∈ mainBarrierGlobalRadiusRange := by
+    constructor
+    · linarith [hR₂.1]
+    · exact hR₂.2
+  have hAdec := mainBarrierA_strictAnti_R_on_ranges ht₁ hR₁global hR₂global hR₁₂
+  have hAatR₂ : mainBarrierA t₁ R₂ < 2 * Real.pi := by
+    rw [← hA₁]
+    exact hAdec
+  have ht₁₂ : t₁ < t₂ := by
+    by_contra hnot
+    have ht₂₁ : t₂ ≤ t₁ := le_of_not_gt hnot
+    have hAmono := mainBarrierA_mono_t_on_ranges hR₂ ht₂ ht₁ ht₂₁
+    rw [hA₂] at hAmono
+    linarith
+  have hBdecT := mainBarrierB_strictAnti_t_on_ranges hR₂ ht₁ ht₂ ht₁₂
+  have hBdecR := mainBarrierB_strictAnti_R_on_ranges ht₁ hR₁global hR₂global hR₁₂
+  rw [hB₂] at hBdecT
+  rw [hB₁] at hBdecR
+  linarith
+
+/-- The simultaneous angle equations have at most one solution in the
+certified rectangle. This follows from the replayed strict radial decrease
+of both barriers, weak increase of `A` in `t`, and strict decrease of `B` in
+`t`. -/
+theorem main_angle_critical_pair_unique
+    {t₁ t₂ R₁ R₂ : ℝ}
+    (hR₁ : R₁ ∈ mainBarrierRadiusRange)
+    (hR₂ : R₂ ∈ mainBarrierRadiusRange)
+    (ht₁ : t₁ ∈ mainBarrierTRange)
+    (ht₂ : t₂ ∈ mainBarrierTRange)
+    (hA₁ : mainBarrierA t₁ R₁ = 2 * Real.pi)
+    (hB₁ : mainBarrierB t₁ R₁ = 2 * Real.pi)
+    (hA₂ : mainBarrierA t₂ R₂ = 2 * Real.pi)
+    (hB₂ : mainBarrierB t₂ R₂ = 2 * Real.pi) : t₁ = t₂ ∧ R₁ = R₂ := by
+  have hR : R₁ = R₂ := by
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with hlt | hgt
+    · exact False.elim (main_angle_no_two_roots_if_radius_lt
+        hR₁ hR₂ ht₁ ht₂ hlt hA₁ hB₁ hA₂ hB₂)
+    · exact False.elim (main_angle_no_two_roots_if_radius_lt
+        hR₂ hR₁ ht₂ ht₁ hgt hA₂ hB₂ hA₁ hB₁)
+  subst R₂
+  have ht : t₁ = t₂ := by
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with hlt | hgt
+    · have hB := mainBarrierB_strictAnti_t_on_ranges hR₁ ht₁ ht₂ hlt
+      rw [hB₁, hB₂] at hB
+      exact (lt_irrefl _ hB)
+    · have hB := mainBarrierB_strictAnti_t_on_ranges hR₁ ht₂ ht₁ hgt
+      rw [hB₁, hB₂] at hB
+      exact (lt_irrefl _ hB)
+  exact ⟨ht, rfl⟩
 
 /-- The root comparison theorem specialized to the certified angular rectangle.
 Both `t` and `R` monotonicity branches are discharged by Lean on the certified
