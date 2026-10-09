@@ -51,13 +51,19 @@ We study the minimum radius of a circle containing fifteen pairwise interior-dis
   R_0=1+\sqrt{1+\bigl(2+\cot(\pi/5)\bigr)^2}
      =4.521356964706164\ldots
 \]
-and a computer-assisted lower-bound certificate. A radial threshold reduces every putative packing with radius at most $R_0$ to four possible inner/outer counts. For each of the 760 dihedral classes of their cyclic binary words, an integer difference-constraint test either excludes the class or passes it to exact rational interval refinement. Refinement leaves one cyclic type, $(I,O,O)^5$, and confines its five free center radii to $[1.68,1.72]$. An explicit local angular inequality then forces the symmetric candidate radius vector and excludes every smaller container. The certificate uses integer and rational arithmetic, including a Taylor remainder bound for the trigonometric table. Reproduction instructions and the full verifier are supplied with the manuscript.
+and a computer-assisted candidate lower-bound certificate. A radial threshold reduces every putative packing with radius at most $R_0$ to four possible inner/outer counts. For each of the 760 dihedral classes of their cyclic binary words, an integer difference-constraint test either excludes the class or passes it to exact rational interval refinement. Refinement leaves one cyclic type, $(I,O,O)^5$, and confines its five free center radii to $[1.68,1.72]$. An explicit local angular inequality then forces the symmetric candidate radius vector and excludes every smaller container. The certificate uses integer and rational arithmetic, including an explicit Taylor remainder bound for the trigonometric table. The repository contains a serialized subdivision certificate, a separate rational checker, and a one-command replay.
 \end{abstract}
 
 \paragraph{Verification status.}
-The computational certificate reproduced with the accompanying source bundle. The proof is computer-assisted and should be read together with that verifier. The manuscript and implementation have not yet received independent formal or peer review.
+The finite computations and the separate certificate checker were successfully replayed with the accompanying source bundle. This is a candidate computer-assisted proof, not an independently formalized result. The geometric reductions and the implementation have not yet received independent mathematical or peer review.
 
-\section{Problem and result}
+\section{Introduction}\label{sec:intro}
+
+Packing congruent disks in a circle is equivalent to maximizing the minimum distance among a fixed number of points in a disk. Graham proved the small cases through seven points, and Pirl treated the circle-packing cases through ten. Later computational work by Graham, Lubachevsky, Nurmela, and Ostergård tabulated best-known configurations and described the configurations for 12 through 20 disks as conjecturally optimal; their 15-disk entry is the familiar five-inner, ten-outer arrangement \cite{Graham1968,Pirl1969,GrahamEtAl1998}. Ekanayake and LaFountain subsequently proved the 14-disk case and reported that the proved cases then known were $N\le14$ and $N=19$ \cite{EF2024}. Thus the candidate addressed here is historically important, but its status must be stated carefully: the theorem below is supported by the explicit certificate and replay in this manuscript and still calls for independent checking.
+
+Our proof strategy does not assume that a minimizing packing has fivefold symmetry. It first moves the outer centers to the container wall, then enumerates every cyclic inner/outer word and every compatible radial bin using necessary angular inequalities. The finite stage uses exact integer difference constraints and rational interval subdivision; only the final surviving cyclic type is handled by a local analytic inequality. This combines a global finite reduction with a symmetry-free local argument. The finite certificate only rejects a radial box when a necessary condition fails; a surviving box is not treated as evidence that a packing exists.
+
+\section{Problem and main result}
 
 Let $p_1,\ldots,p_{15}\in\mathbb R^2$ be the centers of fifteen unit disks. A circle of radius $R$ centered at the origin contains the disks without interior overlap exactly when
 \begin{equation}\label{eq:feas}
@@ -73,7 +79,7 @@ The minimum enclosing radius for fifteen pairwise interior-disjoint unit disks i
 \]
 \end{theorem}
 
-The upper bound comes from the familiar $D_5$ arrangement with five inner disks and ten outer disks, which is listed among the best-known packings in the standard compilation \cite{Packomania}. A 2024 proof for fourteen disks develops a geometric reduction based on tight partitions \cite{EF2024}; here the fifteen-disk lower bound is reduced to finitely checkable angular constraints and a local analytic inequality. The finite computation never asserts that a surviving radius box contains a packing: it only prunes a box when a necessary condition for a packing fails.
+The upper bound comes from the familiar $D_5$ arrangement with five inner disks and ten outer disks, listed among the best-known configurations \cite{GrahamEtAl1998,Packomania}. The lower-bound strategy is independent of the tight-partition reduction used for fourteen disks \cite{EF2024}.
 
 \section{An exact packing of radius \texorpdfstring{$R_0$}{R0}}\label{sec:construction}
 
@@ -252,7 +258,7 @@ Order the centers by nondecreasing polar angle and lift their angles to $\theta_
 \[
  C_{ij}=\max\{c(x,y):x\in X_i,\ y\in X_j\}.
 \]
-The maximum is obtained at the four interval corners by \cref{lem:corners}. The limiting cases involving radius zero are treated separately by radial-distance or endpoint monotonicity, as implemented in the verifier.
+The maximum is obtained at the four interval corners by \cref{lem:corners}. The exact zero-radius case and positive intervals whose closure touches zero are handled separately; the endpoint rules and their bin ownership are proved in \cref{sec:bins}.
 
 If $C_{ij}<1$, put $\gamma_{ij}=\arccos C_{ij}$. Every feasible angle assignment must satisfy
 \begin{equation}\label{eq:anglepair}
@@ -306,11 +312,26 @@ For $x\ge0$, let $P_{18}(x)=\sum_{j=0}^{9}(-1)^j x^{2j}/(2j)!$. Taylor's theorem
 \begin{equation}\label{eq:coslower}
  \cos x\ge P_{18}(x)-\frac{x^{19}}{19!}.
 \end{equation}
-The explicit remainder subtraction is essential: the even Taylor polynomial alone is not used as a lower bound. For an interval pair with corner maximum $C_{ij}$, the integer $q$ is chosen so that the right side of \eqref{eq:coslower} at $x=q/2800$ is at least $C_{ij}$. Since cosine decreases on $[0,\pi]$, this certifies $q/2800\le\gamma_{ij}$. All comparisons are performed with exact fractions.
+The explicit remainder subtraction is essential: the even Taylor polynomial alone is not used as a lower bound. For an interval pair with corner maximum $C_{ij}$, the integer $q$ is chosen so that the right side of \eqref{eq:coslower} at $x=q/2800$ is at least $C_{ij}$. Since cosine decreases on $[0,\pi]$, this certifies $q/2800\le\gamma_{ij}$. The integer range is certified by exact Machin-series bounds: \(8790/2800<\pi<22/7\), so every tested angle is below $\pi$ and $2\pi<44/7$. All comparisons are performed with exact fractions.
 
 \section{Exhaustive finite certificate}\label{sec:certificate}
 
 The cyclic inner/outer word is defined up to rotation and reflection, because the disks are congruent and the container is rotationally and reflectively symmetric. Burnside's lemma gives 111, 185, 232, and 232 classes for the four inner counts in \eqref{eq:counts}, for a total of 760.
+
+\subsection{Half-open radial bins and the origin}\label{sec:bins}
+
+The finite enumerators assign each radius to a half-open owner bin: every rational cutpoint belongs to the bin on its right. The first owner bin is split into the singleton $\{0\}$ and the positive interval $0<r<1/2$. The remaining owner bins begin at $1/2$, $1$, $3/2$, $8/5$, $5/3$, and $2$ (with the stated further subdivisions in the twelve-bin stage); the last inner owner is truncated at $L$. The arrays used for interval bounds are closed rational hulls of these owner bins. Consequently, the outward bounds may include shared endpoints, but the discrete enumeration neither loses an endpoint nor relies on assigning it to two different cases. At an exact bisection, the two closed child hulls cover the parent, including their common midpoint.
+
+This convention justifies the early count tests. The labels counted by `small` have actual radii strictly below $1$, so `small>1` gives two centers with radial sum strictly less than $2$. A first-bin center and a center in $[1,3/2)$ also have sum strictly less than $2$. The labels counted by `high` and `high2` have lower endpoints $5/3$ and $2$, respectively, so the rank bounds in the radial reduction are preserved at equality.
+
+An exact-origin center has no polar angle. The graph therefore places no angular edges between it and other centers. Instead, since its distance to a center of radius $s$ is exactly $s$, every other center must have radius at least $2$. The refined enumerators enforce this directly: all other inner labels must be in bins with lower endpoint at least $2$ (label $6$ in the eight-bin grid and label $8$ in the twelve-bin grid); the wall-pushed outer centers already have radius $b_0>2$.
+
+For the positive first-bin type, $0<x<1/2$, the closed hull touches zero but does not represent the origin. When the other interval has upper endpoint at most $2$, the cosine expression $c(x,y)$ is increasing in each variable on the relevant positive rectangle, since
+\[
+\partial_x c=\frac{x^2-y^2+4}{2x^2y}\ge0,\qquad
+\partial_y c=\frac{y^2-x^2+4}{2xy^2}\ge0.
+\]
+Thus the value at the upper endpoints is a valid upper bound even as $x\downarrow0$. If the other interval extends above $2$, the verifier disables that angular edge. The exact-origin singleton is never subjected to this limiting-angle rule.
 
 \begin{figure}[htbp]
 \centering
@@ -334,7 +355,7 @@ The cyclic inner/outer word is defined up to rotation and reflection, because th
 \label{fig:bracelet}
 \end{figure}
 
-The finite verifier has four stages. First, it checks every positive entry in a fixed four-type angular table by exact rational arithmetic and applies its negative-cycle test to all 760 words. A word is not discarded by the separate analytic gap-capacity experiment. Second, the surviving words are refined over eight radial bins and then twelve radial bins, using the rank bounds in \cref{sec:radial}. Third, every remaining radial box is enumerated and split exactly until it is excluded by a pair-sum contradiction or a negative cycle. Fourth, a local analytic inequality closes the only remaining type and radius region.
+The finite verifier has four stages. First, it checks every positive entry in a fixed four-type angular table by exact rational arithmetic and applies its negative-cycle test to all 760 words. A word is not discarded by the separate analytic gap-capacity experiment. Second, the surviving words are refined over eight radial bins and then twelve radial bins, using the rank bounds in \cref{sec:radial}. Third, every remaining radial box is enumerated and split exactly until it is closed by a pair-sum contradiction, a negative cycle, or (for the canonical type only) containment in the local region. Fourth, a local analytic inequality closes the only remaining type and radius region.
 \cref{fig:certificate-flow} lays out these certified stages and their counts.
 
 \begin{table}[ht]
@@ -379,7 +400,7 @@ Final types & $5I+10O$ canonical, $5I+10O$ noncanonical (2), $6I+9O$ (1) & 4 \\
 \label{fig:certificate-flow}
 \end{figure}
 
-The exact rational subdivision closes the two noncanonical $5I+10O$ words from 47 and 38 coarse radial boxes, respectively. Their branch-and-bound trees contain 1,641 and 646 nodes. The $6I+9O$ word has three coarse boxes; bisecting the unique radius interval below $1/2$ gives six leaves, three excluded by pair-sum contradictions and three by negative cycles. \Cref{fig:branch-tree} shows the generic exact subdivision logic.
+The exact rational subdivision closes the two noncanonical $5I+10O$ words from 47 and 38 coarse radial boxes, respectively. Their branch-and-bound trees contain 1,641 and 646 nodes. The $6I+9O$ word has three coarse boxes. Splitting its unique first-bin radius into $0<r<1/4$, $1/4\le r<1/2$, and the exact origin gives nine leaves: six pair-sum contradictions and three negative cycles. \Cref{fig:branch-tree} shows the generic exact subdivision logic.
 
 \begin{figure}[htbp]
 \centering
@@ -407,7 +428,7 @@ For the canonical word $(I,O,O)^5$, 1,181 coarse radial boxes generate 56,573 se
 \]
 The local argument below excludes every point of that cube except the candidate radius vector. It does not assume that the five radii or the packing are symmetric.
 
-The complete data tables, branch rules, exact checkers, generated reports, and a one-command replay are in \url{research/fifteen_equal_completion/candidate_bundle/}. The run script asserts the orbit counts, the surviving word identities, all finite-tree counts, and the local rational inequalities.
+The complete data tables, branch rules, generated reports, and one-command replay are in the repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/dbc19b12b351bebaff1f249459b6da53bf409a8b/research/fifteen_equal_completion/candidate_bundle}{candidate-bundle snapshot pinned to commit \texttt{dbc19b12}}. The run script asserts the orbit counts, survivor identities, and finite-tree counts. It emits a 3.8 MB JSON certificate containing 1,266 exact subdivision roots, then \texttt{check\_exact\_certificate.py} independently verifies each bisection cover, pair-sum leaf, negative-cycle edge and weight, and local-region leaf using rational arithmetic. The checker also verifies the nine $6I+9O$ endpoint leaves. It compares its roots with \texttt{full\_residuals.txt}; completeness of the earlier coarse enumerations is established by exhaustive replay and count/set assertions, not by the serialized trees alone.
 
 \section{The local angular barrier}\label{sec:local}
 
@@ -549,9 +570,18 @@ bash run_all.sh
 All exclusion decisions use integers or rational fractions. The code's decimal output is diagnostic only. The replay is self-contained and records the branch counts and terminal reasons; independent reimplementation and peer review remain desirable for a result of this scope.
 
 \begin{thebibliography}{9}
+\bibitem{Graham1968}
+R. L. Graham, ``Sets of points with given minimum separation (Solution to Problem E1921),''
+\emph{American Mathematical Monthly} 75 (1968), 192--193.
+
 \bibitem{Pirl1969}
 U. Pirl, ``Der Mindestabstand von $n$ in der Einheitskreisscheibe gelegenen Punkten,''
 \emph{Mathematische Nachrichten} 40 (1969), 111--124.
+
+\bibitem{GrahamEtAl1998}
+R. L. Graham, B. D. Lubachevsky, K. J. Nurmela, and P. R. J. Ostergård,
+``Dense packings of congruent circles in a circle,'' \emph{Discrete Mathematics} 181 (1998), 139--154.
+\url{https://doi.org/10.1016/S0012-365X(97)00050-2}.
 
 \bibitem{EF2024}
 D. B. Ekanayake and D. J. LaFountain, ``Tight partitions for packing circles in a circle,''
