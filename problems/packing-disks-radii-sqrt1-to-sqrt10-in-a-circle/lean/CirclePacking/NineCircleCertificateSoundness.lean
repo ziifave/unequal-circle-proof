@@ -411,12 +411,12 @@ theorem nineCycleWeightTicks_scaled_sum
       have hcast : ((ninePiUpperTicks - edge.2.2 : ℕ) : ℝ) =
           (ninePiUpperTicks : ℝ) - edge.2.2 := by
         rw [Nat.cast_sub hle]
-      simp only [nineCycleWeightStep, nineCycleRealUpper, if_pos hdir,
+      simp only [nineCycleWeightStep, nineCycleRealUpper, ite_eq_left hdir,
         Int.cast_add, Int.ofNat_eq_natCast, Int.cast_natCast]
       rw [hcast]
       dsimp [tau]
       field_simp [show (nineAngleScale : ℝ) ≠ 0 by norm_num [nineAngleScale]]
-    · simp only [nineCycleWeightStep, nineCycleRealUpper, if_neg hdir,
+    · simp only [nineCycleWeightStep, nineCycleRealUpper, ite_eq_right hdir,
         Int.cast_sub, Int.ofNat_eq_natCast, Int.cast_natCast]
       field_simp [show (nineAngleScale : ℝ) ≠ 0 by norm_num [nineAngleScale]]
       ring
@@ -630,7 +630,7 @@ theorem nineSetHi_getElem
   rw [getElem!_pos (box.modify axis (fun interval => (interval.1, cut))) i.1
     (by simp [hsize])]
   rw [Array.getElem_modify (by simp [hsize])]
-  have hi : i.1 < box.size := by simpa [hsize] using i.isLt
+  have hi : i.1 < box.size := by simp [hsize]
   by_cases h : axis = i.1 <;> simp [h] <;>
     rw [← getElem!_pos box i.1 hi]
 
@@ -643,7 +643,7 @@ theorem nineSetLo_getElem
   rw [getElem!_pos (box.modify axis (fun interval => (cut, interval.2))) i.1
     (by simp [hsize])]
   rw [Array.getElem_modify (by simp [hsize])]
-  have hi : i.1 < box.size := by simpa [hsize] using i.isLt
+  have hi : i.1 < box.size := by simp [hsize]
   by_cases h : axis = i.1 <;> simp [h] <;>
     rw [← getElem!_pos box i.1 hi]
 
@@ -668,7 +668,7 @@ theorem nineSetHi_preserves_scaledBoxContains
   · have hp := hcontains i
     have hmodify := nineSetHi_getElem (axis := axis) (cut := cut) hsize i
     have hnot : axis ≠ i.1 := fun heq => h heq.symm
-    rw [if_neg hnot] at hmodify
+    rw [ite_eq_right hnot] at hmodify
     rw [hmodify]
     exact hp
 
@@ -693,7 +693,7 @@ theorem nineSetLo_preserves_scaledBoxContains
   · have hp := hcontains i
     have hmodify := nineSetLo_getElem (axis := axis) (cut := cut) hsize i
     have hnot : axis ≠ i.1 := fun heq => h heq.symm
-    rw [if_neg hnot] at hmodify
+    rw [ite_eq_right hnot] at hmodify
     rw [hmodify]
     exact hp
 

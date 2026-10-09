@@ -95,17 +95,17 @@ theorem pointPolarAngle_representation (p : Point) :
     dsimp
     split_ifs with h
     · rw [hnorm]
-      simpa [z] using Complex.norm_mul_cos_arg z
+      simp [z]
     · rw [Real.cos_add_two_pi, hnorm]
-      simpa [z] using Complex.norm_mul_cos_arg z
+      simp [z]
   have hsin : pointNorm p * Real.sin (pointPolarAngle p) = p.2 := by
     unfold pointPolarAngle
     dsimp
     split_ifs with h
     · rw [hnorm]
-      simpa [z] using Complex.norm_mul_sin_arg z
+      simp [z]
     · rw [Real.sin_add_two_pi, hnorm]
-      simpa [z] using Complex.norm_mul_sin_arg z
+      simp [z]
   have hpolar : polarPoint (pointNorm p) (pointPolarAngle p) = p := by
     apply Prod.ext
     · simpa [polarPoint] using hcos
@@ -153,7 +153,7 @@ theorem nineInitialBox_getElem
       (0, cert.radiusUpper - cert.radiiLower[i.1]!) := by
   unfold nineInitialBox
   rw [getElem!_pos _ i.1 (by simp [hsize])]
-  have hi : i.1 < cert.radiiLower.size := by simpa [hsize] using i.isLt
+  have hi : i.1 < cert.radiiLower.size := by simp [hsize]
   rw [getElem!_pos cert.radiiLower i.1 hi]
   simp
 

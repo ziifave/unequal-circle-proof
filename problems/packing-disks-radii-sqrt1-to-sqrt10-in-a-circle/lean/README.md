@@ -180,16 +180,29 @@ normalization. Other cyclic orders still require coverage.
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
 non-overlap turns this into a directed angle-gap bound; and summing those
 bounds around any closed walk contradicts a strictly negative total. The
-remaining nine-circle work is to instantiate the recursive theorem for all
-required cyclic orders and cover the main-order angle-barrier cases. The
-concrete radial tree and those main-order cases also remain to be replayed.
+alternate P/Q orders are connected to packing exclusions by the finite
+projection module described below. The main-order angle-barrier cases and the
+concrete radial tree remain to be replayed.
 
-The radial tree, angle-barrier certificates, and the analytic connection for
-the alternate nine-circle cycle are therefore not yet fully replayed by Lean.
-They remain checked by the exact Python composition verifier, so this is a
-verified foundation with one concrete finite payload replayed, not yet a Lean
-proof of global optimality. Build the focused global entry point with
-`lake build CirclePacking.GlobalOptimality`.
+`CirclePacking/AlternateOrderProjection.lean` now replays the finite order
+projection for the two residual sector-mask types. It bit-decodes the masks
+`(5,16,40,2)` and `(4,16,41,2)`, exhausts the sector-local permutations, and
+proves that deleting disk 1 leaves one of the two checked P/Q orders. Its
+`alternateCaseA_excluded_of_sector_permutations` and
+`alternateCaseB_excluded_of_sector_permutations` theorems compose this finite
+fact with the existing nine-circle packing exclusions. They assume that each
+sector list is a permutation of its decoded mask labels and that the full
+interleaved order is monotone in lifted polar angle. Deriving those premises
+from the global radial-tree terminal cases, replaying the main-order
+exclusions, and the final global assembly remain outstanding.
+
+The two alternate nine-circle certificates, their geometric soundness, and the
+finite P/Q order projection are replayed by Lean. The radial tree, the
+main-order angle-barrier certificates, and the derivation of the required
+sector-order hypotheses from the global terminal cases are still checked only
+by the exact Python composition verifier. This remains a partial Lean
+formalization, not yet a Lean proof of global optimality. Build the focused
+global entry point with `lake build CirclePacking.GlobalOptimality`.
 
 Build with:
 

@@ -223,13 +223,13 @@ theorem angular_cell_refuted_of_path_bounds
   intro r
   rw [hq r]
   by_cases hr : rowReverse r
-  · rw [if_pos hr, dot_reversePathQ7 hgap_sum, hgap]
+  · rw [ite_eq_left hr, dot_reversePathQ7 hgap_sum, hgap]
     change cert.lower r ≤ reversePathGap7 theta (rowI r) (rowJ r)
     have hpath := touch_angle_le_reversePathGap7
       (horder r) (hpositive _) (hpositive _)
       (hsep r) (hdelta r)
     exact le_trans (hlower r) hpath
-  · rw [if_neg hr, dot_forwardPathQ7, hgap]
+  · rw [ite_eq_right hr, dot_forwardPathQ7, hgap]
     change cert.lower r ≤ pathGap7 theta (rowI r) (rowJ r)
     have hpath := touch_angle_le_pathGap7
       (horder r) (hpositive _) (hpositive _)

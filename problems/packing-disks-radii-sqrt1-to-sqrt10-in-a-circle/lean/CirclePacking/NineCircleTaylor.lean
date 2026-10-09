@@ -111,7 +111,7 @@ theorem nineTaylorFold_quotient (ticks : Nat) (l : List Nat) (init : Int) :
       l.foldl (nineTaylorRealStep ticks)
         ((init : ℝ) / (nineTaylorDenominator : ℝ)) := by
   induction l generalizing init with
-  | nil => simp [nineTaylorRealStep]
+  | nil => simp
   | cons k rest ih =>
       simp only [List.foldl_cons]
       rw [ih (nineTaylorNumeratorStep ticks init k)]

@@ -39,7 +39,7 @@ theorem positive_stress_blocks_strict_direction
     simp_rw [Finset.sum_mul]
     rw [Finset.sum_comm]
     simp_rw [Finset.mul_sum]
-    simp [mul_assoc, mul_left_comm, mul_comm]
+    simp [mul_assoc, mul_comm]
   rw [hsum] at hobjective
   have hterm : ∀ e, cert.lambda e * dotProduct (cert.a e) v ≤ 0 := by
     intro e

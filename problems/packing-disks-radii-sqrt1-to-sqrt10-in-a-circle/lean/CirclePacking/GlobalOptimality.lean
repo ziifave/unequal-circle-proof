@@ -13,6 +13,7 @@ import CirclePacking.GlobalRadialBox
 import CirclePacking.NineCircleCertificate
 import CirclePacking.NineCircleGeometry
 import CirclePacking.NineCirclePackingSoundness
+import CirclePacking.AlternateOrderProjection
 
 /-!
 # Lean entry point for the global optimality proof
@@ -78,9 +79,15 @@ origin. Its `nineCertificate_excludes_polar_order` interface accepts
 explicit normalized polar coordinates independently of `Complex.arg`, which
 is used by `nineCertificate_excludes_cyclic_packing_order` to rotate a packing
 and normalize the angle origin while preserving containment and separation.
-Deriving the needed cyclic orders from arbitrary packings,
-covering the remaining order cases, replaying the main-order exclusions, and
-the final global assembly remain outstanding.
+`CirclePacking/AlternateOrderProjection.lean` replays the finite combinatorial
+projection for the four alternate sector assignments. It decodes their masks,
+enumerates all sector-local permutations, proves each projection after
+deleting disk 1 is P or Q, and composes that result with the existing packing
+exclusions. Thus, once the angular argument identifies the four sector lists
+and proves their monotone order, either Lean P/Q theorem excludes that case.
+Deriving those sector lists and their monotone angular order from the exported
+radial-tree terminal hypotheses, replaying the main-order exclusions, and the
+final global assembly remain outstanding.
 -/
 
 namespace CirclePacking

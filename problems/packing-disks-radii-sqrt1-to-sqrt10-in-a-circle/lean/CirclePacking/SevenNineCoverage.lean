@@ -235,7 +235,7 @@ lemma sevenNine_lower_of_packing
     have hu := sevenNine_upper_of_packing P hRadius j10
     norm_num [sevenNineRadius, sevenNineUpper, sevenNineLower, j10] at hp hu ⊢
     have hi' : ¬ (i.1 = 6) := hi
-    simp [sevenNineLower, hi'] at ⊢
+    simp [hi'] at ⊢
     nlinarith
 
 theorem sevenNine_packing_is_covered

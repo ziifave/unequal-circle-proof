@@ -27,7 +27,7 @@ theorem centerCosine_polar
     pointNorm_polarPoint (le_of_lt hb)
   unfold centerCosine
   rw [hpa, hpb]
-  simp only [polarPoint, Prod.fst, Prod.snd]
+  simp only [polarPoint]
   have hfactor :
       a * Real.cos α * (b * Real.cos β) +
         a * Real.sin α * (b * Real.sin β) =

@@ -124,7 +124,7 @@ theorem nineEdgeAngleValid_spec {cert : NineCircleCertificate}
     (h : nineEdgeAngleValid cert box edge = true) :
     nineEdgeAngleSpec cert box edge := by
   unfold nineEdgeAngleValid nineEdgeAngleSpec at *
-  simp only [Id.run, bind_pure_comp, pure_bind, decide_eq_true_eq] at h ⊢
+  simp only [Id.run] at h ⊢
   split_ifs at h ⊢ <;> try simp_all
   change (nineCornerPairs box[edge.1]! box[edge.2.1]!).all
       (fun xy => decide
