@@ -3,6 +3,6 @@
 .pytest_cache/
 __pycache__/
 *.pyc
-tools/bin/
-lean/.lake/
-lean/build/
+**/tools/bin/
+**/lean/.lake/
+**/lean/build/

@@ -1,46 +1,39 @@
-# Exact global optimality for ten unequal circles
+# Ten unequal circles in a circular container
 
-This repository contains a computer-assisted proof that the smallest radius
-of a circular container holding ten pairwise non-overlapping circles of
-radii $1,\sqrt2,\ldots,\sqrt{10}$ is the exact number $R_{\mathrm{crit}}$
-defined by two angular equations. The certified enclosure is
+This repository studies the smallest circle containing ten pairwise disjoint
+circles with radii `sqrt(1), sqrt(2), ..., sqrt(10)`. The work is grouped by
+the statement each package addresses:
 
-```text
-8.303468122111489 <= R_crit < 8.303468122111490
-```
+- [Global optimality](problems/packing-ten-unequal-circles-in-a-circle/README.md) proves
+  that the minimum container radius is the unique root of the certified angle
+  equations. It includes the manuscript, exact certificate replayers, Lean
+  development, and the reproducible proof composition.
+- [Algebraic identification of the critical radius](problems/ten-circle-critical-radius-algebraic-identification/README.md)
+  records the exact polynomial and root-isolation work for a candidate contact
+  configuration. This does not by itself prove global optimality.
 
-The lower bound is a complete rational radial and angular case analysis. Its
-remaining cases are closed by a seven-circle angle barrier and exact
-negative-cycle certificates for the exceptional orders. A matching ten-circle
-configuration proves attainability. The case tree covers radii up to its
-certified cap; the exclusion rules rule out every packing with radius below
-`R_crit`, while the constructed packing exists at `R_crit`. The proof and its
-computational trust boundary are described in the [English manuscript](paper/main.pdf), with
-source at [paper/main.tex](paper/main.tex).
-
-## Reproduce the proof
-
-From this directory, with `uv` installed:
+To replay the global-optimality proof from this repository root:
 
 ```bash
+cd problems/packing-ten-unequal-circles-in-a-circle
 uv run --locked python tools/verify_global_optimality_completion.py
 ```
 
-The replay writes
-`artifacts/global-optimality-completion-2026-10-09.json`, including the input
-SHA-256 manifest. The checker requires ordinary Python execution; it refuses
-`-O` and `-OO`, which would disable assertions in component verifiers. The
-certificate and report are fixed together with the manuscript in the Git
-commit containing this release.
+Each problem directory has its own README with scope, files, and reproduction
+instructions. The project environment and proof files live beside the result
+they support; this root README is the navigation page.
 
-Build the PDF with the bundled Tectonic executable:
+## Additional circle-packing files from the supplied ZIP
 
-```bash
-./tools/bin/tectonic --keep-logs --outdir paper paper/main.tex
-```
+The ZIP contained a separate family with **integer** disk radii `1, ..., n`;
+these are distinct from the `sqrt(1), ..., sqrt(10)` problem above. Its files
+are extracted into these directories:
 
-This is a computer-assisted proof, not an end-to-end theorem-prover
-formalization. Its trust boundary includes the replay code, Python's exact
-integer and rational arithmetic, and the hashed certificate inputs; the
-manuscript states the checks that connect the finite records to the geometric
-claims.
+- [Disks of radii 1 to 5](problems/packing-disks-radii-1-to-5-in-a-circle/README.md)
+- [Disks of radii 1 to 7](problems/packing-disks-radii-1-to-7-in-a-circle/README.md)
+- [Disks of radii 1 to 8](problems/packing-disks-radii-1-to-8-in-a-circle/README.md)
+- [Disks of radii 1 to 9](problems/packing-disks-radii-1-to-9-in-a-circle/README.md)
+- [Disks of radii 1 to 10](problems/packing-disks-radii-1-to-10-in-a-circle/README.md)
+- [15 equal circles: working and progress notes](problems/15-equal-circles-in-a-circle-working-notes/README.md)
+
+Original nested proof-bundle ZIPs are kept alongside their extracted files.
