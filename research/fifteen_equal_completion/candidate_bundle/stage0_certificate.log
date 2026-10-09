@@ -1,0 +1,5 @@
+inner=5 outer=10 total=111 analytic=0 graph=51 UNKNOWN=60
+inner=6 outer=9 total=185 analytic=0 graph=70 UNKNOWN=115
+inner=7 outer=8 total=232 analytic=0 graph=96 UNKNOWN=136
+inner=8 outer=7 total=232 analytic=0 graph=165 UNKNOWN=67
+stage0 certificate: 760 orbits, 382 excluded, 378 retained

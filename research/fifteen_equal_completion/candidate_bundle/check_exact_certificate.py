@@ -143,7 +143,7 @@ def check_node(node, box, inner, pattern, counts):
     raise AssertionError(("unknown node kind", kind))
 
 
-def check_special_cases(cases):
+def check_special_cases(cases, residual_assignments):
     pattern = "001001001001011"
     inner = [i for i, symbol in enumerate(pattern) if symbol == "1"]
     modes = {"POSITIVE_LOW", "POSITIVE_HIGH", "EXACT_ZERO"}
@@ -175,6 +175,7 @@ def check_special_cases(cases):
     assert len(seen) == 9
     assignments = {assignment for assignment, _ in seen}
     assert len(assignments) == 3
+    assert assignments == residual_assignments, (assignments, residual_assignments)
     for assignment in assignments:
         assert {(a, m) for a, m in seen if a == assignment} == {(assignment, m) for m in modes}
     print("independently checked 6+9 special cases: 3 assignments x 3 radius-zero branches = 9 leaves")
@@ -183,12 +184,19 @@ def check_special_cases(cases):
 def main():
     document = json.loads(Path("exact_subdivision_certificate.json").read_text())
     assert document.get("format") == "unequal-circle-exact-subdivision-v1"
-    check_special_cases(document.get("special_cases", []))
-    residual_roots = {mask: [] for mask in EXPECTED}
+    residual_rows = {}
     for line in Path("full_residuals.txt").read_text().splitlines():
         fields = line.split("\t")
-        if len(fields) >= 6 and fields[0] == "UNKNOWN" and fields[2] in EXPECTED:
-            residual_roots[fields[2]] = [a for a in fields[5].split(",") if a]
+        if len(fields) >= 6 and fields[0] == "UNKNOWN":
+            assert fields[2] not in residual_rows
+            assignments = [a for a in fields[5].split(",") if a]
+            assert len(assignments) == int(fields[3]) == int(fields[4]) == len(set(assignments))
+            residual_rows[fields[2]] = assignments
+    assert set(residual_rows) == set(EXPECTED) | {"001001001001011"}
+    check_special_cases(document.get("special_cases", []), set(residual_rows["001001001001011"]))
+    residual_roots = {mask: [] for mask in EXPECTED}
+    for mask in EXPECTED:
+        residual_roots[mask] = residual_rows[mask]
     assert {m: len(xs) for m, xs in residual_roots.items()} == {m: d["roots"] for m, d in EXPECTED.items()}
     observed = {mask: [] for mask in EXPECTED}
     total = {mask: {"roots": 0, "nodes": 0, "cycles": 0, "sums": 0, "local": 0} for mask in EXPECTED}

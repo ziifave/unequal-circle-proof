@@ -58,8 +58,9 @@ assert min_kder>F(26,100)
 assert F(93,100)**2+F(37,100)**2>1
 # At the base point, k_x = (-c_x)/sin(phi(x,b0)) > .26/.37 > .5 > c.
 assert F(26,100)/F(37,100)>F(1,2)
-assert (F(2,5)*F(21,50)-F(5)*F(11,500))>0
-print('EXACT LOCAL COEFFICIENT CHECK PASSED')
+local_coefficient_floor = F(2,5)*F(21,50)-F(5)*F(11,500)
+assert local_coefficient_floor == F(29,500)
+print('EXACT LOCAL COEFFICIENT CHECK PASSED (> 29/500 lower-bound coefficient)')
 print('b0:',str(float(blo)),str(float(bhi)))
 print('a0:',str(float(a0lo)),str(float(a0hi)))
 print('Hxx(h)<0.3, Hxy(h)<0.8, Hxx(g)<5; local expansion coefficient positive')

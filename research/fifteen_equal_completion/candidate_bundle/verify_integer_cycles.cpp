@@ -11,6 +11,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+#include <algorithm>
 using namespace std;
 static constexpr int N=15, TWO_PI_UP=17600;
 // radians * 2800; all are strict rational lower bounds
@@ -46,53 +47,96 @@ static vector<int> innerRuns(const string &s){
  if(r)runs.push_back(r);
  return runs;
 }
+struct CertEdge {int u,v;char kind;};
+struct ProofCase {string assignment;vector<CertEdge> cycle;};
+
 // Truth means the given rational necessary constraints admit an angular assignment.
 // False means a negative cycle and hence this radial-type assignment is impossible.
-static bool noNegativeCycle(const array<int,15> &labels){
- array<int,15> d{};
- for(int it=0;it<15;it++){
-   bool change=false;
-   for(int i=0;i<14;i++){
-     if(d[i]>d[i+1]){d[i]=d[i+1];change=true;}
-   }
-   for(int i=0;i<15;i++)for(int j=i+1;j<15;j++){
-     const int q=Q[labels[i]][labels[j]];
-     // theta_j-theta_i >= q/2800
-     if(d[i]>d[j]-q){d[i]=d[j]-q;change=true;}
-     // theta_j-theta_i <= 2*pi - q/2800
-     // 2*pi < 44/7 = 17600/2800.
-     if(d[j]>d[i]+TWO_PI_UP-q){d[j]=d[i]+TWO_PI_UP-q;change=true;}
-   }
-   if(!change)return true;
+// If requested, extract the actual cycle as a short independently checkable witness.
+static bool noNegativeCycle(const array<int,15> &labels, vector<CertEdge>* witness=nullptr){
+ struct Edge {int u,v,w;char kind;};
+ vector<Edge> edges;
+ for(int i=0;i<14;i++)edges.push_back({i+1,i,0,'O'});
+ for(int i=0;i<15;i++)for(int j=i+1;j<15;j++){
+   const int q=Q[labels[i]][labels[j]];
+   // theta_j-theta_i >= q/2800 is the edge j -> i of weight -q.
+   edges.push_back({j,i,-q,'L'});
+   // theta_j-theta_i <= 2*pi - q/2800, with 2*pi < 17600/2800.
+   edges.push_back({i,j,TWO_PI_UP-q,'U'});
  }
- return false; // Bellman-Ford negative cycle
+ array<int,15> d{};
+ array<int,15> parent;parent.fill(-1);
+ int last=-1;
+ for(int it=0;it<15;it++){
+   last=-1;
+   for(int e=0;e<(int)edges.size();e++){
+     const auto &z=edges[e];
+     if(d[z.v]>d[z.u]+z.w){d[z.v]=d[z.u]+z.w;parent[z.v]=e;last=z.v;}
+   }
+   if(last==-1)return true;
+ }
+ if(witness){
+   int x=last;
+   for(int i=0;i<15;i++){
+     assert(parent[x]>=0);
+     x=edges[parent[x]].u;
+   }
+   const int start=x;
+   vector<CertEdge> reverse;
+   do{
+     assert(parent[x]>=0 && reverse.size()<=15);
+     const auto &e=edges[parent[x]];
+     reverse.push_back({e.u,e.v,e.kind});
+     x=e.u;
+   }while(x!=start);
+   std::reverse(reverse.begin(),reverse.end());
+   *witness=move(reverse);
+ }
+ return false; // Bellman-Ford found a negative cycle
 }
 static bool allTypesNegativeRec(const vector<int>& positions, int k, int depth,
-                                int nsmall, int nhigh, array<int,15> &lab){
+                                int nsmall, int nhigh, array<int,15> &lab,
+                                vector<ProofCase>* proofs=nullptr, string* feasible=nullptr){
  if(nsmall>1)return true;
  if(nhigh+(k-depth)<k-4)return true;
  if(depth==k){
    if(nhigh<k-4)return true;
-   return !noNegativeCycle(lab);
+   vector<CertEdge> cycle;
+   if(noNegativeCycle(lab,proofs?&cycle:nullptr)){
+     if(feasible){
+       feasible->clear();
+       for(int p:positions)feasible->push_back(char('0'+lab[p]));
+     }
+     return false;
+   }
+   if(proofs){
+     string assignment;
+     for(int p:positions)assignment.push_back(char('0'+lab[p]));
+     proofs->push_back({assignment,move(cycle)});
+   }
+   return true;
  }
  for(int type=1;type<=3;type++){
    lab[positions[depth]]=type;
-   if(!allTypesNegativeRec(positions,k,depth+1,nsmall+(type==1),nhigh+(type==3),lab)){
+   if(!allTypesNegativeRec(positions,k,depth+1,nsmall+(type==1),nhigh+(type==3),lab,proofs,feasible)){
      lab[positions[depth]]=0;return false;
    }
  }
  lab[positions[depth]]=0;return true;
 }
-static bool allTypesNegative(const string &rep,int k){
+static bool allTypesNegative(const string &rep,int k,vector<ProofCase>* proofs=nullptr,string* feasible=nullptr){
  vector<int> pos;
  for(int i=0;i<15;i++)if(rep[i]=='1')pos.push_back(i);
  assert((int)pos.size()==k);
  array<int,15> labels{};
- return allTypesNegativeRec(pos,k,0,0,0,labels);
+ return allTypesNegativeRec(pos,k,0,0,0,labels,proofs,feasible);
 }
 int main(int argc, char** argv){
  bool emit=(argc>1 && string(argv[1])=="--list");
+ bool certificate=(argc>1 && string(argv[1])=="--certificate");
+ if(certificate)cout<<"{\"format\":\"unequal-circle-stage0-v1\",\"orbits\":[\n";
  int totalAll=0,totalAnalytic=0,totalGraph=0,totalUnknown=0;
+ bool firstOrbit=true;
  for(int k=5;k<=8;k++){
    set<string> orbits;
    for(int mask=0;mask<(1<<15);mask++){
@@ -106,15 +150,45 @@ int main(int argc, char** argv){
      // Do not rely on a combinatorial gap filter: apply the certified integer
      // angular graph to every orbit class directly.
      bool excludedAnalytic=false;
-     if(allTypesNegative(rep,k)){graph++;if(emit)cout<<"orbit\t"<<k<<"\t"<<rep<<"\tNEGATIVE_CYCLE\n";}
-     else{unknown++;if(emit)cout<<"orbit\t"<<k<<"\t"<<rep<<"\tUNKNOWN\n";}
+     vector<ProofCase> proofs;string feasible;
+     const bool excluded=allTypesNegative(rep,k,certificate?&proofs:nullptr,certificate?&feasible:nullptr);
+     if(excluded){
+       graph++;
+       if(emit)cout<<"orbit\t"<<k<<"\t"<<rep<<"\tNEGATIVE_CYCLE\n";
+       if(certificate){
+         if(!firstOrbit)cout<<",\n";firstOrbit=false;
+         cout<<"{\"k\":"<<k<<",\"pattern\":\""<<rep<<"\",\"status\":\"NEGATIVE_CYCLES\",\"cases\":[";
+         for(size_t ci=0;ci<proofs.size();ci++){
+           if(ci)cout<<",";
+           const auto &pc=proofs[ci];
+           cout<<"{\"assignment\":\""<<pc.assignment<<"\",\"cycle\":[";
+           for(size_t ei=0;ei<pc.cycle.size();ei++){
+             if(ei)cout<<",";const auto &e=pc.cycle[ei];
+             cout<<"["<<e.u<<","<<e.v<<",\""<<e.kind<<"\"]";
+           }
+           cout<<"]}";
+         }
+         cout<<"]}";
+       }
+     }
+     else{
+       unknown++;
+       if(emit)cout<<"orbit\t"<<k<<"\t"<<rep<<"\tUNKNOWN\n";
+       if(certificate){
+         if(!firstOrbit)cout<<",\n";firstOrbit=false;
+         cout<<"{\"k\":"<<k<<",\"pattern\":\""<<rep<<"\",\"status\":\"UNKNOWN\",\"witness\":\""<<feasible<<"\",\"cases\":[]}";
+       }
+     }
    }
    totalAll+=orbits.size();totalAnalytic+=analytic;totalGraph+=graph;totalUnknown+=unknown;
-   cout<<"inner="<<k<<" outer="<<(15-k)<<" total="<<orbits.size()
+   ostream &summary=certificate?cerr:cout;
+   summary<<"inner="<<k<<" outer="<<(15-k)<<" total="<<orbits.size()
        <<" analytic="<<analytic<<" graph="<<graph<<" UNKNOWN="<<unknown<<"\n";
  }
- cout<<"TOTAL "<<totalAll<<" = analytic "<<totalAnalytic
+ if(certificate)cout<<"\n]}\n";
+ else cout<<"TOTAL "<<totalAll<<" = analytic "<<totalAnalytic
      <<" + graph "<<totalGraph<<" + UNKNOWN "<<totalUnknown<<"\n";
+ if(certificate)cerr<<"stage0 certificate: "<<totalAll<<" orbits, "<<totalGraph<<" excluded, "<<totalUnknown<<" retained\n";
  assert(totalAll==760 && totalAnalytic==0 && totalGraph==382 && totalUnknown==378);
  return 0;
 }
