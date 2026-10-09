@@ -23,14 +23,32 @@ Build the combined Stage 3 and Stage 4 finite-certificate result with:
 lake build CirclePacking.FifteenStages34Integrated
 ```
 
+The four residual patterns are connected to the exact radial-subdivision
+certificate in `CirclePacking.FifteenStage4LocalHandoff`. This checks the
+three I5/O10 roots (47, 38, and 1,181 boxes) and the I6/O9 special pattern,
+including that the local box is exactly `[42/25, 43/25]` in each inner radius.
+The same theorem bundles the Stage 3, Stage 4, and radial-certificate replay
+results:
+
+```sh
+lake build CirclePacking.FifteenStage4LocalHandoff
+```
+
+`CirclePacking.FifteenLocalBarrierAlgebra` formalizes the calculus-free core
+of the local argument: the max-of-two-slopes estimate, the alternating
+five-cycle identity and its indexed L1 consequence, the quadratic error bound,
+and the rational margin `29/500`. These facts do not yet establish the
+derivative bounds or Taylor inequalities for the geometric angle function.
+The local analytic and geometric connection remains open.
+
 Regenerate the Stage 4 certificate data with:
 
 ```sh
 python3 tools/export_lean_stage4_certificates.py
 ```
 
-This formalizes finite certificate replay and the manifest handoff. It does
-not yet prove in Lean that every checked pruning predicate follows from the
-geometric packing model, nor does it close the four residual cases with the
-local analytic argument. Those soundness and final-analysis layers remain
-separate obligations.
+This formalizes finite certificate replay, the manifest handoff, and part of
+the arithmetic local barrier. It does not yet prove in Lean that every checked
+pruning predicate follows from the geometric packing model, nor does it close
+the four residual cases with the local analytic argument. Those soundness and
+final-analysis layers remain separate obligations.

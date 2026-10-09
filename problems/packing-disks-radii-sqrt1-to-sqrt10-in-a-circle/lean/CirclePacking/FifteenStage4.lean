@@ -54,6 +54,11 @@ private def fifteenStage4ManifestEntryValid (entry : Stage4ManifestEntry) : Bool
     (bits.filter (· == '1')).length == entry.innerCount &&
     5 ≤ entry.innerCount && entry.innerCount ≤ 8
 
+def fifteenStage4ResidualPatterns : List String :=
+  match fifteenStage4ParseManifest fifteenStage4ManifestSource with
+  | some records => (records.filter (!·.closed)).map (·.pattern)
+  | none => []
+
 def fifteenStage4CertifiedPatterns : List String :=
   fifteenStage4Batch000Patterns ++
   fifteenStage4Batch001Patterns ++
