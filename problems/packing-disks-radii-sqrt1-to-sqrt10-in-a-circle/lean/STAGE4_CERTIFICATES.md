@@ -41,6 +41,23 @@ and the rational margin `29/500`. These facts do not yet establish the
 derivative bounds or Taylor inequalities for the geometric angle function.
 The local analytic and geometric connection remains open.
 
+The first packing-to-certificate soundness slice is in
+`CirclePacking.FifteenPackingGeometry`. From the `Packing` containment and
+separation fields it derives the center-radius bound `‖cᵢ‖ ≤ R - 1`, the
+pairwise radial inequality, and the necessary upper-endpoint condition
+`2 ≤ uᵢ + uⱼ` for any radial box containing two distinct unit-disk centers.
+Consequently a `SUM` terminal condition with `uᵢ + uⱼ < 2` is impossible for
+an actual unit-disk packing. Build this geometry layer with:
+
+```sh
+lake build CirclePacking.FifteenPackingGeometry
+```
+
+This closes the geometric meaning of the pair-sum leaf only. Deriving
+certificate box membership and signed edge bounds for every cycle leaf, and
+proving the Stage 3/4 structural pruning predicates from the packing model,
+remain separate obligations.
+
 Regenerate the Stage 4 certificate data with:
 
 ```sh
