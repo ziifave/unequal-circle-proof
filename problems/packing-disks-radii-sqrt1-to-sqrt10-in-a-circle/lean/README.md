@@ -147,6 +147,23 @@ Likewise, matching the roots to `full_residuals.txt` does not yet certify the
 upstream 760-orbit enumeration. This is a replay of the rational subdivision
 certificate, not yet a Lean proof of the 15-disk optimum.
 
+`CirclePacking/FifteenCycleSoundness.lean` now proves the generic soundness
+step for these integer negative-cycle witnesses. If each checked edge weight
+is an upper bound for its polar-angle difference after scaling by 1/2800, then
+a closed edge chain cannot have negative total weight. The theorem explicitly
+matches the certificate's `O`, `L`, and `U` edge conventions to the 17,600-tick
+upper bound for a full turn. `fifteenCycleEdgeShape_spec` derives the endpoint,
+direction, and zero-tick facts used by this conversion from the checked edge
+shape. The Lean JSON replay is not yet connected to this soundness theorem:
+although it checks the edge shape and the negative integer sum, it does not yet
+recompute each edge's tick from its radius box and the cosine/Taylor bound.
+That tick-to-box proof and the geometric angle inequalities are the next
+formalization steps. The independent Python checker currently performs the
+exact rational tick-to-box check.
+
+Build this layer with `lake build CirclePacking.FifteenCycleSoundness`; it is
+also included in the default `CirclePacking` target.
+
 Build this layer with:
 
 ```sh

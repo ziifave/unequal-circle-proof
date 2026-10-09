@@ -3,8 +3,8 @@ import json
 import time
 from fractions import Fraction as F
 from pathlib import Path
-from certify_six_nine import B, cycle
-from verify_noncanonical_exact import detect
+from certify_six_nine import B, TWOPI, cycle
+from verify_noncanonical_exact import ang, detect
 
 TARGETS = {
     "000100100010101": 47,
@@ -31,7 +31,12 @@ def build_tree(pattern, assignment, stats):
             return ["SUM", payload[0], payload[1]]
         if kind == "CYCLE":
             stats["cycles"] += 1
-            return ["CYCLE", [list(edge) for edge in payload]]
+            edges = []
+            for u, v, edge_kind in payload:
+                q = 0 if edge_kind == "O" else ang(box[min(u, v)], box[max(u, v)])
+                assert q is not None
+                edges.append([u, v, edge_kind, q])
+            return ["CYCLE", edges]
         assert kind == "OPEN", kind
         _, _, p = max((box[p][1] - box[p][0], -p, p) for p in inner)
         lo, hi = box[p]
@@ -115,7 +120,11 @@ def main():
                 leaf = ["SUM", *result["pair"]]
             else:
                 kind_map = {"ORDER": "O", "LOWER": "L", "UPPER": "U"}
-                leaf = ["CYCLE", [[u, v, kind_map[edge_kind]] for u, v, _, edge_kind in result["edges"]]]
+                edges = []
+                for u, v, weight, edge_kind in result["edges"]:
+                    q = 0 if edge_kind == "ORDER" else (-weight if edge_kind == "LOWER" else TWOPI - weight)
+                    edges.append([u, v, kind_map[edge_kind], q])
+                leaf = ["CYCLE", edges]
             special.append({"pattern": six_nine, "assignment": assignment, "mode": mode,
                             "vertex": vertex, "leaf": leaf})
     assert len(special) == 9

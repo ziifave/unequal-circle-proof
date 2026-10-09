@@ -78,29 +78,30 @@ def required_integer_angle(x, y, positive_zero=False, exact_zero=False):
 
 
 def check_cycle(edges, box, positive_zero=frozenset(), exact_zero=frozenset()):
-    assert edges and all(len(e) == 3 for e in edges)
+    assert edges and all(len(e) == 4 for e in edges)
     weights = []
-    for n, (u, v, kind) in enumerate(edges):
+    for n, (u, v, kind, recorded_q) in enumerate(edges):
         assert isinstance(u, int) and isinstance(v, int) and 0 <= u < 15 and 0 <= v < 15
+        assert isinstance(recorded_q, int) and 0 <= recorded_q <= 8790
         next_u = edges[(n + 1) % len(edges)][0]
         assert v == next_u, (edges, n)
         if kind == "O":
-            assert u == v + 1
+            assert u == v + 1 and recorded_q == 0
             weights.append(0)
         elif kind == "L":
             assert u > v
             i, j = v, u
             q = required_integer_angle(box[i], box[j],
                 bool(positive_zero.intersection((i, j))), bool(exact_zero.intersection((i, j))))
-            assert q is not None
-            weights.append(-q)
+            assert q is not None and recorded_q == q, (recorded_q, q, i, j, box[i], box[j])
+            weights.append(-recorded_q)
         elif kind == "U":
             assert u < v
             i, j = u, v
             q = required_integer_angle(box[i], box[j],
                 bool(positive_zero.intersection((i, j))), bool(exact_zero.intersection((i, j))))
-            assert q is not None
-            weights.append(TWO_PI_UP - q)
+            assert q is not None and recorded_q == q, (recorded_q, q, i, j, box[i], box[j])
+            weights.append(TWO_PI_UP - recorded_q)
         else:
             raise AssertionError(("unknown edge label", kind))
     total = sum(weights)

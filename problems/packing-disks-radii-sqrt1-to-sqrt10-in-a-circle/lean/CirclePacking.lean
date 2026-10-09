@@ -21,6 +21,8 @@ import CirclePacking.StressCertificate
 import CirclePacking.OptimalitySmokeTest
 import CirclePacking.ParametricOptimality
 import CirclePacking.GlobalAnchorRadius
+import CirclePacking.FifteenCertificate
+import CirclePacking.FifteenCycleSoundness
 
 /-!
 # Formal algebraic core for unequal-circle packing
