@@ -586,14 +586,15 @@ theorem nineSetHi_preserves_scaledBoxContains
   · have hi : i = ⟨axis, haxis⟩ := Fin.ext h
     subst i
     have hp := hcontains ⟨axis, haxis⟩
-    have hmodify := nineSetHi_getElem (cut := cut) hsize ⟨axis, haxis⟩
+    have hmodify := nineSetHi_getElem (axis := axis) (cut := cut)
+      hsize ⟨axis, haxis⟩
     simp only at hmodify
     rw [hmodify]
     constructor
     · exact hp.1
     · exact hcut
   · have hp := hcontains i
-    have hmodify := nineSetHi_getElem (cut := cut) hsize i
+    have hmodify := nineSetHi_getElem (axis := axis) (cut := cut) hsize i
     have hnot : axis ≠ i.1 := fun heq => h heq.symm
     rw [if_neg hnot] at hmodify
     rw [hmodify]
@@ -610,14 +611,15 @@ theorem nineSetLo_preserves_scaledBoxContains
   · have hi : i = ⟨axis, haxis⟩ := Fin.ext h
     subst i
     have hp := hcontains ⟨axis, haxis⟩
-    have hmodify := nineSetLo_getElem (cut := cut) hsize ⟨axis, haxis⟩
+    have hmodify := nineSetLo_getElem (axis := axis) (cut := cut)
+      hsize ⟨axis, haxis⟩
     simp only at hmodify
     rw [hmodify]
     constructor
     · exact hcut
     · exact hp.2
   · have hp := hcontains i
-    have hmodify := nineSetLo_getElem (cut := cut) hsize i
+    have hmodify := nineSetLo_getElem (axis := axis) (cut := cut) hsize i
     have hnot : axis ≠ i.1 := fun heq => h heq.symm
     rw [if_neg hnot] at hmodify
     rw [hmodify]

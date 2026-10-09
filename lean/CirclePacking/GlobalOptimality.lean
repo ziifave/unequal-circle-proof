@@ -12,6 +12,7 @@ import CirclePacking.PropagatedSplitTree
 import CirclePacking.GlobalRadialBox
 import CirclePacking.NineCircleCertificate
 import CirclePacking.NineCircleGeometry
+import CirclePacking.NineCirclePackingSoundness
 
 /-!
 # Lean entry point for the global optimality proof
@@ -67,9 +68,11 @@ a normalized polar configuration inside its radial box. The tree exclusion
 theorem now composes the leaf contradiction through the recursive split tree,
 deriving contractor preservation from pairwise separation, radius lower
 bounds, and the triangle inequality; endpoint ordering follows from box
-membership. Establishing the normalized-polar hypotheses from an arbitrary
-packing, instantiating the theorem on the checked tree, and formalizing the
-main-order exclusions remain outstanding.
+membership. The Packing connection is now formalized for a `Packing 10 R`
+whose anchor is at the container origin and whose other nine circles follow
+the certificate's specified cyclic order. The exact disk-label/radius
+identification, remaining cyclic-order cases, concrete main-order exclusions,
+and final global assembly remain outstanding.
 -/
 
 namespace CirclePacking

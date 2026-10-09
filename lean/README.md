@@ -152,16 +152,26 @@ pairwise separation, radius lower bounds, and the triangle inequality: each
 contractor lower bound is at most the corresponding scaled center radius, and
 the finite maximum used by the checker preserves that inequality. Box endpoint
 ordering follows from membership itself. The remaining bridge is to establish
-the normalized-polar hypotheses for an arbitrary packing and instantiate the
-theorem on the concrete checked tree.
+the certificate's disk-label/radius correspondence and instantiate the
+theorem for every cyclic-order case needed by the global proof.
+
+`NineCirclePackingSoundness.lean` supplies polar coordinates from arbitrary
+center points using `Complex.arg`, with angles in `[0, 2π]`. Its
+`nineCertificate_excludes_packing_order` theorem takes a `Packing 10 R` whose
+anchor circle is centered at the container origin and whose other nine
+circles are supplied in one certificate's cyclic order. It derives the initial
+radial box from containment, obtains outer-circle separation from the packing
+axiom, and invokes the checked split-tree exclusion. Matching each slot to its
+certified disk radius and covering the other cyclic orders still require
+separate proofs.
 
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
 non-overlap turns this into a directed angle-gap bound; and summing those
 bounds around any closed walk contradicts a strictly negative total. The
-remaining nine-circle work is to establish the normalized-polar hypotheses
-from an arbitrary packing, instantiate the recursive theorem on the replayed
-tree, and cover the main-order angle-barrier cases. The concrete radial tree
+remaining nine-circle work is to prove the certificate's disk-radius
+correspondence, instantiate the recursive theorem for all required cyclic
+orders, and cover the main-order angle-barrier cases. The concrete radial tree
 and those main-order cases also remain to be replayed.
 
 The radial tree, angle-barrier certificates, and the analytic connection for
