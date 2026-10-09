@@ -4,6 +4,9 @@
 \usepackage{booktabs,array,longtable}
 \usepackage{enumitem}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{subcaption}
+\usetikzlibrary{arrows.meta,calc,positioning}
 \usepackage{hyperref}
 \usepackage[nameinlink,noabbrev]{cleveref}
 \hypersetup{colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!60!black,
@@ -20,6 +23,20 @@
 \newcommand{\cmax}{c_{\max}}
 \newcommand{\Iset}{\mathcal I}
 \newcommand{\Oset}{\mathcal O}
+
+\definecolor{proofblue}{HTML}{347C91}
+\definecolor{proofgold}{HTML}{D99B3E}
+\definecolor{proofpale}{HTML}{EAF3F5}
+\definecolor{proofpaleyellow}{HTML}{FFF4E3}
+\tikzset{
+  diskI/.style={draw=black!70,thick,fill=proofgold!48},
+  diskO/.style={draw=black!70,thick,fill=proofblue!38},
+  vertexI/.style={circle,draw=black!70,fill=proofgold!60,minimum size=6mm,inner sep=0pt},
+  vertexO/.style={circle,draw=black!70,fill=proofblue!48,minimum size=6mm,inner sep=0pt},
+  proofedge/.style={-{Stealth[length=2mm]},thick,draw=proofblue!90!black},
+  proofbox/.style={draw=proofblue!70!black,fill=proofpale,rounded corners,align=center,inner sep=5pt,font=\small},
+  proofleaf/.style={draw=proofgold!75!black,fill=proofpaleyellow,rounded corners,align=center,inner sep=5pt,font=\small}
+}
 
 \title{Optimal Packing of Fifteen Equal Disks in a Circle:\\An Exact Computer-Assisted Certificate}
 \author{}
@@ -82,7 +99,36 @@ The other outer gap is larger because $\alpha>\varphi/2$. For an inner center an
 \[
  a_0^2+b_0^2-2a_0b_0\cos\alpha=4.
 \]
-These are the closest pairs within each type; all other same-type or mixed pairs have a larger angular separation and hence a larger center distance. Every outer disk is tangent to the container boundary, and $a_0<b_0$. Thus the arrangement is feasible in radius $R_0$, proving $R_{15}^*\le R_0$.
+These are the closest pairs within each type; all other same-type or mixed pairs have a larger angular separation and hence a larger center distance. Every outer disk is tangent to the container boundary, and $a_0<b_0$. Thus the arrangement is feasible in radius $R_0$, proving $R_{15}^*\le R_0$; \cref{fig:construction} shows the resulting placement.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=.9]
+  \def\ra{1.7013016167}
+  \def\rb{3.5213569647}
+  \def\RC{4.5213569647}
+  \def\alphaDeg{19.50202638}
+  \draw[proofblue!90!black,very thick] (0,0) circle (\RC);
+  \draw[densely dashed,black!35] (0,0) circle (\rb);
+  \draw[densely dashed,proofgold!90!black] (0,0) circle (\ra);
+  \foreach \k in {0,...,4}{
+    \pgfmathsetmacro{\th}{72*\k}
+    \pgfmathsetmacro{\lm}{\th-\alphaDeg}
+    \pgfmathsetmacro{\lp}{\th+\alphaDeg}
+    \draw[diskI] (\th:\ra) circle (1);
+    \draw[diskO] (\lm:\rb) circle (1);
+    \draw[diskO] (\lp:\rb) circle (1);
+  }
+  \fill (0,0) circle (1.6pt) node[below right,font=\small] {$O$};
+  \draw[proofedge] (0,0)--(18:\RC) node[pos=.69,above,font=\small] {$R_0$};
+  \draw[proofgold!90!black,very thick] (4.58,2.65)--(4.92,2.65);
+  \node[font=\small,anchor=west] at (5.02,2.65) {five inner centers};
+  \draw[proofblue!90!black,very thick] (4.58,2.15)--(4.92,2.15);
+  \node[font=\small,anchor=west] at (5.02,2.15) {ten outer centers};
+\end{tikzpicture}
+\caption{The exact fivefold-symmetric construction. The gold and blue circles represent unit disks centered at radii $a_0$ and $b_0$; the dashed circles mark those center radii. This verifies the upper bound only and makes no symmetry assumption about a minimizer.}
+\label{fig:construction}
+\end{figure}
 
 \section{Radial reduction}\label{sec:radial}
 
@@ -108,7 +154,6 @@ For fixed $y$,
 \]
 Its numerator is strictly increasing in $x$, so the derivative can change sign only from negative to positive. Thus an interior critical point in the $x$ direction is a minimum, and a maximum occurs at an endpoint. Apply the same argument in $y$.
 \end{proof}
-
 \begin{lemma}[Pushing outer centers to the wall]\label{lem:push}
 Suppose \eqref{eq:feas} holds with $R\le R_0$. Each outer center can be moved radially to distance $b_0$, with its polar angle fixed, without creating an overlap.
 \end{lemma}
@@ -119,15 +164,85 @@ An inner--outer pair has radii $x<L\le y\le b_0$. During the move, its squared d
 \]
 so its distance cannot decrease. For an outer--outer pair, \cref{lem:corners} and $L=b_0-4/b_0$ show that
 \[
- \max_{L\le x,y\le b_0}c(x,y)=c(b_0,b_0),
+\max_{L\le x,y\le b_0}c(x,y)=c(b_0,b_0),
 \]
 with equality also at $(L,b_0)$ and $(b_0,L)$. Its original angular separation therefore meets the required separation when both centers are moved to radius $b_0$.
 \end{proof}
+The two cases in this radial move are summarized in \cref{fig:wall-push}.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[t]{.47\textwidth}
+\centering
+\begin{tikzpicture}[scale=.78,>=Stealth]
+  \draw[black!25,dashed] (0,0) circle (2.75);
+  \draw[proofblue!70,densely dashed] (0,0) circle (1.9);
+  \coordinate (I) at (22:1.05);
+  \coordinate (O) at (60:1.75);
+  \coordinate (Op) at (60:2.75);
+  \fill[proofgold] (I) circle (2.2pt) node[below left] {$x$};
+  \fill[proofblue] (O) circle (2.2pt);
+  \fill[proofblue] (Op) circle (2.2pt) node[above right] {$b_0$};
+  \draw[proofedge] (O)--(Op);
+  \draw[proofgold!85!black,thick] (I)--(O);
+  \draw[proofblue!85!black,thick] (I)--(Op);
+  \fill (0,0) circle (1.4pt) node[below left] {$O$};
+  \node[font=\scriptsize,align=center] at (0,-3.25) {inner--outer distance\\increases as the outer radius moves out};
+\end{tikzpicture}
+\caption{The fixed-angle derivative is positive for $x<L\le y$.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{.47\textwidth}
+\centering
+\begin{tikzpicture}[scale=.78,>=Stealth]
+  \draw[black!25,dashed] (0,0) circle (2.75);
+  \coordinate (A) at (24:1.85);
+  \coordinate (B) at (68:2.15);
+  \coordinate (Ap) at (24:2.75);
+  \coordinate (Bp) at (68:2.75);
+  \fill[proofblue] (A) circle (2.2pt);
+  \fill[proofblue] (B) circle (2.2pt);
+  \fill[proofblue] (Ap) circle (2.2pt);
+  \fill[proofblue] (Bp) circle (2.2pt);
+  \draw[black!45,dashed,thick] (A)--(B);
+  \draw[proofblue!90!black,very thick] (Ap)--(Bp);
+  \draw[proofedge] (A)--(Ap);
+  \draw[proofedge] (B)--(Bp);
+  \draw[<->,proofgold!90!black] (24:2.35) arc (24:68:2.35);
+  \fill (0,0) circle (1.4pt) node[below left] {$O$};
+  \node[font=\scriptsize,align=center] at (0,-3.25) {outer--outer pairs use the\\four-corner bound for $c(x,y)$};
+\end{tikzpicture}
+\caption{At the boundary radii, the same angular gap is sufficient.}
+\end{subfigure}
+\caption{Schematic of the wall-pushing argument. The left panel is monotonicity of squared distance; the right panel summarizes \cref{lem:corners}. The dashed pair is illustrative, not a pointwise distance comparison throughout simultaneous motion.}
+\label{fig:wall-push}
+\end{figure}
 
 Let $\theta_0=2\arcsin(1/b_0)$. Any two outer centers, after the preceding move, require angular separation at least $\theta_0$. Since $11\theta_0>2\pi$, there are at most ten outer centers. Nine inner centers would be nine unit disks inside radius $L+1<3.4$, whereas the exact nine-disk minimum radius is $1+\sqrt{2(2+\sqrt2)}>3.6$ \cite{Pirl1969,Packomania}; hence there are at most eight inner centers. Since there are fifteen disks in all,
 \begin{equation}\label{eq:counts}
- (|\Iset|,|\Oset|)\in\{(5,10),(6,9),(7,8),(8,7)\}.
+(|\Iset|,|\Oset|)\in\{(5,10),(6,9),(7,8),(8,7)\}.
 \end{equation}
+The threshold and the surviving count ranges are sketched in \cref{fig:radial-shells}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=.78]
+  \fill[proofblue!16] (0,0) circle (3.05);
+  \fill[proofgold!20] (0,0) circle (2.05);
+  \draw[proofblue!85!black,very thick] (0,0) circle (3.05);
+  \draw[proofgold!90!black,densely dashed,thick] (0,0) circle (2.05);
+  \fill (0,0) circle (1.5pt) node[below left] {$O$};
+  \draw[proofedge] (0,0)--(32:2.05) node[midway,above left,font=\small] {$L$};
+  \draw[proofedge] (0,0)--(-22:3.05) node[pos=.78,below,font=\small] {$b_0$};
+  \node[font=\small,align=left,anchor=west,text=proofgold!90!black] at (3.55,1.75) {$\Iset:\ s<L$};
+  \node[font=\small,align=left,anchor=west,text=proofblue!90!black] at (3.55,1.05) {$\Oset:\ L\le s\le b_0$};
+  \node[font=\small,align=left,anchor=west] at (3.55,.25) {$5\le |\Iset|\le8$};
+  \node[font=\small,align=left,anchor=west] at (3.55,-.45) {$7\le |\Oset|\le10$};
+  \node[font=\small,align=left,anchor=west] at (3.55,-1.15) {$|\Iset|+|\Oset|=15$};
+  \node[font=\scriptsize,align=left,anchor=west] at (3.55,-1.8) {No symmetry assumption};
+\end{tikzpicture}
+\caption{The radial threshold separates inner centers from the outer annulus. The count bounds leave only the four populations in \cref{eq:counts}; this is not a packing diagram.}
+\label{fig:radial-shells}
+\end{figure}
 
 The standard small-packing bounds $s_{(5)}\ge a_0>5/3$ and $s_{(6)}\ge2$ are also used in the radial interval enumeration. Here $s_{(j)}$ denotes the $j$th smallest center radius among all fifteen centers. They follow by applying the known exact five- and six-disk packing radii to the $j$ innermost disks. Consequently, among $k$ inner centers at least $k-4$ have radius at least $5/3$, and at least $k-5$ have radius at least $2$.
 
@@ -143,9 +258,48 @@ If $C_{ij}<1$, put $\gamma_{ij}=\arccos C_{ij}$. Every feasible angle assignment
 \begin{equation}\label{eq:anglepair}
  \gamma_{ij}\le\theta_j-\theta_i\le2\pi-\gamma_{ij}\qquad(i<j).
 \end{equation}
-If some box has $x+y<2$ throughout, the box is impossible immediately. A box for which $|x-y|\ge2$ throughout imposes no angular restriction for that pair. These rules are relaxed outwards, so every actual packing in a radius box satisfies the resulting difference constraints.
+If some box has $x+y<2$ throughout, the box is impossible immediately. A box for which $|x-y|\ge2$ throughout imposes no angular restriction for that pair. These rules are relaxed outwards, so every actual packing in a radius box satisfies the resulting difference constraints. The geometric conversion is illustrated in \cref{fig:angle-conversion}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=.84,>=Stealth]
+  \coordinate (O) at (0,0);
+  \coordinate (A) at (8:3.15);
+  \coordinate (B) at (54:2.72);
+  \fill[proofblue] (A) circle (2.2pt);
+  \fill[proofgold] (B) circle (2.2pt);
+  \draw[black!65] (O)--(A) node[midway,below right,font=\small] {$x$};
+  \draw[black!65] (O)--(B) node[midway,above left,font=\small] {$y$};
+  \draw[proofblue!85!black,very thick] (A)--(B) node[midway,above right,font=\small] {$\ge2$};
+  \draw[proofedge] (8:1.0) arc (8:54:1.0);
+  \node[font=\small] at (32:1.35) {$\Delta$};
+  \fill (O) circle (1.5pt) node[below left] {$O$};
+  \node[proofbox,text width=4.4cm] at (5.25,1.45) {$\cos\Delta\le c(x,y)$\\[2pt]
+    $\Phi(x,y)\le\Delta\le2\pi-\Phi(x,y)$};
+  \node[font=\scriptsize,align=center] at (5.25,.25) {A pairwise distance condition\\becomes two angular bounds.};
+\end{tikzpicture}
+\caption{The law of cosines converts center separation into a lower bound on the smaller angular gap. The complementary upper bound in \cref{eq:anglepair} is also needed for the difference-constraint graph.}
+\label{fig:angle-conversion}
+\end{figure}
 
 Each inequality $\theta_v-\theta_u\le w$ is a directed edge $u\to v$ with weight $w$. Such a system is feasible only if the directed graph has no negative cycle. The verifier replaces each required angle by a certified rational lower bound $q/2800$ and uses $44/7$ as an upper bound for $2\pi$. Thus a lower-bound edge has weight $-q$, while its complementary upper-bound edge has weight $17600-q$. A negative cycle in these integer weights excludes the entire radial box.
+The cancellation giving this contradiction is pictured in \cref{fig:negative-cycle}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth,scale=1.1,transform shape]
+  \node[vertexI] (u) at (0,0) {$u$};
+  \node[vertexO] (v) at (2.45,1.25) {$v$};
+  \node[vertexI] (w) at (4.9,0) {$w$};
+  \draw[proofedge] (u) to[bend left=8] node[above left,fill=white,inner sep=1pt] {$w_{uv}$} (v);
+  \draw[proofedge] (v) to[bend left=8] node[above right,fill=white,inner sep=1pt] {$w_{vw}$} (w);
+  \draw[proofedge] (w) to[bend left=16] node[below,fill=white,inner sep=1pt] {$w_{wu}$} (u);
+  \node[proofleaf,text width=3.7cm] at (8.0,.5) {$w_{uv}+w_{vw}+w_{wu}<0$\\[2pt]
+    add the three inequalities $\Longrightarrow\ 0<0$};
+\end{tikzpicture}
+\caption{A negative directed cycle is a compact contradiction: summing its difference inequalities cancels all angle variables. The actual verifier uses exact integer edge weights for each radial box.}
+\label{fig:negative-cycle}
+\end{figure}
 
 \paragraph{Certified trigonometric bounds.}
 For $x\ge0$, let $P_{18}(x)=\sum_{j=0}^{9}(-1)^j x^{2j}/(2j)!$. Taylor's theorem and $|\cos^{(19)}(t)|\le1$ give the rational lower bound
@@ -158,7 +312,30 @@ The explicit remainder subtraction is essential: the even Taylor polynomial alon
 
 The cyclic inner/outer word is defined up to rotation and reflection, because the disks are congruent and the container is rotationally and reflectively symmetric. Burnside's lemma gives 111, 185, 232, and 232 classes for the four inner counts in \eqref{eq:counts}, for a total of 760.
 
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=.9]
+  \draw[black!30] (0,0) circle (2.25);
+  \foreach \j in {0,...,14}{
+    \pgfmathtruncatemacro{\slot}{mod(\j,3)}
+    \pgfmathsetmacro{\ang}{90-24*\j}
+    \ifnum\slot=0
+      \node[vertexI] at (\ang:2.25) {\scriptsize $I$};
+    \else
+      \node[vertexO] at (\ang:2.25) {\scriptsize $O$};
+    \fi
+  }
+  \draw[proofedge] (12:2.82) arc (12:63:2.82);
+  \node[font=\small,align=center] at (0,0) {one cyclic word\\$(I,O,O)^5$};
+  \node[proofbox,text width=3.25cm] at (4.85,.72) {rotation: choose a new starting point};
+  \node[proofbox,text width=3.25cm] at (4.85,-.72) {reflection: reverse the traversal};
+\end{tikzpicture}
+\caption{A binary bracelet records only the cyclic inner/outer order. Rotating or reversing the word changes its representation, not the underlying case; it does not make a geometric packing symmetric.}
+\label{fig:bracelet}
+\end{figure}
+
 The finite verifier has four stages. First, it checks every positive entry in a fixed four-type angular table by exact rational arithmetic and applies its negative-cycle test to all 760 words. A word is not discarded by the separate analytic gap-capacity experiment. Second, the surviving words are refined over eight radial bins and then twelve radial bins, using the rank bounds in \cref{sec:radial}. Third, every remaining radial box is enumerated and split exactly until it is excluded by a pair-sum contradiction or a negative cycle. Fourth, a local analytic inequality closes the only remaining type and radius region.
+\cref{fig:certificate-flow} lays out these certified stages and their counts.
 
 \begin{table}[ht]
 \centering
@@ -177,7 +354,52 @@ Final types & $5I+10O$ canonical, $5I+10O$ noncanonical (2), $6I+9O$ (1) & 4 \\
 \end{tabular}
 \end{table}
 
-The exact rational subdivision closes the two noncanonical $5I+10O$ words from 47 and 38 coarse radial boxes, respectively. Their branch-and-bound trees contain 1,641 and 646 nodes. The $6I+9O$ word has three coarse boxes; bisecting the unique radius interval below $1/2$ gives six leaves, three excluded by pair-sum contradictions and three by negative cycles.
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth,scale=1.1,transform shape]
+  \node[proofbox,text width=31mm] (all) at (0,0) {760 dihedral words};
+  \node[proofleaf,text width=34mm] (closed) at (-3.15,-1.35) {382 closed by coarse negative cycles};
+  \node[proofbox,text width=35mm] (pass) at (3.15,-1.35) {378 passed to refinement};
+  \node[proofbox,text width=37mm] (eight) at (3.15,-2.8) {Eight-bin refinement\\23 words remain};
+  \node[proofbox,text width=37mm] (twelve) at (3.15,-4.25) {Twelve-bin refinement\\4 types remain};
+  \node[proofleaf,text width=42mm] (other) at (-1.25,-5.75) {3 types closed by exact subdivision\\2 noncanonical $5I+10O$; 1 type $6I+9O$};
+  \node[proofbox,text width=42mm] (canonical) at (5.0,-5.75) {Canonical type $(I,O,O)^5$\\1,181 coarse boxes};
+  \node[proofbox,text width=42mm] (nodes) at (5.0,-7.25) {56,573 search nodes\\31 leaves in $[1.68,1.72]^5$};
+  \node[proofleaf,text width=42mm] (local) at (5.0,-8.75) {Local angular barrier\\only candidate radii remain};
+  \draw[proofedge] (all)--(closed);
+  \draw[proofedge] (all)--(pass);
+  \draw[proofedge] (pass)--(eight);
+  \draw[proofedge] (eight)--(twelve);
+  \draw[proofedge] (twelve)--(other);
+  \draw[proofedge] (twelve)--(canonical);
+  \draw[proofedge] (canonical)--(nodes);
+  \draw[proofedge] (nodes)--(local);
+\end{tikzpicture}
+\caption{The replayed reduction path. Unlike an earlier exploratory gap-capacity filter, the certified path tests all 760 dihedral classes directly; the counts here match the included verifier reports.}
+\label{fig:certificate-flow}
+\end{figure}
+
+The exact rational subdivision closes the two noncanonical $5I+10O$ words from 47 and 38 coarse radial boxes, respectively. Their branch-and-bound trees contain 1,641 and 646 nodes. The $6I+9O$ word has three coarse boxes; bisecting the unique radius interval below $1/2$ gives six leaves, three excluded by pair-sum contradictions and three by negative cycles. \Cref{fig:branch-tree} shows the generic exact subdivision logic.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth]
+  \node[proofbox,text width=32mm] (root) at (0,0) {radial box $B$};
+  \node[proofbox,text width=34mm] (left) at (-2.45,-1.35) {split one radius interval\\at exact midpoint $m$};
+  \node[proofbox,text width=34mm] (right) at (2.45,-1.35) {split one radius interval\\at exact midpoint $m$};
+  \node[proofleaf,text width=32mm] (sum) at (-4.7,-3.35) {pair-sum contradiction\\$u_i+u_j<2$};
+  \node[proofleaf,text width=32mm] (cycle) at (0,-3.35) {negative integer-weight cycle};
+  \node[proofleaf,text width=32mm] (localbox) at (4.7,-3.35) {local-box leaf\\canonical type only};
+  \draw[proofedge] (root)--(left);
+  \draw[proofedge] (root)--(right);
+  \draw[proofedge] (left)--(sum);
+  \draw[proofedge] (left)--(cycle);
+  \draw[proofedge] (right)--(cycle);
+  \draw[proofedge] (right)--(localbox);
+\end{tikzpicture}
+\caption{A schematic subdivision tree. Each split covers its parent by two closed rational children; a branch is finished only by a listed exact contradiction or, for the canonical type, by the local region proved separately below.}
+\label{fig:branch-tree}
+\end{figure}
 
 For the canonical word $(I,O,O)^5$, 1,181 coarse radial boxes generate 56,573 search nodes. There are 28,846 negative-cycle leaves, no pair-sum leaves, and 31 leaves contained in the local cube
 \[
@@ -199,6 +421,50 @@ For $a_i\in[1.68,1.72]$, the exact interval checks give $k_i>1.175$. The four co
  \sum_{i=1}^5\max(h_i,k_i)\le2\pi.
 \end{equation}
 When an outer center has radius below $b_0$, the inner--outer angle requirement is at least the value used in $k_i$, because $\ph(a,s)$ decreases with $s$ on the relevant interval. The outer--outer term obeys the analogous bound.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[t]{.47\textwidth}
+\centering
+\begin{tikzpicture}[scale=.86,>=Stealth]
+  \coordinate (O) at (0,0);
+  \coordinate (I) at (12:1.8);
+  \coordinate (J) at (72:1.8);
+  \draw[black!25,dashed] (0,0) circle (2.8);
+  \draw[proofgold!90!black,very thick] (I)--(J);
+  \fill[proofgold] (I) circle (2.6pt) node[below right] {$a_i$};
+  \fill[proofgold] (J) circle (2.6pt) node[above left] {$a_{i+1}$};
+  \draw[proofedge] (12:.72) arc (12:72:.72);
+  \node[font=\small] at (42:1.02) {$\Delta_i$};
+  \fill (O) circle (1.3pt);
+  \node[proofbox,text width=32mm,font=\scriptsize] at (0,-2.35) {$\Delta_i\ge h_i$\\direct inner pair};
+\end{tikzpicture}
+\caption{The inner chord requires at least $h_i$.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{.47\textwidth}
+\centering
+\begin{tikzpicture}[scale=.86,>=Stealth]
+  \coordinate (O) at (0,0);
+  \coordinate (I) at (12:1.8);
+  \coordinate (A) at (30:2.85);
+  \coordinate (B) at (51:2.85);
+  \coordinate (J) at (72:1.8);
+  \draw[black!25,dashed] (0,0) circle (2.85);
+  \draw[proofedge] (I)--(A)--(B)--(J);
+  \fill[proofgold] (I) circle (2.6pt) node[below right] {$a_i$};
+  \fill[proofblue] (A) circle (2.6pt);
+  \fill[proofblue] (B) circle (2.6pt);
+  \fill[proofgold] (J) circle (2.6pt) node[above left] {$a_{i+1}$};
+  \draw[proofgold!90!black,<->] (12:.72) arc (12:72:.72);
+  \node[font=\small] at (42:1.02) {$\Delta_i$};
+  \fill (O) circle (1.3pt);
+  \node[proofbox,text width=42mm,font=\scriptsize] at (0,-2.35) {$\Delta_i\ge k_i$\\two intervening outer centers};
+\end{tikzpicture}
+\caption{The three consecutive gaps sum to at least $k_i$.}
+\end{subfigure}
+\caption{Each inner-to-inner sector has two independent lower bounds. Combining them gives $\Delta_i\ge\max\{h_i,k_i\}$, which leads to the total angular budget in \cref{eq:budget}. The radii and angles are schematic.}
+\label{fig:local-paths}
+\end{figure}
 
 At $a_i=a_0$, one has $h_i=k_i=2\pi/5$. Write $\delta_i=a_i-a_0$ and $\sigma_i=\delta_i+\delta_{i+1}$. Differentiation at the candidate gives
 \[
@@ -230,9 +496,44 @@ implies $\sum_i|\sigma_i|\ge\frac25\sum_i|\delta_i|$. Moreover $|\delta_i|\le11/
  \sum_i\max(h_i,k_i)
  &\ge 2\pi+c_0\sum_i|\sigma_i|-5\sum_i\delta_i^2\\
  &\ge 2\pi+\left(\frac25c_0-5\cdot\frac{11}{500}\right)\sum_i|\delta_i|\\
- &>2\pi+\frac{29}{500}\sum_i|\delta_i|.
+&>2\pi+\frac{29}{500}\sum_i|\delta_i|.
 \end{align*}
 This contradicts \eqref{eq:budget} unless every $\delta_i=0$.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[t]{.47\textwidth}
+\centering
+\begin{tikzpicture}[scale=.78,>=Stealth]
+  \draw[proofgold!80!black,densely dashed] (0,0) circle (1.7);
+  \foreach \j/\r in {0/1.82,1/1.60,2/1.78,3/1.58,4/1.82}{
+    \pgfmathsetmacro{\ang}{90-72*\j}
+    \fill[proofgold] (\ang:\r) circle (3pt);
+    \draw[proofedge] (\ang:1.7)--(\ang:\r);
+    \node[font=\scriptsize,fill=white,inner sep=1pt] at (\ang:2.08) {$\delta_{\j}$};
+  }
+  \fill (0,0) circle (1.4pt);
+  \node[font=\scriptsize,align=center] at (0,-2.45) {independent radial changes\\(arrows exaggerated)};
+\end{tikzpicture}
+\caption{The five radii vary independently.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{.47\textwidth}
+\centering
+\begin{tikzpicture}[scale=.82,>=Stealth]
+  \draw[->,black!70] (-1.65,0)--(1.75,0) node[right] {$\sigma_i$};
+  \draw[->,black!70] (0,-.65)--(0,1.42) node[above] {linear change};
+  \draw[proofblue,thick] (-1.25,.78)--(0,0)--(1.25,-.58);
+  \draw[proofgold!90!black,thick] (-1.25,-.58)--(0,0)--(1.25,.95);
+  \draw[black,very thick] (-1.25,.78)--(0,0)--(1.25,.95);
+  \node[font=\scriptsize,fill=white,inner sep=1pt] at (-1.12,1.02) {$-c_0\sigma_i$};
+  \node[font=\scriptsize,fill=white,inner sep=1pt] at (1.12,1.16) {$d_0\sigma_i$};
+  \node[font=\scriptsize,below] at (0,-.02) {$0$};
+\end{tikzpicture}
+\caption{Taking the larger linear term yields a positive penalty.}
+\end{subfigure}
+\caption{The local barrier has no hidden symmetry constraint: radial deviations are independent, while the maximum of the oppositely sloped first-order terms grows away from $\sigma_i=0$. Quadratic errors are controlled by the exact interval bounds.}
+\label{fig:local-penalty}
+\end{figure}
 
 If every $a_i=a_0$ but $R<R_0$, each original outer radius is strictly below $b_0$. Its required inner--outer angle is then strictly larger than the candidate value, so the five-gap sum is strictly larger than $2\pi$, again a contradiction. Thus no packing with $R<R_0$ exists in the final surviving class.
 
