@@ -220,6 +220,13 @@ private def stage0ParseOrbit? (line : String) : Option Stage0Orbit := do
 private def stage0Orbits? : Option (List Stage0Orbit) := do
   (stage0NonemptyLines stage0OrbitLinesSource).mapM stage0ParseOrbit?
 
+/-- Patterns not eliminated by the certified first-stage assignment table. -/
+def fifteenStage0SurvivorPatterns : List String :=
+  match stage0Orbits? with
+  | none => []
+  | some orbits => orbits.filterMap fun orbit =>
+      if orbit.excluded then none else some orbit.pattern
+
 private def stage0Labels (pattern assignment : String) : Array Nat := Id.run do
   let positions := stage0InnerPositions pattern
   let digits := (stage0Digits? assignment).getD []
