@@ -155,15 +155,23 @@ that cap. This remainder is more conservative than the Python checker's
 degree-18 `x^19 / 19!` bound; every stored cycle tick still passes the
 stronger Lean remainder check.
 
+The theorem `fifteenRegularTick_lower_bounds_center_angle` now connects a
+regular checked tick to the geometry of a separated pair of centers. Given
+positive radial intervals, radii inside those intervals, and squared center
+distance at least 4, it proves that the centers' angle is at least the tick.
+Its proof establishes that the cosine-rule cap over the whole rectangle is
+bounded by the maximum of its four rational corners, then applies the disk
+separation inequality.
+
 `CirclePacking/FifteenCycleSoundness.lean` proves the generic soundness step
 for negative-cycle witnesses. If each checked edge weight is an upper bound
 for its polar-angle difference after scaling by 1/2800, then a closed edge
 chain cannot have negative total weight. The theorem matches the certificate's
 `O`, `L`, and `U` edge conventions to the 17,600-tick upper bound for a full
-turn. The remaining connections are the geometric derivation of the cosine
-cap and its four-corner maximum from disk separation, the exceptional
-zero-radius and out-of-range cap branches, and deriving the signed edge bounds
-from polar order. The upstream 760-orbit enumeration and final local obstruction
+turn. The remaining connections are the exceptional zero-radius and out-of-range
+cap branches, deriving the signed edge bounds from the sorted polar order, and
+lifting the finite Boolean replay to a proposition about every geometric
+configuration. The upstream 760-orbit enumeration and final local obstruction
 also remain outside Lean; this certificate replay is not yet the full optimum
 proof.
 
