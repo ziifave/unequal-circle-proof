@@ -172,8 +172,9 @@ axiom, and invoke the checked split-tree exclusion. Matching each slot to its
 certified disk radius is now derived for the two concrete certificates under
 the standard radius assignment `radius(k)^2 = k + 1`. The caller still has to
 establish that the labels occur in the certificate's cyclic order; the
-absolute choice of angle origin no longer matters. Other cyclic orders still
-require coverage.
+absolute choice of angle origin no longer matters. Concrete P and Q
+corollaries now combine the radius map, certificate label order, and cyclic
+normalization. Other cyclic orders still require coverage.
 
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;

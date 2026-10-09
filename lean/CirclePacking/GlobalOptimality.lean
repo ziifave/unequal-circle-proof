@@ -73,7 +73,8 @@ whose anchor is at the container origin and whose other nine circles follow
 the certificate's specified cyclic order. For both checked certificates,
 `NineCirclePackingSoundness.lean` proves an injective map from certificate
 slots to the standard ten radii and gives concrete packing-exclusion
-corollaries. Its new `nineCertificate_excludes_polar_order` interface accepts
+corollaries, including P/Q theorems invariant under cyclic choice of angle
+origin. Its `nineCertificate_excludes_polar_order` interface accepts
 explicit normalized polar coordinates independently of `Complex.arg`, which
 is used by `nineCertificate_excludes_cyclic_packing_order` to rotate a packing
 and normalize the angle origin while preserving containment and separation.
