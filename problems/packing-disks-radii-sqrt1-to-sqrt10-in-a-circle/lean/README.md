@@ -138,31 +138,38 @@ one-coordinate lemmas showing that an in-range split covers its parent
 interval and that both child intervals stay inside the parent.
 
 At terminal leaves Lean checks pair-sum contradictions and replays each
-negative cycle's directed edge connectivity, edge labels, recorded integer
-ticks, and strictly negative integer total. It checks 30,032 cycle leaves,
-31 local leaves, and all nine branches for the three 6+9 residual assignments.
-The integer ticks are still treated as supplied data here: connecting each
-tick to its geometric angle lower bound is the next formalization layer.
-Likewise, matching the roots to `full_residuals.txt` does not yet certify the
-upstream 760-orbit enumeration. This is a replay of the rational subdivision
-certificate, not yet a Lean proof of the 15-disk optimum.
+negative cycle's directed edge connectivity, edge labels, integer ticks, and
+strictly negative integer total. The checker also recomputes each regular
+edge's corner cosine cap and verifies that its recorded tick is safe under an
+exact rational degree-18 Taylor lower bound. It checks 30,032 cycle leaves,
+31 local leaves, and all nine branches for the three 6+9 residual
+assignments. Matching the roots to `full_residuals.txt` does not yet certify
+the upstream 760-orbit enumeration.
 
-`CirclePacking/FifteenCycleSoundness.lean` now proves the generic soundness
-step for these integer negative-cycle witnesses. If each checked edge weight
-is an upper bound for its polar-angle difference after scaling by 1/2800, then
-a closed edge chain cannot have negative total weight. The theorem explicitly
-matches the certificate's `O`, `L`, and `U` edge conventions to the 17,600-tick
-upper bound for a full turn. `fifteenCycleEdgeShape_spec` derives the endpoint,
-direction, and zero-tick facts used by this conversion from the checked edge
-shape. The Lean JSON replay is not yet connected to this soundness theorem:
-although it checks the edge shape and the negative integer sum, it does not yet
-recompute each edge's tick from its radius box and the cosine/Taylor bound.
-That tick-to-box proof and the geometric angle inequalities are the next
-formalization steps. The independent Python checker currently performs the
-exact rational tick-to-box check.
+`CirclePacking/FifteenTickSoundness.lean` proves that the degree-18 Taylor
+polynomial minus its `x^19 / 18!` remainder is below `cos x` for every
+certificate angle `x = q / 2800`, with `q ≤ 8790`. For a regular cosine cap
+in `(-1, 1)`, `fifteenRegularTick_gives_angle_lower_bound` then proves that an
+accepted tick is a lower bound on any contact angle whose cosine is below
+that cap. This remainder is more conservative than the Python checker's
+degree-18 `x^19 / 19!` bound; every stored cycle tick still passes the
+stronger Lean remainder check.
 
-Build this layer with `lake build CirclePacking.FifteenCycleSoundness`; it is
-also included in the default `CirclePacking` target.
+`CirclePacking/FifteenCycleSoundness.lean` proves the generic soundness step
+for negative-cycle witnesses. If each checked edge weight is an upper bound
+for its polar-angle difference after scaling by 1/2800, then a closed edge
+chain cannot have negative total weight. The theorem matches the certificate's
+`O`, `L`, and `U` edge conventions to the 17,600-tick upper bound for a full
+turn. The remaining connections are the geometric derivation of the cosine
+cap and its four-corner maximum from disk separation, the exceptional
+zero-radius and out-of-range cap branches, and deriving the signed edge bounds
+from polar order. The upstream 760-orbit enumeration and final local obstruction
+also remain outside Lean; this certificate replay is not yet the full optimum
+proof.
+
+Build the certificate replay with `lake build CirclePacking.FifteenCertificate`
+and the analytic tick lemmas with `lake build CirclePacking.FifteenTickSoundness`.
+Both are included in the default `CirclePacking` target.
 
 Build this layer with:
 

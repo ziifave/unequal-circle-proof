@@ -1,4 +1,5 @@
 import Lean
+import CirclePacking.FifteenTickBounds
 
 /-!
 # Lean replay of the 15-disk rational subdivision certificate
@@ -6,9 +7,11 @@ import Lean
 This is the first Lean-facing replay layer for the 15-equal-disk candidate.
 It parses the repository's exact JSON certificate at compile time, checks the
 rational bisection tree, and verifies the integer sum and topology of each
-recorded angular negative cycle.  The cycle edge's integer angle tick is
-certificate data at this stage; proving that the tick is a valid geometric
-angle lower bound is the next layer of the formalization.
+recorded angular negative cycle.  It also recomputes every recorded angle tick
+from the rational radius box using the cosine-rule cap and a conservative
+Taylor lower polynomial.  The analytic Taylor estimate and its implication
+for regular contact angles are proved in `FifteenTickSoundness`; deriving the
+contact cap from the disk geometry remains a separate step.
 
 The tree replayer deliberately uses a work list rather than recursively
 expanding the large JSON value.  The resulting Boolean theorem is checked with
@@ -20,7 +23,6 @@ namespace CirclePacking
 
 open Lean
 
-abbrev FifteenInterval := Rat × Rat
 abbrev FifteenBox := Array FifteenInterval
 abbrev FifteenTask := FifteenBox × List Nat × Json
 
@@ -46,9 +48,6 @@ theorem fifteenIntervalRightChildSubset (lo cut hi x : Rat)
     fifteenIntervalContains (lo, hi) x := by
   rcases hx with ⟨hcutx, hhi⟩
   exact ⟨Rat.le_trans hcut hcutx, hhi⟩
-
-def fifteenRational (n d : Nat) : Rat :=
-  if hd : d = 0 then 0 else Rat.normalize (Int.ofNat n) d hd
 
 def fifteenBins : Array FifteenInterval := #[
   (fifteenRational 0 1, fifteenRational 1 2),
@@ -175,6 +174,17 @@ def fifteenCycleEdgeShape (edge : FifteenCycleEdge) : Bool :=
     edge.source < edge.target
    else false)
 
+def fifteenCycleEdgeTickValid (edge : FifteenCycleEdge) (box : FifteenBox)
+    (positiveZero exactZero : List Nat) : Bool := Id.run do
+  if edge.kind == "O" then return edge.ticks == 0
+  let (i, j) := if edge.kind == "L" then
+      (edge.target, edge.source)
+    else
+      (edge.source, edge.target)
+  let positive := positiveZero.contains i || positiveZero.contains j
+  let exact := exactZero.contains i || exactZero.contains j
+  return fifteenTickCertificateValid box[i]! box[j]! positive exact edge.ticks
+
 def fifteenCycleEdgeWeight (edge : FifteenCycleEdge) : Int :=
   if edge.kind == "O" then 0
   else if edge.kind == "L" then -(Int.ofNat edge.ticks)
@@ -186,11 +196,14 @@ def fifteenCycleLinkValid : List FifteenCycleEdge → Bool
   | first :: second :: rest =>
       first.target == second.source && fifteenCycleLinkValid (second :: rest)
 
-def fifteenCycleValid (j : Json) : Bool := Id.run do
+def fifteenCycleValid (j : Json) (box : FifteenBox)
+    (positiveZero exactZero : List Nat) : Bool := Id.run do
   let some rawEdges := fifteenJsonArray? j | return false
   let some edges := rawEdges.toList.mapM fifteenParseCycleEdge? | return false
   if edges.length < 2 || edges.length > 15 then return false
   if !edges.all fifteenCycleEdgeShape then return false
+  if !edges.all (fun edge => fifteenCycleEdgeTickValid edge box positiveZero exactZero) then
+    return false
   let some first := edges.head? | return false
   let some last := edges.getLast? | return false
   if !fifteenCycleLinkValid edges then return false
@@ -206,13 +219,14 @@ def fifteenInLocalBox (box : FifteenBox) (inner : List Nat) : Bool :=
     decide (fifteenLocalLo ≤ box[p]!.1) && decide (box[p]!.2 ≤ fifteenLocalHi))
 
 def fifteenTerminalValid (box : FifteenBox) (inner : List Nat)
-    (node : Json) (allowLocal : Bool) : Bool := Id.run do
+    (node : Json) (allowLocal : Bool)
+    (positiveZero exactZero : List Nat := []) : Bool := Id.run do
   let some values := fifteenJsonArray? node | return false
   let some tag := values[0]? >>= fifteenJsonString? | return false
   if tag == "CYCLE" then
     if values.size != 2 then return false
     let some edges := values[1]? | return false
-    return fifteenCycleValid edges
+    return fifteenCycleValid edges box positiveZero exactZero
   if tag == "SUM" then
     if values.size != 3 then return false
     let some i := values[1]? >>= fifteenJsonNat? | return false
@@ -350,7 +364,10 @@ def fifteenSpecialCaseValid (item : Json) : Bool := Id.run do
   if pattern != fifteenSpecialPattern then return false
   let some box := fifteenSpecialBox? assignment mode vertex | return false
   let some leaf := fifteenJsonField? item "leaf" | return false
+  let positiveZero := if mode == "POSITIVE_LOW" then [vertex] else []
+  let exactZero := if mode == "EXACT_ZERO" then [vertex] else []
   return fifteenTerminalValid box (fifteenInnerPositions pattern) leaf false
+    positiveZero exactZero
 
 def fifteenSpecialModeCount (cases : Array Json) (assignment mode : String) : Nat :=
   cases.foldl (fun count item =>
