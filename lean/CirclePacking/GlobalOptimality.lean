@@ -75,8 +75,9 @@ the certificate's specified cyclic order. For both checked certificates,
 slots to the standard ten radii and gives concrete packing-exclusion
 corollaries. Its new `nineCertificate_excludes_polar_order` interface accepts
 explicit normalized polar coordinates independently of `Complex.arg`, which
-is the interface needed to normalize a cyclic order by rotating its angle
-origin. Deriving the needed cyclic orders from arbitrary packings,
+is used by `nineCertificate_excludes_cyclic_packing_order` to rotate a packing
+and normalize the angle origin while preserving containment and separation.
+Deriving the needed cyclic orders from arbitrary packings,
 covering the remaining order cases, replaying the main-order exclusions, and
 the final global assembly remain outstanding.
 -/

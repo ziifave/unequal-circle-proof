@@ -8,6 +8,62 @@ namespace CirclePacking
 
 noncomputable section
 
+/-- Counterclockwise rotation of a centre point by an angle `φ`. -/
+def rotatePoint (φ : ℝ) (p : Point) : Point :=
+  (Real.cos φ * p.1 - Real.sin φ * p.2,
+   Real.sin φ * p.1 + Real.cos φ * p.2)
+
+theorem rotatePoint_zero (φ : ℝ) : rotatePoint φ (0, 0) = (0, 0) := by
+  simp [rotatePoint]
+
+theorem rotatePoint_distSq (φ : ℝ) (p q : Point) :
+    distSq (rotatePoint φ p) (rotatePoint φ q) = distSq p q := by
+  unfold distSq rotatePoint
+  nlinarith [Real.sin_sq_add_cos_sq φ]
+
+theorem rotatePoint_pointNorm (φ : ℝ) (p : Point) :
+    pointNorm (rotatePoint φ p) = pointNorm p := by
+  have hnormSq :
+      (rotatePoint φ p).1 ^ 2 + (rotatePoint φ p).2 ^ 2 =
+        p.1 ^ 2 + p.2 ^ 2 := by
+    dsimp [rotatePoint]
+    nlinarith [Real.sin_sq_add_cos_sq φ]
+  change Real.sqrt ((rotatePoint φ p).1 ^ 2 +
+    (rotatePoint φ p).2 ^ 2) = Real.sqrt (p.1 ^ 2 + p.2 ^ 2)
+  rw [hnormSq]
+
+theorem rotatePoint_polarPoint (φ r θ : ℝ) :
+    rotatePoint φ (polarPoint r θ) = polarPoint r (θ + φ) := by
+  simp [rotatePoint, polarPoint, Real.cos_add, Real.sin_add]
+  constructor <;> ring
+
+/-- Rotating every centre preserves all packing constraints. -/
+def Packing.rotate {n : ℕ} {R : ℝ} (P : Packing n R) (φ : ℝ) : Packing n R where
+  circles i :=
+    { center := rotatePoint φ (P.circles i).center
+      radius := (P.circles i).radius
+      radius_nonneg := (P.circles i).radius_nonneg }
+  container_nonneg := P.container_nonneg
+  contained i := by
+    rcases P.contained i with ⟨hradius, hcenter⟩
+    refine ⟨hradius, ?_⟩
+    change distSq (rotatePoint φ (P.circles i).center) (0, 0) ≤ _
+    rw [← rotatePoint_zero φ, rotatePoint_distSq]
+    exact hcenter
+  separated := by
+    intro i j hij
+    change ((P.circles i).radius + (P.circles j).radius) ^ 2 ≤
+      distSq (rotatePoint φ (P.circles i).center)
+        (rotatePoint φ (P.circles j).center)
+    rw [rotatePoint_distSq]
+    exact P.separated hij
+
+theorem Packing.rotate_anchor_center {n : ℕ} {R : ℝ}
+    (P : Packing n R) (φ : ℝ) (i : Fin n)
+    (hcenter : (P.circles i).center = (0, 0)) :
+    ((P.rotate φ).circles i).center = (0, 0) := by
+  simp [Packing.rotate, hcenter, rotatePoint_zero]
+
 def pointPolarAngle (p : Point) : ℝ :=
   let z : ℂ := (p.1 : ℂ) + (p.2 : ℂ) * Complex.I
   let angle := Complex.arg z
@@ -55,6 +111,31 @@ theorem pointPolarAngle_representation (p : Point) :
     · simpa [polarPoint] using hcos
     · simpa [polarPoint] using hsin
   exact ⟨hlo, hhi, hpolar⟩
+
+/-- Angle in `[0, 2π]` measured from a chosen angular origin. -/
+def angleFromOrigin (origin angle : ℝ) : ℝ :=
+  if origin ≤ angle then angle - origin else angle - origin + 2 * Real.pi
+
+theorem angleFromOrigin_bounds {origin angle : ℝ}
+    (horiginLo : 0 ≤ origin) (horiginHi : origin ≤ 2 * Real.pi)
+    (hangleLo : 0 ≤ angle) (hangleHi : angle ≤ 2 * Real.pi) :
+    0 ≤ angleFromOrigin origin angle ∧
+      angleFromOrigin origin angle ≤ 2 * Real.pi := by
+  unfold angleFromOrigin
+  split_ifs with h
+  · constructor <;> nlinarith
+  · constructor <;> nlinarith
+
+theorem polarPoint_angleFromOrigin (r origin angle : ℝ) :
+    polarPoint r (angleFromOrigin origin angle) =
+      polarPoint r (angle - origin) := by
+  unfold angleFromOrigin
+  split_ifs with h
+  · simp
+  · have hsum : angle - origin + 2 * Real.pi =
+        (angle - origin) + 2 * Real.pi := by ring
+    rw [hsum]
+    simp [polarPoint, Real.cos_add_two_pi, Real.sin_add_two_pi]
 
 theorem pointNorm_le_container {R : ℝ} {c : Circle}
     (hcontained : Contained R c) :
@@ -286,6 +367,90 @@ theorem nineCertificate_excludes_packing_order
     hindexInjective hindexAvoidsAnchor hanchorCenter hanchorRadius hcontainer
     hradiusSq radial theta (by intro i; rfl) hpolar hthetaLo hthetaHi (by
       simpa [theta] using horder)
+
+/-- Exclusion is independent of the absolute angle origin. The hypothesis
+states that the certificate order is cyclically increasing when measured from
+the first certificate slot; the packing is rotated so that this order becomes
+an ordinary increasing order in `[0, 2π]`. -/
+theorem nineCertificate_excludes_cyclic_packing_order
+    {cert : NineCircleCertificate} {R : ℝ}
+    (hcert : nineCertificateSpec cert)
+    (P : Packing 10 R)
+    (anchor : Fin 10) (index : Fin 9 → Fin 10)
+    (hindexInjective : Function.Injective index)
+    (hindexAvoidsAnchor : ∀ i : Fin 9, index i ≠ anchor)
+    (hanchorCenter : (P.circles anchor).center = (0, 0))
+    (hanchorRadius : 0 < (P.circles anchor).radius)
+    (hcontainer : R ≤ (cert.radiusUpper : ℝ) / cert.scale)
+    (hradiusSq : ∀ i : Fin 9,
+      (P.circles (index i)).radius ^ 2 =
+        (cert.diskLabels[i.1]! : ℝ))
+    (hcyclic : ∀ i j : Fin 9, i.1 < j.1 →
+      angleFromOrigin
+          (pointPolarAngle (P.circles (index (0 : Fin 9))).center)
+          (pointPolarAngle (P.circles (index i)).center) ≤
+        angleFromOrigin
+          (pointPolarAngle (P.circles (index (0 : Fin 9))).center)
+          (pointPolarAngle (P.circles (index j)).center)) :
+    False := by
+  let origin := pointPolarAngle (P.circles (index (0 : Fin 9))).center
+  let φ := -origin
+  let P' := P.rotate φ
+  let radial : Fin 9 → ℝ := fun i =>
+    pointNorm (P.circles (index i)).center
+  let theta : Fin 9 → ℝ := fun i =>
+    angleFromOrigin origin
+      (pointPolarAngle (P.circles (index i)).center)
+  have horigin :=
+    pointPolarAngle_representation (P.circles (index (0 : Fin 9))).center
+  have hradial : ∀ i : Fin 9,
+      radial i = pointNorm (P'.circles (index i)).center := by
+    intro i
+    change pointNorm (P.circles (index i)).center =
+      pointNorm (rotatePoint φ (P.circles (index i)).center)
+    exact (rotatePoint_pointNorm φ _).symm
+  have hpolar : ∀ i : Fin 9,
+      (P'.circles (index i)).center = polarPoint (radial i) (theta i) := by
+    intro i
+    let p := (P.circles (index i)).center
+    have hrep := pointPolarAngle_representation p
+    change rotatePoint φ p =
+      polarPoint (pointNorm p)
+        (angleFromOrigin origin (pointPolarAngle p))
+    calc
+      rotatePoint φ p =
+          rotatePoint φ (polarPoint (pointNorm p) (pointPolarAngle p)) := by
+            exact (congrArg (rotatePoint φ) hrep.2.2).symm
+      _ = polarPoint (pointNorm p) (pointPolarAngle p + φ) :=
+        rotatePoint_polarPoint φ _ _
+      _ = polarPoint (pointNorm p) (pointPolarAngle p - origin) := by
+        congr 1
+      _ = polarPoint (pointNorm p)
+          (angleFromOrigin origin (pointPolarAngle p)) :=
+        (polarPoint_angleFromOrigin _ _ _).symm
+  have hthetaLo : ∀ i : Fin 9, 0 ≤ theta i := by
+    intro i
+    have hi := pointPolarAngle_representation
+      (P.circles (index i)).center
+    exact (angleFromOrigin_bounds horigin.1 horigin.2.1 hi.1 hi.2.1).1
+  have hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi := by
+    intro i
+    have hi := pointPolarAngle_representation
+      (P.circles (index i)).center
+    exact (angleFromOrigin_bounds horigin.1 horigin.2.1 hi.1 hi.2.1).2
+  have hanchorCenter' : (P'.circles anchor).center = (0, 0) := by
+    exact Packing.rotate_anchor_center P φ anchor hanchorCenter
+  have hradiusSq' : ∀ i : Fin 9,
+      (P'.circles (index i)).radius ^ 2 =
+        (cert.diskLabels[i.1]! : ℝ) := by
+    intro i
+    simpa [P', Packing.rotate] using hradiusSq i
+  have horder : ∀ i j : Fin 9, i.1 < j.1 → theta i ≤ theta j := by
+    intro i j hij
+    exact hcyclic i j hij
+  exact nineCertificate_excludes_polar_order hcert P' anchor index
+    hindexInjective hindexAvoidsAnchor hanchorCenter' hanchorRadius hcontainer
+    hradiusSq' radial theta hradial hpolar hthetaLo hthetaHi horder
 
 /-- Specialized interface for the usual ten-circle radius assignment
 `radius(k)^2 = k + 1`. The caller supplies the embedding of certificate slots

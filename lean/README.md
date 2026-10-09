@@ -160,7 +160,9 @@ cyclic-order cases and connect their coverage to the global proof.
 `NineCirclePackingSoundness.lean` supplies `nineCertificate_excludes_polar_order`,
 which accepts an explicit polar representation in any normalized coordinate
 frame. This separates the geometric replay from the choice of angle origin and
-is intended to support the cyclic-order rotation step. The existing
+supports the cyclic-order rotation step. `nineCertificate_excludes_cyclic_packing_order`
+now rotates the whole packing so the first certificate slot becomes angle zero,
+using proved rotation invariance of containment and separation. The existing
 `nineCertificate_excludes_packing_order` theorem is the `Complex.arg`
 specialization, with angles in `[0, 2π]`. Both take a `Packing 10 R` whose
 anchor circle is centered at the container origin and whose other nine
@@ -169,8 +171,9 @@ radial box from containment, obtain outer-circle separation from the packing
 axiom, and invoke the checked split-tree exclusion. Matching each slot to its
 certified disk radius is now derived for the two concrete certificates under
 the standard radius assignment `radius(k)^2 = k + 1`. The caller still has to
-establish the relevant cyclic order, and the other cyclic orders still require
-coverage.
+establish that the labels occur in the certificate's cyclic order; the
+absolute choice of angle origin no longer matters. Other cyclic orders still
+require coverage.
 
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
