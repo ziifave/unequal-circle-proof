@@ -135,18 +135,21 @@ continues the edge path: it converts the stored integer Taylor/corner checks
 to a real cosine inequality, normalizes the four radial corners by the
 certificate scale, derives a lower bound on the actual touch angle, and
 turns that into the directed angular inequality for an edge of a separated
-packing.
+packing. The natural-number cycle metadata is mapped to `Fin 9`; its tail
+specification yields a closed angular walk. The negative integer tick sum is
+also proved to equal the corresponding negative real edge-weight sum. Together
+these give `nineLeafSpec_negative_cycle_excluded`: any checked leaf is
+geometrically impossible once its per-edge angular bounds are supplied.
 
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
 non-overlap turns this into a directed angle-gap bound; and summing those
 bounds around any closed walk contradicts a strictly negative total. The
 remaining nine-circle work is to prove the box invariants for every leaf of
-the replayed split tree, assemble each checked natural-number cycle as a
-closed `Fin 9` walk, and connect its negative integer tick sum to the real
-edge-weight sum before applying the closed-walk contradiction to all 155
-leaves. The concrete radial tree and its main-order angle-barrier cases also
-remain to be replayed.
+the replayed split tree and obtain the per-edge geometric hypotheses from an
+arbitrary packing at that leaf. Then the leaf exclusion theorem can be applied
+to all 155 leaves. The concrete radial tree and its main-order angle-barrier
+cases also remain to be replayed.
 
 The radial tree, angle-barrier certificates, and the analytic connection for
 the alternate nine-circle cycle are therefore not yet fully replayed by Lean.

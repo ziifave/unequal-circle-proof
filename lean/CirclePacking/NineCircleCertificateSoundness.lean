@@ -293,4 +293,202 @@ theorem nineCertificateEdge_implies_angularBound
     (la + lb) ha hb hanglePi hneq hsorted hthetaLo hthetaHi hsepLower
     hangle' htau
 
+def nineCycleFin (i : ℕ) : Fin 9 :=
+  ⟨i % 9, Nat.mod_lt _ (by decide)⟩
+
+noncomputable def nineCycleAngularEdge (edge : NineCycleEdge) : NineAngularEdge 9 :=
+  ⟨nineCycleFin edge.1, nineCycleFin edge.2.1,
+    (edge.2.2 : ℝ) / nineAngleScale⟩
+
+noncomputable def nineCycleAngularEdges (edges : List NineCycleEdge) :
+    List (NineAngularEdge 9) :=
+  edges.map nineCycleAngularEdge
+
+noncomputable def nineCycleRealUpper (tauUpper : ℝ)
+    (edge : NineCycleEdge) : ℝ :=
+  if edge.1 < edge.2.1 then
+    tauUpper - (edge.2.2 : ℝ) / nineAngleScale
+  else -(edge.2.2 : ℝ) / nineAngleScale
+
+def nineCycleWeightStep (total : ℤ) (edge : NineCycleEdge) : ℤ :=
+  if edge.1 < edge.2.1 then
+    total + Int.ofNat (ninePiUpperTicks - edge.2.2)
+  else total - Int.ofNat edge.2.2
+
+theorem nineCycleWeightTicks_eq_fold (edges : List NineCycleEdge) :
+    nineCycleWeightTicks edges = edges.foldl nineCycleWeightStep 0 := by
+  rfl
+
+theorem nineCycleWeightTicks_scaled_sum
+    {edges : List NineCycleEdge}
+    (hbound : ∀ edge ∈ edges, edge.2.2 ≤ 314159) :
+    (nineCycleWeightTicks edges : ℝ) / nineAngleScale =
+      (edges.map
+        (nineCycleRealUpper ((ninePiUpperTicks : ℝ) / nineAngleScale))).sum := by
+  let tau : ℝ := (ninePiUpperTicks : ℝ) / nineAngleScale
+  have hstep : ∀ (initial : ℤ) (edge : NineCycleEdge),
+      edge.2.2 ≤ 314159 →
+      (nineCycleWeightStep initial edge : ℝ) / nineAngleScale =
+        (initial : ℝ) / nineAngleScale + nineCycleRealUpper tau edge := by
+    intro initial edge htick
+    by_cases hdir : edge.1 < edge.2.1
+    · have hpiTicks : 314159 ≤ ninePiUpperTicks := by
+        norm_num [ninePiUpperTicks]
+      have hle : edge.2.2 ≤ ninePiUpperTicks := by omega
+      have hcast : ((ninePiUpperTicks - edge.2.2 : ℕ) : ℝ) =
+          (ninePiUpperTicks : ℝ) - edge.2.2 := by
+        rw [Nat.cast_sub hle]
+      simp only [nineCycleWeightStep, nineCycleRealUpper, if_pos hdir,
+        Int.cast_add, Int.ofNat_eq_natCast, Int.cast_natCast]
+      rw [hcast]
+      dsimp [tau]
+      field_simp [show (nineAngleScale : ℝ) ≠ 0 by norm_num [nineAngleScale]]
+    · simp only [nineCycleWeightStep, nineCycleRealUpper, if_neg hdir,
+        Int.cast_sub, Int.ofNat_eq_natCast, Int.cast_natCast]
+      field_simp [show (nineAngleScale : ℝ) ≠ 0 by norm_num [nineAngleScale]]
+      ring
+  have hfold : ∀ (es : List NineCycleEdge) (initial : ℤ),
+      (∀ edge ∈ es, edge.2.2 ≤ 314159) →
+      ((es.foldl nineCycleWeightStep initial : ℤ) : ℝ) / nineAngleScale =
+        (initial : ℝ) / nineAngleScale +
+          (es.map (nineCycleRealUpper tau)).sum := by
+    intro es
+    induction es with
+    | nil =>
+        intro initial _
+        simp
+    | cons edge rest ih =>
+        intro initial hall
+        have hhead := hall edge (by simp)
+        have hrest : ∀ e ∈ rest, e.2.2 ≤ 314159 := by
+          intro e he
+          exact hall e (by simp [he])
+        simp only [List.foldl_cons, List.map_cons, List.sum_cons]
+        rw [ih (nineCycleWeightStep initial edge) hrest]
+        rw [hstep initial edge hhead]
+        ring
+  rw [nineCycleWeightTicks_eq_fold]
+  simpa [tau] using hfold edges 0 hbound
+
+theorem nineCycleTailSpec_to_angularChain
+    {start current : ℕ} {edges : List NineCycleEdge}
+    (h : nineCycleTailSpec start current edges) :
+    NineAngularChain (nineCycleFin current) (nineCycleAngularEdges edges)
+      (nineCycleFin start) := by
+  induction edges generalizing current with
+  | nil =>
+      simp only [nineCycleTailSpec] at h
+      subst current
+      rfl
+  | cons edge rest ih =>
+      simp only [nineCycleTailSpec] at h
+      rcases h with ⟨hcurrent, hrest⟩
+      subst current
+      simp only [NineAngularChain, nineCycleAngularEdges, List.map_cons]
+      exact ⟨rfl, ih hrest⟩
+
+theorem nineLeafSpec_to_angularCycle
+    {cert : NineCircleCertificate} {box : NineRadialBox}
+    {first : NineCycleEdge} {rest : List NineCycleEdge}
+    (hleaf : nineLeafSpec cert box (first :: rest)) :
+    NineAngularChain (nineCycleFin first.1)
+      (nineCycleAngularEdges (first :: rest)) (nineCycleFin first.1) := by
+  rcases hleaf with ⟨_, _, _, htail, _, _⟩
+  simp only [nineCycleAngularEdges, List.map_cons, NineAngularChain]
+  exact ⟨rfl, nineCycleTailSpec_to_angularChain htail⟩
+
+theorem nineCycleAngularEdge_upper_eq_real
+    (tauUpper : ℝ) {edge : NineCycleEdge}
+    (hsrc : edge.1 < 9) (hdst : edge.2.1 < 9) :
+    nineAngularEdgeUpper tauUpper (nineCycleAngularEdge edge) =
+      nineCycleRealUpper tauUpper edge := by
+  simp [nineAngularEdgeUpper, nineCycleRealUpper, nineCycleAngularEdge,
+    nineCycleFin, Nat.mod_eq_of_lt hsrc, Nat.mod_eq_of_lt hdst]
+  ring_nf
+
+theorem nineCycleAngularEdges_upper_sum
+    (tauUpper : ℝ) (edges : List NineCycleEdge)
+    (hindices : ∀ edge ∈ edges, edge.1 < 9 ∧ edge.2.1 < 9) :
+    ((nineCycleAngularEdges edges).map (nineAngularEdgeUpper tauUpper)).sum =
+      (edges.map (nineCycleRealUpper tauUpper)).sum := by
+  induction edges with
+  | nil => simp [nineCycleAngularEdges]
+  | cons edge rest ih =>
+      have hhead := hindices edge (by simp)
+      have hrest : ∀ e ∈ rest, e.1 < 9 ∧ e.2.1 < 9 := by
+        intro e he
+        exact hindices e (by simp [he])
+      simp only [nineCycleAngularEdges, List.map_cons, List.sum_cons]
+      rw [nineCycleAngularEdge_upper_eq_real tauUpper hhead.1 hhead.2]
+      have htail :
+          (List.map (nineAngularEdgeUpper tauUpper)
+            (List.map nineCycleAngularEdge rest)).sum =
+            (rest.map (nineCycleRealUpper tauUpper)).sum := by
+        simpa [nineCycleAngularEdges] using ih hrest
+      rw [htail]
+
+theorem nineLeafSpec_negative_cycle_excluded
+    {cert : NineCircleCertificate} {box : NineRadialBox}
+    {edges : List NineCycleEdge} {theta : Fin 9 → ℝ}
+    (hleaf : nineLeafSpec cert box edges)
+    (hangleBound : ∀ edge ∈ edges,
+      theta (nineCycleAngularEdge edge).dst -
+          theta (nineCycleAngularEdge edge).src ≤
+        nineAngularEdgeUpper
+          ((ninePiUpperTicks : ℝ) / nineAngleScale)
+          (nineCycleAngularEdge edge)) :
+    False := by
+  cases edges with
+  | nil =>
+      simp [nineLeafSpec, nineLeafSpecWithWeight] at hleaf
+  | cons first rest =>
+      have hmeta : ∀ edge ∈ first :: rest,
+          edge.1 < 9 ∧ edge.2.1 < 9 ∧ edge.2.2 ≤ 314159 := by
+        intro edge hedge
+        have hs := nineLeafSpec_edgeAngleSpec hleaf hedge
+        rcases hs with ⟨hsrc, hdst, _, htick, _⟩
+        exact ⟨hsrc, hdst, htick⟩
+      have hindices : ∀ edge ∈ first :: rest,
+          edge.1 < 9 ∧ edge.2.1 < 9 := by
+        intro edge hedge
+        exact ⟨(hmeta edge hedge).1, (hmeta edge hedge).2.1⟩
+      have hticks : ∀ edge ∈ first :: rest, edge.2.2 ≤ 314159 := by
+        intro edge hedge
+        exact (hmeta edge hedge).2.2
+      have hleaf0 := hleaf
+      have hweight : nineCycleWeightTicks (first :: rest) < 0 := by
+        rcases hleaf with ⟨_, _, _, _, _, hnegative⟩
+        exact hnegative
+      have hcycle := nineLeafSpec_to_angularCycle hleaf0
+      have hedges : ∀ edge,
+          edge ∈ nineCycleAngularEdges (first :: rest) →
+          theta edge.dst - theta edge.src ≤ nineAngularEdgeUpper
+            ((ninePiUpperTicks : ℝ) / nineAngleScale) edge := by
+        intro angularEdge hmem
+        obtain ⟨source, hsource, heq⟩ := List.mem_map.mp hmem
+        subst angularEdge
+        exact hangleBound source hsource
+      have hsumInts := nineCycleWeightTicks_scaled_sum hticks
+      have hsumEdges := nineCycleAngularEdges_upper_sum
+        ((ninePiUpperTicks : ℝ) / nineAngleScale) (first :: rest) hindices
+      have hweightReal :
+          (nineCycleWeightTicks (first :: rest) : ℝ) / nineAngleScale < 0 := by
+        have hweightCast : (nineCycleWeightTicks (first :: rest) : ℝ) < 0 :=
+          by exact_mod_cast hweight
+        exact div_neg_of_neg_of_pos hweightCast (by norm_num [nineAngleScale])
+      have hnegative :
+          ((nineCycleAngularEdges (first :: rest)).map
+              (nineAngularEdgeUpper
+                ((ninePiUpperTicks : ℝ) / nineAngleScale))).sum < 0 := by
+        calc
+          _ = ((first :: rest).map
+              (nineCycleRealUpper
+                ((ninePiUpperTicks : ℝ) / nineAngleScale))).sum := hsumEdges
+          _ = (nineCycleWeightTicks (first :: rest) : ℝ) / nineAngleScale :=
+            hsumInts.symm
+          _ < 0 := hweightReal
+      exact negative_nine_angular_cycle_impossible theta
+        ((ninePiUpperTicks : ℝ) / nineAngleScale) (nineCycleFin first.1)
+        (nineCycleAngularEdges (first :: rest)) hcycle hedges hnegative
+
 end CirclePacking
