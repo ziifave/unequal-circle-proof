@@ -1,6 +1,6 @@
 # Lean integration
 
-`lean/CirclePacking/G112.lean` imports the primitive integer coefficient table
+[`G112.lean`](../../packing-ten-unequal-circles-in-a-circle/lean/CirclePacking/G112.lean) imports the primitive integer coefficient table
 from `circle_G112_primitive_integer_coefficients.tsv`.
 
 The Lean module defines:
@@ -53,7 +53,7 @@ concrete rational polynomial and its root/irreducibility proofs are supplied,
 `degree1792_root_is_algebraic` derives algebraicity of `R0` immediately.
 
 The later algebraic reproducibility bundle adds the complete 1793-coefficient
-integer polynomial. It is represented in `lean/CirclePacking/P1792.lean` as
+integer polynomial. It is represented in [`P1792.lean`](../../packing-ten-unequal-circles-in-a-circle/lean/CirclePacking/P1792.lean) as
 `p1792PrimitivePolynomial : Polynomial ℚ`, with its exact real evaluation and
 the bridge structure `P1792R0Certificate`. Supplying the exact root,
 nonzero, degree, and irreducibility fields constructs the earlier
