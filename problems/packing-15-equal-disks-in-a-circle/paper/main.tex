@@ -495,7 +495,7 @@ If every $a_i=a_0$ but $R<R_0$, each original outer radius is strictly below $b_
 
 The construction in \cref{sec:construction} proves $R_{15}^*\le R_0$. The radial classification, exhaustive difference-constraint certificate, exact rational subdivision, and local angular barrier prove that every feasible packing has $R\ge R_0$, conditional on the finite certificate and geometric reductions stated above.
 
-Replay files are in the repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/main/problems/packing-15-equal-disks-in-a-circle/candidate_bundle}{candidate bundle}. Run it with Python 3.10 or newer, GNU C++17, and a POSIX shell:
+Replay files are in the repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/02b61760e4dd392fbe3dd19499312d5d8c1135a4/problems/packing-15-equal-disks-in-a-circle/candidate_bundle}{candidate bundle pinned to commit \texttt{02b6176}}. Run it with Python 3.10 or newer, GNU C++17, and a POSIX shell:
 \begin{verbatim}
 cd problems/packing-15-equal-disks-in-a-circle/candidate_bundle
 bash run_all.sh
@@ -507,7 +507,7 @@ Subject to independent validation of the certificate and geometric reductions, t
 \appendix
 \section{Certificate data and exact subdivision}
 
-The repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/main/problems/packing-15-equal-disks-in-a-circle/candidate_bundle}{candidate bundle} contains the tables, branch rules, reports, and replay scripts. Stage zero writes \texttt{stage0\_certificate.json.gz}, covering every excluded binary dihedral class and each radial type assignment not ruled out by rank constraints.
+The repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/02b61760e4dd392fbe3dd19499312d5d8c1135a4/problems/packing-15-equal-disks-in-a-circle/candidate_bundle}{candidate bundle pinned to commit \texttt{02b6176}} contains the tables, branch rules, reports, and replay scripts. Stage zero writes \texttt{stage0\_certificate.json.gz}, covering every excluded binary dihedral class and each radial type assignment not ruled out by rank constraints.
 
 The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 classes and checks assignment coverage and integer cycles. The replay also emits a 3.8 MB subdivision certificate with 1,266 roots. The independent \texttt{check\_exact\_certificate.py} verifies every bisection cover, pair-sum leaf, negative-cycle edge and weight, and local-region leaf using rational arithmetic; it checks the three $6I+9O$ assignments against \texttt{full\_residuals.txt} and verifies all nine endpoint leaves. Stage counts and survivor identities are asserted during replay.
 
