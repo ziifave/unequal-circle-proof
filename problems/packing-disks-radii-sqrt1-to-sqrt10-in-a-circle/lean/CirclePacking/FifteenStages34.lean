@@ -47,7 +47,7 @@ private structure Stage3ManifestEntry where
   closed : Bool
 
 private def fifteenStage3ManifestSource : String :=
-  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage3.tsv"
+  include_str "../data/fifteen_stage3_manifest.tsv"
 
 private def fifteenStage3ManifestLine? (line : String) : Option Stage3ManifestEntry := do
   let fields := line.splitOn "\t"
