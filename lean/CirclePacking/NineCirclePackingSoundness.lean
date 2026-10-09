@@ -118,10 +118,11 @@ theorem nineCertificate_label_bounds_of_spec
     simpa using of_decide_eq_true hrow
   exact ⟨hdata.1, hdata.2.1⟩
 
-/-- A packing with the certificate's prescribed cyclic order is excluded at
-the certificate radius.  The anchor circle is at the container origin; the
-other nine circles are supplied in the order represented by the certificate. -/
-theorem nineCertificate_excludes_packing_order
+/-- A packing described in any explicit normalized polar frame is excluded
+when its polar data follow the certificate's prescribed cyclic order.  This
+form is useful after rotating the coordinate frame: the angle coordinates
+need not be obtained from `Complex.arg`. -/
+theorem nineCertificate_excludes_polar_order
     {cert : NineCircleCertificate} {R : ℝ}
     (hcert : nineCertificateSpec cert)
     (P : Packing 10 R)
@@ -134,9 +135,15 @@ theorem nineCertificate_excludes_packing_order
     (hradiusSq : ∀ i : Fin 9,
       (P.circles (index i)).radius ^ 2 =
         (cert.diskLabels[i.1]! : ℝ))
+    (radial theta : Fin 9 → ℝ)
+    (hradial : ∀ i : Fin 9,
+      radial i = pointNorm (P.circles (index i)).center)
+    (hpolar : ∀ i : Fin 9,
+      (P.circles (index i)).center = polarPoint (radial i) (theta i))
+    (hthetaLo : ∀ i : Fin 9, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi)
     (horder : ∀ i j : Fin 9, i.1 < j.1 →
-      pointPolarAngle (P.circles (index i)).center ≤
-        pointPolarAngle (P.circles (index j)).center) :
+      theta i ≤ theta j) :
     False := by
   rcases hcert with ⟨hscaleNat, _, hradiiSpec, htree⟩
   have hradiiData := hradiiSpec
@@ -150,23 +157,6 @@ theorem nineCertificate_excludes_packing_order
       (P.circles (index i)).radius_nonneg (hradiusSq i)
   have hrootSize : (nineInitialBox cert).size = 9 := by
     simpa [nineInitialBox] using hradiiSize
-  let radial : Fin 9 → ℝ := fun i =>
-    pointNorm (P.circles (index i)).center
-  let theta : Fin 9 → ℝ := fun i =>
-    pointPolarAngle (P.circles (index i)).center
-  have hpolar : ∀ i : Fin 9,
-      (P.circles (index i)).center = polarPoint (radial i) (theta i) := by
-    intro i
-    have hrep := pointPolarAngle_representation (P.circles (index i)).center
-    simpa [radial, theta] using hrep.2.2.symm
-  have hthetaLo : ∀ i : Fin 9, 0 ≤ theta i := by
-    intro i
-    have hrep := pointPolarAngle_representation (P.circles (index i)).center
-    exact hrep.1
-  have hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi := by
-    intro i
-    have hrep := pointPolarAngle_representation (P.circles (index i)).center
-    exact hrep.2.1
   have hradialPos : ∀ i : Fin 9, 0 < radial i := by
     intro i
     have hanchorNe : anchor ≠ index i := Ne.symm (hindexAvoidsAnchor i)
@@ -188,7 +178,8 @@ theorem nineCertificate_excludes_packing_order
         0 < (P.circles anchor).radius + (P.circles (index i)).radius :=
       add_pos_of_pos_of_nonneg hanchorRadius
         (P.circles (index i)).radius_nonneg
-    simpa [radial] using lt_of_lt_of_le hsumPos hsumLower
+    rw [hradial i]
+    exact lt_of_lt_of_le hsumPos hsumLower
   have hcontains :
       nineScaledBoxContains (cert.scale : ℝ) (nineInitialBox cert) radial := by
     intro i
@@ -196,10 +187,12 @@ theorem nineCertificate_excludes_packing_order
     rw [hroot]
     constructor
     · have hradialNonneg : 0 ≤ radial i := by
+        rw [hradial i]
         exact pointNorm_nonneg _
       simpa using hradialNonneg
     · have hcenterBound :
         radial i ≤ R - (P.circles (index i)).radius := by
+        rw [hradial i]
         exact pointNorm_le_container (P.contained (index i))
       have hupperDiv :
           radial i + (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤
@@ -251,9 +244,48 @@ theorem nineCertificate_excludes_packing_order
     rw [pointNorm_sq]
     simpa [Separated, distSq] using hpack
   have hsorted : ∀ i j : Fin 9, i.1 < j.1 → theta i ≤ theta j := by
-    simpa [theta] using horder
+    exact horder
   exact nineReplayTree_excludes_scaled_configuration htree hrootSize hscale
     hcontains hradialPos hradiusLower hseparated hsorted hthetaLo hthetaHi
+
+/-- The standard `Complex.arg` coordinate choice is a specialization of the
+explicit-polar theorem. -/
+theorem nineCertificate_excludes_packing_order
+    {cert : NineCircleCertificate} {R : ℝ}
+    (hcert : nineCertificateSpec cert)
+    (P : Packing 10 R)
+    (anchor : Fin 10) (index : Fin 9 → Fin 10)
+    (hindexInjective : Function.Injective index)
+    (hindexAvoidsAnchor : ∀ i : Fin 9, index i ≠ anchor)
+    (hanchorCenter : (P.circles anchor).center = (0, 0))
+    (hanchorRadius : 0 < (P.circles anchor).radius)
+    (hcontainer : R ≤ (cert.radiusUpper : ℝ) / cert.scale)
+    (hradiusSq : ∀ i : Fin 9,
+      (P.circles (index i)).radius ^ 2 =
+        (cert.diskLabels[i.1]! : ℝ))
+    (horder : ∀ i j : Fin 9, i.1 < j.1 →
+      pointPolarAngle (P.circles (index i)).center ≤
+        pointPolarAngle (P.circles (index j)).center) :
+    False := by
+  let radial : Fin 9 → ℝ := fun i =>
+    pointNorm (P.circles (index i)).center
+  let theta : Fin 9 → ℝ := fun i =>
+    pointPolarAngle (P.circles (index i)).center
+  have hpolar : ∀ i : Fin 9,
+      (P.circles (index i)).center = polarPoint (radial i) (theta i) := by
+    intro i
+    have hrep := pointPolarAngle_representation (P.circles (index i)).center
+    simpa [radial, theta] using hrep.2.2.symm
+  have hthetaLo : ∀ i : Fin 9, 0 ≤ theta i := by
+    intro i
+    exact (pointPolarAngle_representation (P.circles (index i)).center).1
+  have hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi := by
+    intro i
+    exact (pointPolarAngle_representation (P.circles (index i)).center).2.1
+  exact nineCertificate_excludes_polar_order hcert P anchor index
+    hindexInjective hindexAvoidsAnchor hanchorCenter hanchorRadius hcontainer
+    hradiusSq radial theta (by intro i; rfl) hpolar hthetaLo hthetaHi (by
+      simpa [theta] using horder)
 
 /-- Specialized interface for the usual ten-circle radius assignment
 `radius(k)^2 = k + 1`. The caller supplies the embedding of certificate slots

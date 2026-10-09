@@ -157,13 +157,16 @@ standard radii and packages this as concrete exclusion theorems for both
 checked certificates. The remaining work is to establish the required
 cyclic-order cases and connect their coverage to the global proof.
 
-`NineCirclePackingSoundness.lean` supplies polar coordinates from arbitrary
-center points using `Complex.arg`, with angles in `[0, 2π]`. Its
-`nineCertificate_excludes_packing_order` theorem takes a `Packing 10 R` whose
+`NineCirclePackingSoundness.lean` supplies `nineCertificate_excludes_polar_order`,
+which accepts an explicit polar representation in any normalized coordinate
+frame. This separates the geometric replay from the choice of angle origin and
+is intended to support the cyclic-order rotation step. The existing
+`nineCertificate_excludes_packing_order` theorem is the `Complex.arg`
+specialization, with angles in `[0, 2π]`. Both take a `Packing 10 R` whose
 anchor circle is centered at the container origin and whose other nine
-circles are supplied in one certificate's cyclic order. It derives the initial
-radial box from containment, obtains outer-circle separation from the packing
-axiom, and invokes the checked split-tree exclusion. Matching each slot to its
+circles are supplied in one certificate's cyclic order. They derive the initial
+radial box from containment, obtain outer-circle separation from the packing
+axiom, and invoke the checked split-tree exclusion. Matching each slot to its
 certified disk radius is now derived for the two concrete certificates under
 the standard radius assignment `radius(k)^2 = k + 1`. The caller still has to
 establish the relevant cyclic order, and the other cyclic orders still require
