@@ -58,6 +58,40 @@ theorem fifteen_unit_packing_pair_radial_sum_ge_two
   norm_num at hsum ⊢
   exact hsum
 
+theorem fifteen_unit_packing_subunit_centers_unique
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    {i j : Fin 15}
+    (hi : fifteenCenterRadius P i < 1)
+    (hj : fifteenCenterRadius P j < 1) : i = j := by
+  by_contra hne
+  have hsum := fifteen_unit_packing_pair_radial_sum_ge_two P hunit hne
+  linarith
+
+theorem fifteen_unit_packing_origin_forces_other_centers_radius_two
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    {i j : Fin 15} (hij : i ≠ j)
+    (horigin : fifteenCenterRadius P i = 0) :
+    2 ≤ fifteenCenterRadius P j := by
+  have hsum := fifteen_unit_packing_pair_radial_sum_ge_two P hunit hij
+  rw [horigin] at hsum
+  simpa using hsum
+
+theorem fifteen_unit_packing_excludes_two_subunit_box_upper_bounds
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    {i j : Fin 15} (hij : i ≠ j)
+    (x y : FifteenInterval)
+    (hix : fifteenCenterRadius P i ≤ (x.2 : ℝ))
+    (hjy : fifteenCenterRadius P j ≤ (y.2 : ℝ))
+    (hx : (x.2 : ℝ) < 1) (hy : (y.2 : ℝ) < 1) : False := by
+  have hsum := fifteen_unit_packing_pair_radial_sum_ge_two P hunit hij
+  have hupper :
+      (fifteenCenterRadius P i + fifteenCenterRadius P j : ℝ) < 2 := by
+    linarith
+  exact (not_lt_of_ge hsum) hupper
+
 theorem fifteen_unit_packing_pair_box_upper_sum_ge_two
     {R : ℝ} (P : Packing 15 R)
     (hunit : ∀ i, (P.circles i).radius = 1)
