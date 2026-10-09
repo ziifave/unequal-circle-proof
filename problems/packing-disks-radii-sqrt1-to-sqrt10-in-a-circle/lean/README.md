@@ -155,25 +155,37 @@ that cap. This remainder is more conservative than the Python checker's
 degree-18 `x^19 / 19!` bound; every stored cycle tick still passes the
 stronger Lean remainder check.
 
-The theorem `fifteenRegularTick_lower_bounds_center_angle` now connects a
-regular checked tick to the geometry of a separated pair of centers. Given
-positive radial intervals, radii inside those intervals, and squared center
-distance at least 4, it proves that the centers' angle is at least the tick.
-Its proof establishes that the cosine-rule cap over the whole rectangle is
-bounded by the maximum of its four rational corners, then applies the disk
-separation inequality.
+The theorem `fifteenRegularTick_lower_bounds_center_angle` connects a regular
+checked tick to the geometry of a separated pair of centers. Given positive
+radial intervals, radii inside those intervals, and squared center distance at
+least 4, it proves that the centers' angle is at least the tick. Its proof
+establishes that the cosine-rule cap over the whole rectangle is bounded by the
+maximum of its four rational corners, then applies the disk separation
+inequality. The lower-bound part is factored as
+`fifteenRegularTick_lower_bounds_touch_angle`.
+
+The signed polar-order bridge is now formalized for regular edges.
+`fifteen_polar_touch_angle_ordered_gap` turns a contact-angle lower bound into
+bounds on both directed gaps between two sorted polar angles. Then
+`fifteen_polar_edge_respects_angular_bound` proves the signed upper bound used
+by the negative-cycle argument, for either edge direction. Finally,
+`fifteenRegularTick_gives_polar_edge_bound` composes the rational tick check,
+the corner-based contact-angle estimate, pairwise separation, and the polar
+order argument into one theorem for an individual regular certificate edge.
+It assumes the edge's stored lower angle equals its tick divided by 2800 and
+that the polar angles are sorted in `[0, 2π]`.
 
 `CirclePacking/FifteenCycleSoundness.lean` proves the generic soundness step
 for negative-cycle witnesses. If each checked edge weight is an upper bound
 for its polar-angle difference after scaling by 1/2800, then a closed edge
 chain cannot have negative total weight. The theorem matches the certificate's
 `O`, `L`, and `U` edge conventions to the 17,600-tick upper bound for a full
-turn. The remaining connections are the exceptional zero-radius and out-of-range
-cap branches, deriving the signed edge bounds from the sorted polar order, and
-lifting the finite Boolean replay to a proposition about every geometric
-configuration. The upstream 760-orbit enumeration and final local obstruction
-also remain outside Lean; this certificate replay is not yet the full optimum
-proof.
+turn. The remaining connections include the exceptional zero-radius and
+out-of-range cap branches, extracting the assumptions of the per-edge theorem
+from each parsed JSON leaf, and lifting the finite Boolean replay to a
+proposition about every geometric configuration. The upstream 760-orbit
+enumeration and final local obstruction also remain outside Lean; this
+certificate replay is not yet the full optimum proof.
 
 Build the certificate replay with `lake build CirclePacking.FifteenCertificate`
 and the analytic tick lemmas with `lake build CirclePacking.FifteenTickSoundness`.

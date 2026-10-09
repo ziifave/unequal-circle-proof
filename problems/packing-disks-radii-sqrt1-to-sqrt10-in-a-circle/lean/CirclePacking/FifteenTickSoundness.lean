@@ -2,6 +2,8 @@ import CirclePacking.FifteenCertificate
 import CirclePacking.CosineTaylor
 import CirclePacking.CornerBound
 import CirclePacking.GeometricAngle
+import CirclePacking.PolarAngle
+import CirclePacking.FifteenCycleSoundness
 import Mathlib.Analysis.Real.Pi.Bounds
 
 /-!
@@ -240,8 +242,8 @@ theorem fifteen_box_corners_certify_touch_angle
   exact le_trans (corner_touch_cosine_bound haL haU hbL hbU hLa hLb
     h00 h01 h10 h11) hcap
 
-theorem fifteenRegularTick_lower_bounds_center_angle
-    (x y : FifteenInterval) (ticks : Nat) (a b : ℝ) (p q : Point)
+theorem fifteenRegularTick_lower_bounds_touch_angle
+    (x y : FifteenInterval) (ticks : Nat) (a b : ℝ)
     (hsum : 2 ≤ x.2 + y.2)
     (hcapUpper : fifteenBoxCosineCap x y < 1)
     (hcapLower : -1 < fifteenBoxCosineCap x y)
@@ -249,10 +251,8 @@ theorem fifteenRegularTick_lower_bounds_center_angle
     (hxOrder : x.1 ≤ x.2) (hyOrder : y.1 ≤ y.2)
     (hx0 : 0 < (x.1 : ℝ)) (hy0 : 0 < (y.1 : ℝ))
     (haL : (x.1 : ℝ) ≤ a) (haU : a ≤ (x.2 : ℝ))
-    (hbL : (y.1 : ℝ) ≤ b) (hbU : b ≤ (y.2 : ℝ))
-    (hpa : pointNorm p = a) (hqb : pointNorm q = b)
-    (hsep : 4 ≤ pointNorm (p.1 - q.1, p.2 - q.2) ^ 2) :
-    (ticks : ℝ) / 2800 ≤ centerAngle p q := by
+    (hbL : (y.1 : ℝ) ≤ b) (hbU : b ≤ (y.2 : ℝ)) :
+    (ticks : ℝ) / 2800 ≤ touchAngle a b 2 := by
   have hspec := fifteenTickCertificateValid_regular_spec x y ticks
     hsum hcapUpper hcapLower hvalid
   have hangle0 : 0 ≤ (ticks : ℝ) / 2800 := by positivity
@@ -285,6 +285,23 @@ theorem fifteenRegularTick_lower_bounds_center_angle
     fifteen_box_corners_certify_touch_angle haL haU hbL hbU hx0 hy0
       hcornerData.1 hcornerData.2.1 hcornerData.2.2.1 hcornerData.2.2.2
       hangle0 hanglePi hcapCos
+  exact htouch
+
+theorem fifteenRegularTick_lower_bounds_center_angle
+    (x y : FifteenInterval) (ticks : Nat) (a b : ℝ) (p q : Point)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hcapUpper : fifteenBoxCosineCap x y < 1)
+    (hcapLower : -1 < fifteenBoxCosineCap x y)
+    (hvalid : fifteenTickCertificateValid x y false false ticks = true)
+    (hxOrder : x.1 ≤ x.2) (hyOrder : y.1 ≤ y.2)
+    (hx0 : 0 < (x.1 : ℝ)) (hy0 : 0 < (y.1 : ℝ))
+    (haL : (x.1 : ℝ) ≤ a) (haU : a ≤ (x.2 : ℝ))
+    (hbL : (y.1 : ℝ) ≤ b) (hbU : b ≤ (y.2 : ℝ))
+    (hpa : pointNorm p = a) (hqb : pointNorm q = b)
+    (hsep : 4 ≤ pointNorm (p.1 - q.1, p.2 - q.2) ^ 2) :
+    (ticks : ℝ) / 2800 ≤ centerAngle p q := by
+  have htouch := fifteenRegularTick_lower_bounds_touch_angle x y ticks a b
+    hsum hcapUpper hcapLower hvalid hxOrder hyOrder hx0 hy0 haL haU hbL hbU
   have ha : 0 < a := lt_of_lt_of_le hx0 haL
   have hb : 0 < b := lt_of_lt_of_le hy0 hbL
   have hsep' : (2 : ℝ) ^ 2 ≤ pointNorm (p.1 - q.1, p.2 - q.2) ^ 2 := by
@@ -292,5 +309,179 @@ theorem fifteenRegularTick_lower_bounds_center_angle
     simpa [htwo] using hsep
   have hcenter := touch_angle_le_center_angle ha hb hpa hqb hsep'
   exact le_trans htouch hcenter
+
+theorem fifteen_centerAngle_symm (p q : Point) :
+    centerAngle p q = centerAngle q p := by
+  unfold centerAngle centerCosine
+  congr 1
+  ring
+
+theorem fifteen_touchAngle_symm (a b d : ℝ) :
+    touchAngle a b d = touchAngle b a d := by
+  unfold touchAngle touchCosine
+  congr 1
+  ring
+
+theorem fifteen_centerAngle_polar_reverse_sub
+    {a b alpha beta : ℝ} (ha : 0 < a) (hb : 0 < b)
+    (hlo : 0 ≤ 2 * Real.pi - (alpha - beta))
+    (hhi : 2 * Real.pi - (alpha - beta) ≤ Real.pi) :
+    centerAngle (polarPoint a alpha) (polarPoint b beta) =
+      2 * Real.pi - (alpha - beta) := by
+  have hcos : Real.cos (alpha - beta) =
+      Real.cos (2 * Real.pi - (alpha - beta)) := by
+    conv_rhs => rw [Real.cos_sub]
+    simp
+  unfold centerAngle
+  rw [centerCosine_polar ha hb, hcos]
+  exact Real.arccos_cos hlo hhi
+
+theorem fifteen_polar_touch_angle_ordered_gap
+    {a b d ell alpha beta : ℝ}
+    (ha : 0 < a) (hb : 0 < b)
+    (hellpi : ell ≤ Real.pi)
+    (hdelta0 : 0 ≤ beta - alpha)
+    (hdelta2 : beta - alpha ≤ 2 * Real.pi)
+    (hsep : d ^ 2 ≤ pointNorm
+      ((polarPoint a alpha).1 - (polarPoint b beta).1,
+       (polarPoint a alpha).2 - (polarPoint b beta).2) ^ 2)
+    (hell : ell ≤ touchAngle a b d) :
+    ell ≤ beta - alpha ∧ beta - alpha ≤ 2 * Real.pi - ell := by
+  have hcenterLower :
+      ell ≤ centerAngle (polarPoint a alpha) (polarPoint b beta) := by
+    exact le_trans hell (touch_angle_le_center_angle ha hb
+      (pointNorm_polarPoint (le_of_lt ha))
+      (pointNorm_polarPoint (le_of_lt hb)) hsep)
+  by_cases hsmall : beta - alpha ≤ Real.pi
+  · have hcenter :
+        centerAngle (polarPoint a alpha) (polarPoint b beta) = beta - alpha := by
+      calc
+        centerAngle (polarPoint a alpha) (polarPoint b beta) =
+            centerAngle (polarPoint b beta) (polarPoint a alpha) :=
+              fifteen_centerAngle_symm _ _
+        _ = beta - alpha := centerAngle_polar_sub hb ha hdelta0 hsmall
+    constructor
+    · rw [hcenter] at hcenterLower
+      exact hcenterLower
+    · nlinarith [Real.pi_pos]
+  · have hlarge : Real.pi < beta - alpha := lt_of_not_ge hsmall
+    have hwrap0 : 0 ≤ 2 * Real.pi - (beta - alpha) := by nlinarith
+    have hwrapPi : 2 * Real.pi - (beta - alpha) ≤ Real.pi := by nlinarith
+    have hcenter :
+        centerAngle (polarPoint a alpha) (polarPoint b beta) =
+          2 * Real.pi - (beta - alpha) := by
+      calc
+        centerAngle (polarPoint a alpha) (polarPoint b beta) =
+            centerAngle (polarPoint b beta) (polarPoint a alpha) :=
+              fifteen_centerAngle_symm _ _
+        _ = 2 * Real.pi - (beta - alpha) :=
+          fifteen_centerAngle_polar_reverse_sub hb ha hwrap0 hwrapPi
+    constructor
+    · exact le_trans hellpi (le_of_lt hlarge)
+    · rw [hcenter] at hcenterLower
+      linarith
+
+theorem fifteen_polar_edge_respects_angular_bound
+    (theta : Fin 15 → ℝ) (tauUpper : ℝ)
+    (e : FifteenAngularEdge) (a b d : ℝ)
+    (ha : 0 < a) (hb : 0 < b) (hellpi : e.lower ≤ Real.pi)
+    (hneq : e.src ≠ e.dst)
+    (hsorted : ∀ i j : Fin 15, i.1 < j.1 → theta i ≤ theta j)
+    (hthetaLo : ∀ i : Fin 15, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 15, theta i ≤ 2 * Real.pi)
+    (hsep : d ^ 2 ≤ pointNorm
+      ((polarPoint a (theta e.src)).1 - (polarPoint b (theta e.dst)).1,
+       (polarPoint a (theta e.src)).2 - (polarPoint b (theta e.dst)).2) ^ 2)
+    (hell : e.lower ≤ touchAngle a b d)
+    (htau : 2 * Real.pi ≤ tauUpper) :
+    theta e.dst - theta e.src ≤ fifteenAngularEdgeUpper tauUpper e := by
+  by_cases hforward : e.src.1 < e.dst.1
+  · have hdelta0 : 0 ≤ theta e.dst - theta e.src :=
+      sub_nonneg.mpr (hsorted e.src e.dst hforward)
+    have hdelta2 : theta e.dst - theta e.src ≤ 2 * Real.pi := by
+      have hhi := hthetaHi e.dst
+      have hlo := hthetaLo e.src
+      nlinarith
+    have hgap := fifteen_polar_touch_angle_ordered_gap ha hb hellpi
+      hdelta0 hdelta2 hsep hell
+    simp [fifteenAngularEdgeUpper, hforward]
+    linarith [hgap.2, htau]
+  · have hback : e.dst.1 < e.src.1 := by
+      have hne : e.src.1 ≠ e.dst.1 := fun heq => hneq (Fin.ext heq)
+      omega
+    have hdelta0 : 0 ≤ theta e.src - theta e.dst :=
+      sub_nonneg.mpr (hsorted e.dst e.src hback)
+    have hdelta2 : theta e.src - theta e.dst ≤ 2 * Real.pi := by
+      have hhi := hthetaHi e.src
+      have hlo := hthetaLo e.dst
+      nlinarith
+    have hdistSymm :
+        pointNorm
+          ((polarPoint b (theta e.dst)).1 - (polarPoint a (theta e.src)).1,
+           (polarPoint b (theta e.dst)).2 - (polarPoint a (theta e.src)).2) ^ 2 =
+        pointNorm
+          ((polarPoint a (theta e.src)).1 - (polarPoint b (theta e.dst)).1,
+           (polarPoint a (theta e.src)).2 - (polarPoint b (theta e.dst)).2) ^ 2 := by
+      rw [pointNorm_sq, pointNorm_sq]
+      ring
+    have hsep' : d ^ 2 ≤ pointNorm
+        ((polarPoint b (theta e.dst)).1 - (polarPoint a (theta e.src)).1,
+         (polarPoint b (theta e.dst)).2 - (polarPoint a (theta e.src)).2) ^ 2 := by
+      rw [hdistSymm]
+      exact hsep
+    have htouchSymm : e.lower ≤ touchAngle b a d := by
+      rw [← fifteen_touchAngle_symm a b d]
+      exact hell
+    have hgap := fifteen_polar_touch_angle_ordered_gap hb ha hellpi
+      hdelta0 hdelta2 hsep' htouchSymm
+    simp [fifteenAngularEdgeUpper, hforward]
+    linarith
+
+theorem fifteenRegularTick_gives_polar_edge_bound
+    (x y : FifteenInterval) (ticks : Nat) (e : FifteenAngularEdge)
+    (theta : Fin 15 → ℝ) (a b : ℝ) (tauUpper : ℝ)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hcapUpper : fifteenBoxCosineCap x y < 1)
+    (hcapLower : -1 < fifteenBoxCosineCap x y)
+    (hvalid : fifteenTickCertificateValid x y false false ticks = true)
+    (hxOrder : x.1 ≤ x.2) (hyOrder : y.1 ≤ y.2)
+    (hx0 : 0 < (x.1 : ℝ)) (hy0 : 0 < (y.1 : ℝ))
+    (haL : (x.1 : ℝ) ≤ a) (haU : a ≤ (x.2 : ℝ))
+    (hbL : (y.1 : ℝ) ≤ b) (hbU : b ≤ (y.2 : ℝ))
+    (hlower : e.lower = (ticks : ℝ) / 2800)
+    (hneq : e.src ≠ e.dst)
+    (hsorted : ∀ i j : Fin 15, i.1 < j.1 → theta i ≤ theta j)
+    (hthetaLo : ∀ i : Fin 15, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 15, theta i ≤ 2 * Real.pi)
+    (hsep : 4 ≤ pointNorm
+      ((polarPoint a (theta e.src)).1 - (polarPoint b (theta e.dst)).1,
+       (polarPoint a (theta e.src)).2 - (polarPoint b (theta e.dst)).2) ^ 2)
+    (htau : 2 * Real.pi ≤ tauUpper) :
+    theta e.dst - theta e.src ≤ fifteenAngularEdgeUpper tauUpper e := by
+  have hell := fifteenRegularTick_lower_bounds_touch_angle x y ticks a b
+    hsum hcapUpper hcapLower hvalid hxOrder hyOrder hx0 hy0 haL haU hbL hbU
+  have hell' : e.lower ≤ touchAngle a b 2 := by
+    rw [hlower]
+    exact hell
+  have hpi : e.lower ≤ Real.pi := by
+    rw [hlower]
+    have htick := (fifteenTickCertificateValid_regular_spec x y ticks
+      hsum hcapUpper hcapLower hvalid).1
+    have ht : (ticks : ℝ) / 2800 ≤ (8790 : ℝ) / 2800 :=
+      div_le_div_of_nonneg_right (by exact_mod_cast htick) (by norm_num)
+    have hbound : (8790 : ℝ) / 2800 < Real.pi := by
+      calc
+        (8790 : ℝ) / 2800 < (3.14 : ℝ) := by norm_num
+        _ < Real.pi := Real.pi_gt_d2
+    exact le_trans ht (le_of_lt hbound)
+  have ha : 0 < a := lt_of_lt_of_le hx0 haL
+  have hb : 0 < b := lt_of_lt_of_le hy0 hbL
+  have hsep' : (2 : ℝ) ^ 2 ≤ pointNorm
+      ((polarPoint a (theta e.src)).1 - (polarPoint b (theta e.dst)).1,
+       (polarPoint a (theta e.src)).2 - (polarPoint b (theta e.dst)).2) ^ 2 := by
+    norm_num at hsep ⊢
+    exact hsep
+  exact fifteen_polar_edge_respects_angular_bound theta tauUpper e a b 2
+    ha hb hpi hneq hsorted hthetaLo hthetaHi hsep' hell' htau
 
 end CirclePacking
