@@ -327,7 +327,8 @@ theorem nineCertificate_excludes_polar_order
   have hsorted : ∀ i j : Fin 9, i.1 < j.1 → theta i ≤ theta j := by
     exact horder
   exact nineReplayTree_excludes_scaled_configuration htree hrootSize hscale
-    hcontains hradialPos hradiusLower hseparated hsorted hthetaLo hthetaHi
+    hcontains (fun i => le_of_lt (hradialPos i)) hradiusLower hseparated
+    hsorted hthetaLo hthetaHi
 
 /-- The standard `Complex.arg` coordinate choice is a specialization of the
 explicit-polar theorem. -/
@@ -639,6 +640,307 @@ theorem nineCertificate_excludes_standard_cyclic_packing_order
   exact nineCertificate_excludes_cyclic_packing_order hcertFull P
     (0 : Fin 10) index hindexInjective hindexAvoidsAnchor hanchorCenter
     hanchorRadius hcontainer hradiusSq hcyclic
+
+/-! ### Anchor-free replay for the residual nine-circle configurations
+
+The four global residual cases concern the subpacking left after removing one
+disk.  That subpacking has no distinguished center at the origin, so its
+radial coordinates may be zero.  The certificate replay below starts from the
+container center directly and uses the nonnegative-radius version of the
+contractor and leaf soundness lemmas. -/
+
+theorem nineCertificate_excludes_nine_polar_order
+    {cert : NineCircleCertificate} {R : ℝ}
+    (hcert : nineCertificateSpec cert)
+    (P : Packing 9 R)
+    (hcontainer : R ≤ (cert.radiusUpper : ℝ) / cert.scale)
+    (hradiusSq : ∀ i : Fin 9,
+      (P.circles i).radius ^ 2 = (cert.diskLabels[i.1]! : ℝ))
+    (radial theta : Fin 9 → ℝ)
+    (hradial : ∀ i : Fin 9, radial i = pointNorm (P.circles i).center)
+    (hpolar : ∀ i : Fin 9,
+      (P.circles i).center = polarPoint (radial i) (theta i))
+    (hthetaLo : ∀ i : Fin 9, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi)
+    (horder : ∀ i j : Fin 9, i.1 < j.1 → theta i ≤ theta j) :
+    False := by
+  rcases hcert with ⟨hscaleNat, _, hradiiSpec, htree⟩
+  have hradiiData := hradiiSpec
+  rcases hradiiSpec with ⟨_, hradiiSize, _⟩
+  have hscale : 0 < (cert.scale : ℝ) := by exact_mod_cast hscaleNat
+  have hradiusLower : ∀ i : Fin 9,
+      (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤ (P.circles i).radius := by
+    intro i
+    exact nineCertificate_radiusLower_of_spec hradiiData hscale i
+      (P.circles i).radius_nonneg (hradiusSq i)
+  have hrootSize : (nineInitialBox cert).size = 9 := by
+    simpa [nineInitialBox] using hradiiSize
+  have hradialNonneg : ∀ i : Fin 9, 0 ≤ radial i := by
+    intro i
+    rw [hradial i]
+    exact pointNorm_nonneg _
+  have hcontains :
+      nineScaledBoxContains (cert.scale : ℝ) (nineInitialBox cert) radial := by
+    intro i
+    have hroot := nineInitialBox_getElem hradiiSize i
+    rw [hroot]
+    constructor
+    · simpa using hradialNonneg i
+    · have hcenterBound : radial i ≤ R - (P.circles i).radius := by
+        rw [hradial i]
+        exact pointNorm_le_container (P.contained i)
+      have hupperDiv :
+          radial i + (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤
+            (cert.radiusUpper : ℝ) / cert.scale := by
+        calc
+          radial i + (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤
+              (R - (P.circles i).radius) + (P.circles i).radius :=
+            add_le_add hcenterBound (hradiusLower i)
+          _ = R := by ring
+          _ ≤ (cert.radiusUpper : ℝ) / cert.scale := hcontainer
+      have hupperDiv' : radial i ≤
+          (cert.radiusUpper : ℝ) / cert.scale -
+            (cert.radiiLower[i.1]! : ℝ) / cert.scale := by
+        linarith
+      have hupperDiv'' : radial i ≤
+          ((cert.radiusUpper : ℝ) - (cert.radiiLower[i.1]! : ℝ)) /
+            cert.scale := by
+        rw [sub_div]
+        exact hupperDiv'
+      have hradialNatLE : cert.radiiLower[i.1]! ≤ cert.radiusUpper := by
+        have hratio :
+            (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤
+              (cert.radiusUpper : ℝ) / cert.scale := by
+          calc
+            (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤
+                (P.circles i).radius := hradiusLower i
+            _ ≤ R := (P.contained i).1
+            _ ≤ (cert.radiusUpper : ℝ) / cert.scale := hcontainer
+        exact_mod_cast (div_le_div_iff_of_pos_right hscale).mp hratio
+      rw [Nat.cast_sub hradialNatLE]
+      exact hupperDiv''
+  have hseparated : ∀ i j : Fin 9, i ≠ j →
+      ((P.circles i).radius + (P.circles j).radius) ^ 2 ≤
+        pointNorm
+          ((polarPoint (radial i) (theta i)).1 -
+              (polarPoint (radial j) (theta j)).1,
+           (polarPoint (radial i) (theta i)).2 -
+              (polarPoint (radial j) (theta j)).2) ^ 2 := by
+    intro i j hij
+    have hpack := P.separated hij
+    dsimp [Separated] at hpack
+    rw [hpolar i, hpolar j] at hpack
+    rw [pointNorm_sq]
+    simpa [Separated, distSq] using hpack
+  exact nineReplayTree_excludes_scaled_configuration htree hrootSize hscale
+    hcontains hradialNonneg hradiusLower hseparated horder hthetaLo hthetaHi
+
+theorem nineCertificate_excludes_nine_packing_order
+    {cert : NineCircleCertificate} {R : ℝ}
+    (hcert : nineCertificateSpec cert)
+    (P : Packing 9 R)
+    (hcontainer : R ≤ (cert.radiusUpper : ℝ) / cert.scale)
+    (hradiusSq : ∀ i : Fin 9,
+      (P.circles i).radius ^ 2 = (cert.diskLabels[i.1]! : ℝ))
+    (horder : ∀ i j : Fin 9, i.1 < j.1 →
+      pointPolarAngle (P.circles i).center ≤ pointPolarAngle (P.circles j).center) :
+    False := by
+  let radial : Fin 9 → ℝ := fun i => pointNorm (P.circles i).center
+  let theta : Fin 9 → ℝ := fun i => pointPolarAngle (P.circles i).center
+  have hpolar : ∀ i : Fin 9,
+      (P.circles i).center = polarPoint (radial i) (theta i) := by
+    intro i
+    have hrep := pointPolarAngle_representation (P.circles i).center
+    simpa [radial, theta] using hrep.2.2.symm
+  have hthetaLo : ∀ i : Fin 9, 0 ≤ theta i := by
+    intro i
+    exact (pointPolarAngle_representation (P.circles i).center).1
+  have hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi := by
+    intro i
+    exact (pointPolarAngle_representation (P.circles i).center).2.1
+  exact nineCertificate_excludes_nine_polar_order hcert P hcontainer hradiusSq
+    radial theta (by intro i; rfl) hpolar hthetaLo hthetaHi (by
+      simpa [theta] using horder)
+
+theorem nineCertificate_excludes_nine_cyclic_packing_order
+    {cert : NineCircleCertificate} {R : ℝ}
+    (hcert : nineCertificateSpec cert)
+    (P : Packing 9 R)
+    (hcontainer : R ≤ (cert.radiusUpper : ℝ) / cert.scale)
+    (hradiusSq : ∀ i : Fin 9,
+      (P.circles i).radius ^ 2 = (cert.diskLabels[i.1]! : ℝ))
+    (hcyclic : ∀ i j : Fin 9, i.1 < j.1 →
+      angleFromOrigin
+          (pointPolarAngle (P.circles (0 : Fin 9)).center)
+          (pointPolarAngle (P.circles i).center) ≤
+        angleFromOrigin
+          (pointPolarAngle (P.circles (0 : Fin 9)).center)
+          (pointPolarAngle (P.circles j).center)) :
+    False := by
+  let origin := pointPolarAngle (P.circles (0 : Fin 9)).center
+  let φ := -origin
+  let P' := P.rotate φ
+  let radial : Fin 9 → ℝ := fun i => pointNorm (P.circles i).center
+  let theta : Fin 9 → ℝ := fun i =>
+    angleFromOrigin origin (pointPolarAngle (P.circles i).center)
+  have horigin := pointPolarAngle_representation
+    (P.circles (0 : Fin 9)).center
+  have hradial : ∀ i : Fin 9,
+      radial i = pointNorm (P'.circles i).center := by
+    intro i
+    change pointNorm (P.circles i).center =
+      pointNorm (rotatePoint φ (P.circles i).center)
+    exact (rotatePoint_pointNorm φ _).symm
+  have hpolar : ∀ i : Fin 9,
+      (P'.circles i).center = polarPoint (radial i) (theta i) := by
+    intro i
+    let p := (P.circles i).center
+    have hrep := pointPolarAngle_representation p
+    change rotatePoint φ p =
+      polarPoint (pointNorm p)
+        (angleFromOrigin origin (pointPolarAngle p))
+    calc
+      rotatePoint φ p = rotatePoint φ
+          (polarPoint (pointNorm p) (pointPolarAngle p)) := by
+        exact congrArg (rotatePoint φ) hrep.2.2.symm
+      _ = polarPoint (pointNorm p) (pointPolarAngle p + φ) :=
+        rotatePoint_polarPoint φ _ _
+      _ = polarPoint (pointNorm p) (pointPolarAngle p - origin) := by
+        congr 1
+      _ = polarPoint (pointNorm p)
+          (angleFromOrigin origin (pointPolarAngle p)) :=
+        (polarPoint_angleFromOrigin _ _ _).symm
+  have hthetaLo : ∀ i : Fin 9, 0 ≤ theta i := by
+    intro i
+    have hi := pointPolarAngle_representation (P.circles i).center
+    exact (angleFromOrigin_bounds horigin.1 horigin.2.1 hi.1 hi.2.1).1
+  have hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi := by
+    intro i
+    have hi := pointPolarAngle_representation (P.circles i).center
+    exact (angleFromOrigin_bounds horigin.1 horigin.2.1 hi.1 hi.2.1).2
+  have hradiusSq' : ∀ i : Fin 9,
+      (P'.circles i).radius ^ 2 = (cert.diskLabels[i.1]! : ℝ) := by
+    intro i
+    simpa [P', Packing.rotate] using hradiusSq i
+  exact nineCertificate_excludes_nine_polar_order hcert P' hcontainer
+    hradiusSq' radial theta hradial hpolar hthetaLo hthetaHi hcyclic
+
+theorem nineCircleProofP_excludes_nine_cyclic_packing_order
+    {R : ℝ} (P : Packing 9 R)
+    (hcontainer : R ≤
+      (nineCircleProofP.radiusUpper : ℝ) / nineCircleProofP.scale)
+    (hradiusSq : ∀ i : Fin 9,
+      (P.circles i).radius ^ 2 =
+        (nineCircleProofP.diskLabels[i.1]! : ℝ))
+    (hcyclic : ∀ i j : Fin 9, i.1 < j.1 →
+      angleFromOrigin
+          (pointPolarAngle (P.circles (0 : Fin 9)).center)
+          (pointPolarAngle (P.circles i).center) ≤
+        angleFromOrigin
+          (pointPolarAngle (P.circles (0 : Fin 9)).center)
+          (pointPolarAngle (P.circles j).center)) :
+    False :=
+  nineCertificate_excludes_nine_cyclic_packing_order nineCircleProofP_spec
+    P hcontainer hradiusSq hcyclic
+
+theorem nineCircleProofQ_excludes_nine_cyclic_packing_order
+    {R : ℝ} (P : Packing 9 R)
+    (hcontainer : R ≤
+      (nineCircleProofQ.radiusUpper : ℝ) / nineCircleProofQ.scale)
+    (hradiusSq : ∀ i : Fin 9,
+      (P.circles i).radius ^ 2 =
+        (nineCircleProofQ.diskLabels[i.1]! : ℝ))
+    (hcyclic : ∀ i j : Fin 9, i.1 < j.1 →
+      angleFromOrigin
+          (pointPolarAngle (P.circles (0 : Fin 9)).center)
+          (pointPolarAngle (P.circles i).center) ≤
+        angleFromOrigin
+          (pointPolarAngle (P.circles 0).center)
+          (pointPolarAngle (P.circles j).center)) :
+    False :=
+  nineCertificate_excludes_nine_cyclic_packing_order nineCircleProofQ_spec
+    P hcontainer hradiusSq hcyclic
+
+/-- Apply a nine-circle certificate to any injectively selected subpacking of
+a standard ten-circle packing. No circle in the selected subpacking needs to
+be centered at the container origin. -/
+theorem nineCertificate_excludes_selected_nine_cyclic_packing_order
+    {cert : NineCircleCertificate} {R : ℝ}
+    (hcert : nineCertificateSpec cert)
+    (P : Packing 10 R)
+    (index : Fin 9 → Fin 10)
+    (hindexInjective : Function.Injective index)
+    (hindexLabel : ∀ i : Fin 9,
+      (index i).1 + 1 = cert.diskLabels[i.1]!)
+    (hstandardRadius : ∀ k : Fin 10,
+      (P.circles k).radius ^ 2 = ((k.1 + 1 : ℕ) : ℝ))
+    (hcontainer : R ≤ (cert.radiusUpper : ℝ) / cert.scale)
+    (hcyclic : ∀ i j : Fin 9, i.1 < j.1 →
+      angleFromOrigin
+          (pointPolarAngle (P.circles (index 0)).center)
+          (pointPolarAngle (P.circles (index i)).center) ≤
+        angleFromOrigin
+          (pointPolarAngle (P.circles (index 0)).center)
+          (pointPolarAngle (P.circles (index j)).center)) :
+    False := by
+  let P9 : Packing 9 R :=
+    { circles := fun i => P.circles (index i)
+      container_nonneg := P.container_nonneg
+      contained := fun i => P.contained (index i)
+      separated := by
+        intro i j hij
+        apply P.separated
+        intro hEq
+        exact hij (hindexInjective hEq) }
+  have hradiusSq : ∀ i : Fin 9,
+      (P9.circles i).radius ^ 2 = (cert.diskLabels[i.1]! : ℝ) := by
+    intro i
+    change (P.circles (index i)).radius ^ 2 = _
+    calc
+      (P.circles (index i)).radius ^ 2 =
+          (((index i).1 + 1 : ℕ) : ℝ) := hstandardRadius (index i)
+      _ = (cert.diskLabels[i.1]! : ℝ) := by
+        exact_mod_cast hindexLabel i
+  exact nineCertificate_excludes_nine_cyclic_packing_order hcert P9
+    hcontainer hradiusSq (by simpa [P9] using hcyclic)
+
+theorem nineCircleProofP_excludes_standard_cyclic_subpacking_order
+    {R : ℝ} (P : Packing 10 R)
+    (hstandardRadius : ∀ k : Fin 10,
+      (P.circles k).radius ^ 2 = ((k.1 + 1 : ℕ) : ℝ))
+    (hcontainer : R ≤
+      (nineCircleProofP.radiusUpper : ℝ) / nineCircleProofP.scale)
+    (hcyclic : ∀ i j : Fin 9, i.1 < j.1 →
+      angleFromOrigin
+          (pointPolarAngle (P.circles (nineCircleProofP_diskIndex 0)).center)
+          (pointPolarAngle (P.circles (nineCircleProofP_diskIndex i)).center) ≤
+        angleFromOrigin
+          (pointPolarAngle (P.circles (nineCircleProofP_diskIndex 0)).center)
+          (pointPolarAngle (P.circles (nineCircleProofP_diskIndex j)).center)) :
+    False := by
+  exact nineCertificate_excludes_selected_nine_cyclic_packing_order
+    nineCircleProofP_spec P nineCircleProofP_diskIndex
+    nineCircleProofP_diskIndex_injective nineCircleProofP_diskIndex_label
+    hstandardRadius hcontainer hcyclic
+
+theorem nineCircleProofQ_excludes_standard_cyclic_subpacking_order
+    {R : ℝ} (P : Packing 10 R)
+    (hstandardRadius : ∀ k : Fin 10,
+      (P.circles k).radius ^ 2 = ((k.1 + 1 : ℕ) : ℝ))
+    (hcontainer : R ≤
+      (nineCircleProofQ.radiusUpper : ℝ) / nineCircleProofQ.scale)
+    (hcyclic : ∀ i j : Fin 9, i.1 < j.1 →
+      angleFromOrigin
+          (pointPolarAngle (P.circles (nineCircleProofQ_diskIndex 0)).center)
+          (pointPolarAngle (P.circles (nineCircleProofQ_diskIndex i)).center) ≤
+        angleFromOrigin
+          (pointPolarAngle (P.circles (nineCircleProofQ_diskIndex 0)).center)
+          (pointPolarAngle (P.circles (nineCircleProofQ_diskIndex j)).center)) :
+    False := by
+  exact nineCertificate_excludes_selected_nine_cyclic_packing_order
+    nineCircleProofQ_spec P nineCircleProofQ_diskIndex
+    nineCircleProofQ_diskIndex_injective nineCircleProofQ_diskIndex_label
+    hstandardRadius hcontainer hcyclic
 
 theorem nineCircleProofP_excludes_standard_cyclic_packing_order
     {R : ℝ} (P : Packing 10 R)

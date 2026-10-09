@@ -293,6 +293,79 @@ theorem nineCertificateEdge_implies_angularBound
     (la + lb) ha hb hanglePi hneq hsorted hthetaLo hthetaHi hsepLower
     hangle' htau
 
+/-- The zero-tick edge is valid even when one centre is at the origin. For a
+positive tick, the certificate itself forces both radial box lower endpoints
+to be positive, so positivity follows from box membership. -/
+theorem nineCertificateEdge_implies_angularBound_of_nonneg
+    {cert : NineCircleCertificate} {box : NineRadialBox}
+    {edge : NineCycleEdge} {theta : Fin 9 → ℝ}
+    {a b ra rb tauUpper : ℝ}
+    (hspec : nineEdgeAngleSpec cert box edge)
+    (hsrc : edge.1 < 9) (hdst : edge.2.1 < 9)
+    (hscale : 0 < (cert.scale : ℝ))
+    (hboxAordered : box[edge.1]!.1 ≤ box[edge.1]!.2)
+    (hboxBordered : box[edge.2.1]!.1 ≤ box[edge.2.1]!.2)
+    (haL : (box[edge.1]!.1 : ℝ) / cert.scale ≤ a)
+    (haU : a ≤ (box[edge.1]!.2 : ℝ) / cert.scale)
+    (hbL : (box[edge.2.1]!.1 : ℝ) / cert.scale ≤ b)
+    (hbU : b ≤ (box[edge.2.1]!.2 : ℝ) / cert.scale)
+    (hla : (cert.radiiLower[edge.1]! : ℝ) / cert.scale ≤ ra)
+    (hlb : (cert.radiiLower[edge.2.1]! : ℝ) / cert.scale ≤ rb)
+    (hsep : (ra + rb) ^ 2 ≤ pointNorm
+      ((polarPoint a (theta ⟨edge.1, hsrc⟩)).1 -
+          (polarPoint b (theta ⟨edge.2.1, hdst⟩)).1,
+       (polarPoint a (theta ⟨edge.1, hsrc⟩)).2 -
+          (polarPoint b (theta ⟨edge.2.1, hdst⟩)).2) ^ 2)
+    (hsorted : ∀ i j : Fin 9, i.1 < j.1 → theta i ≤ theta j)
+    (hthetaLo : ∀ i : Fin 9, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi)
+    (htau : 2 * Real.pi ≤ tauUpper) :
+    let e : NineAngularEdge 9 :=
+      ⟨⟨edge.1, hsrc⟩, ⟨edge.2.1, hdst⟩,
+        (edge.2.2 : ℝ) / nineAngleScale⟩
+    theta e.dst - theta e.src ≤ nineAngularEdgeUpper tauUpper e := by
+  let e : NineAngularEdge 9 :=
+    ⟨⟨edge.1, hsrc⟩, ⟨edge.2.1, hdst⟩,
+      (edge.2.2 : ℝ) / nineAngleScale⟩
+  have hspec' := hspec
+  rcases hspec with ⟨_, _, _, htick, hangle⟩
+  by_cases hzero : edge.2.2 = 0
+  · by_cases hforward : edge.1 < edge.2.1
+    · have hgap : theta e.dst - theta e.src ≤ 2 * Real.pi := by
+        have hd := hthetaHi e.dst
+        have hs := hthetaLo e.src
+        linarith
+      have hgap' : theta e.dst - theta e.src ≤ tauUpper :=
+        hgap.trans htau
+      simpa [nineAngularEdgeUpper, e, hzero, hforward] using hgap'
+    · have hbackward : edge.2.1 < edge.1 := by
+        have hneq : edge.1 ≠ edge.2.1 := by
+          exact hspec'.2.2.1
+        omega
+      have hgap : theta e.dst - theta e.src ≤ 0 := by
+        have hs := hsorted e.dst e.src hbackward
+        linarith
+      simpa [nineAngularEdgeUpper, e, hzero, hforward] using hgap
+  · have hpositive := hangle.resolve_left hzero
+    rcases hpositive with ⟨hAlo, hBlo, _, _⟩
+    have hAloNat : 0 < box[edge.1]!.1 := Nat.pos_of_ne_zero hAlo
+    have hBloNat : 0 < box[edge.2.1]!.1 := Nat.pos_of_ne_zero hBlo
+    have ha : 0 < a := by
+      have hAloReal : 0 < (box[edge.1]!.1 : ℝ) := by exact_mod_cast hAloNat
+      have hAloScaled : 0 < (box[edge.1]!.1 : ℝ) / cert.scale :=
+        div_pos hAloReal hscale
+      linarith [haL]
+    have hb : 0 < b := by
+      have hBloReal : 0 < (box[edge.2.1]!.1 : ℝ) := by exact_mod_cast hBloNat
+      have hBloScaled : 0 < (box[edge.2.1]!.1 : ℝ) / cert.scale :=
+        div_pos hBloReal hscale
+      linarith [hbL]
+    have hbound := nineCertificateEdge_implies_angularBound
+      (a := a) (b := b) (ra := ra) (rb := rb) (theta := theta)
+      hspec' hsrc hdst hscale hboxAordered hboxBordered
+      haL haU hbL hbU ha hb hla hlb hsep hsorted hthetaLo hthetaHi htau
+    simpa [e] using hbound
+
 def nineCycleFin (i : ℕ) : Fin 9 :=
   ⟨i % 9, Nat.mod_lt _ (by decide)⟩
 
@@ -507,7 +580,6 @@ theorem nineLeafSpec_excludes_polar_configuration
     (hradialBounds : ∀ i : Fin 9,
       (box[i.1]!.1 : ℝ) / cert.scale ≤ radial i ∧
         radial i ≤ (box[i.1]!.2 : ℝ) / cert.scale)
-    (hradialPos : ∀ i : Fin 9, 0 < radial i)
     (hradiusLower : ∀ i : Fin 9,
       (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤ diskRadius i)
     (hseparated : ∀ i j : Fin 9, i ≠ j →
@@ -531,13 +603,13 @@ theorem nineLeafSpec_excludes_polar_configuration
     intro heq
     have hval := congrArg Fin.val heq
     exact (nineLeafSpec_edgeAngleSpec hleaf hedge).2.2.1 hval
-  have hbound := nineCertificateEdge_implies_angularBound
+  have hbound := nineCertificateEdge_implies_angularBound_of_nonneg
     (theta := theta) (a := radial i) (b := radial j)
     (ra := diskRadius i) (rb := diskRadius j)
     hspec0 hsrc hdst hscale (hboxOrdered i) (hboxOrdered j)
     (hradialBounds i).1 (hradialBounds i).2
     (hradialBounds j).1 (hradialBounds j).2
-    (hradialPos i) (hradialPos j) (hradiusLower i) (hradiusLower j)
+    (hradiusLower i) (hradiusLower j)
     (hseparated i j hneq) hsorted hthetaLo hthetaHi
     ninePiUpperTicks_is_twoPi_upper
   simpa [nineCycleAngularEdge, nineCycleFin,
@@ -643,7 +715,7 @@ theorem nineContractPair_lowerBound
     {theta radial diskRadius : Fin 9 → ℝ}
     (hscale : 0 < scale)
     (hcontains : nineScaledBoxContains scale box radial)
-    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradialNonneg : ∀ i : Fin 9, 0 ≤ radial i)
     (hradiusLower : ∀ i : Fin 9,
       (radii[i.1]! : ℝ) / scale ≤ diskRadius i)
     (hseparated : ∀ i j : Fin 9, i ≠ j →
@@ -668,9 +740,9 @@ theorem nineContractPair_lowerBound
     (sq_le_sq₀ (add_nonneg (hradiusPos i) (hradiusPos j))
       (pointNorm_nonneg _)).mp (hseparated i j hne)
   have hnormI : pointNorm (polarPoint (radial i) (theta i)) = radial i :=
-    pointNorm_polarPoint (le_of_lt (hradialPos i))
+    pointNorm_polarPoint (hradialNonneg i)
   have hnormJ : pointNorm (polarPoint (radial j) (theta j)) = radial j :=
-    pointNorm_polarPoint (le_of_lt (hradialPos j))
+    pointNorm_polarPoint (hradialNonneg j)
   have htri := pointNorm_triangle
     (polarPoint (radial i) (theta i)) (polarPoint (radial j) (theta j))
   have hcenters : diskRadius i + diskRadius j ≤ radial i + radial j := by
@@ -697,7 +769,7 @@ theorem nineContractCoordinate_le_scaled_radial
     {theta radial diskRadius : Fin 9 → ℝ}
     (hscale : 0 < scale)
     (hcontains : nineScaledBoxContains scale box radial)
-    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradialNonneg : ∀ i : Fin 9, 0 ≤ radial i)
     (hradiusLower : ∀ i : Fin 9,
       (radii[i.1]! : ℝ) / scale ≤ diskRadius i)
     (hseparated : ∀ i j : Fin 9, i ≠ j →
@@ -739,7 +811,7 @@ theorem nineContractCoordinate_le_scaled_radial
   have hbaseLower : (box[i.1]!.1 : ℝ) ≤ scale * radial i := by
     simpa [mul_comm] using (div_le_iff₀ hscale).mp (hcontains i).1
   have hbaseNonneg : 0 ≤ scale * radial i :=
-    mul_nonneg (le_of_lt hscale) (le_of_lt (hradialPos i))
+    mul_nonneg (le_of_lt hscale) (hradialNonneg i)
   have hbase : ((max 0 (box[i.1]!.1) : ℕ) : ℝ) ≤ scale * radial i := by
     exact_mod_cast (max_le hbaseNonneg hbaseLower)
   have hvalues : ∀ j, j ∈ List.range 9 → i.1 ≠ j →
@@ -752,7 +824,7 @@ theorem nineContractCoordinate_le_scaled_radial
       intro heq
       apply hne
       simpa [jFin] using congrArg Fin.val heq
-    have hraw := nineContractPair_lowerBound hscale hcontains hradialPos
+    have hraw := nineContractPair_lowerBound hscale hcontains hradialNonneg
       hradiusLower hseparated i jFin hneq
     have hraw' : ((radii[i.1]! + radii[j]! : ℕ) : ℝ) -
         (box[j]!.2 : ℝ) ≤ scale * radial i := by
@@ -763,7 +835,7 @@ theorem nineContractCoordinate_le_scaled_radial
     · have hzero : radii[i.1]! + radii[j]! - (box[j]!).2 = 0 := by
         omega
       simp [hzero]
-      exact le_of_lt (mul_pos hscale (hradialPos i))
+      exact hbaseNonneg
   have hresult := hfold (List.range 9) (max 0 (box[i.1]!.1)) hbase hvalues
   simpa [nineContractCoordinate, update] using hresult
 
@@ -780,7 +852,7 @@ theorem nineContract_preserves_scaledBoxContains
     {theta radial diskRadius : Fin 9 → ℝ}
     (hscale : 0 < scale)
     (hcontains : nineScaledBoxContains scale box radial)
-    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradialNonneg : ∀ i : Fin 9, 0 ≤ radial i)
     (hradiusLower : ∀ i : Fin 9,
       (radii[i.1]! : ℝ) / scale ≤ diskRadius i)
     (hseparated : ∀ i j : Fin 9, i ≠ j →
@@ -795,7 +867,7 @@ theorem nineContract_preserves_scaledBoxContains
   rw [hget]
   constructor
   · have hcoordinate := nineContractCoordinate_le_scaled_radial
-      hscale hcontains hradialPos hradiusLower hseparated i
+      hscale hcontains hradialNonneg hradiusLower hseparated i
     have hcoordinate' : (nineContractCoordinate radii box i.1 : ℝ) ≤
         radial i * scale := by
       simpa [mul_comm] using hcoordinate
@@ -809,7 +881,7 @@ theorem nineReplayTree_excludes_scaled_configuration
     (hsize : box.size = 9)
     (hscale : 0 < (cert.scale : ℝ))
     (hcontains : nineScaledBoxContains (cert.scale : ℝ) box radial)
-    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradialNonneg : ∀ i : Fin 9, 0 ≤ radial i)
     (hradiusLower : ∀ i : Fin 9,
       (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤ diskRadius i)
     (hseparated : ∀ i j : Fin 9, i ≠ j →
@@ -828,7 +900,7 @@ theorem nineReplayTree_excludes_scaled_configuration
           (nineContract cert.radiiLower currentBox) radial := by
     intro currentBox hcurrent
     exact nineContract_preserves_scaledBoxContains hscale hcurrent
-      hradialPos hradiusLower hseparated
+      hradialNonneg hradiusLower hseparated
   induction tree generalizing box with
   | leaf edges =>
       change nineLeafSpec cert (nineContract cert.radiiLower box) edges at htree
@@ -836,7 +908,7 @@ theorem nineReplayTree_excludes_scaled_configuration
       exact nineLeafSpec_excludes_polar_configuration htree hscale
         (nineScaledBoxContains_ordered hscale hleafContains)
         hleafContains
-        hradialPos hradiusLower hseparated hsorted hthetaLo hthetaHi
+        hradiusLower hseparated hsorted hthetaLo hthetaHi
   | split axis cut left right ihLeft ihRight =>
       simp only [nineReplayTreeSpec] at htree
       rcases htree with ⟨haxis, hcutLo, hcutHi, hleft, hright⟩
