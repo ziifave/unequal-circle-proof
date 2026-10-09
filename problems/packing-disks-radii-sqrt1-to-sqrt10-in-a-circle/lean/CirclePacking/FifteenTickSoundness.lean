@@ -172,6 +172,216 @@ theorem fifteenRegularTick_gives_angle_lower_bound
   exact fifteenAngleTick_lower_of_cosine_cap ticks hspec.1 angle
     (fifteenBoxCosineCap x y : ℝ) hangle0 hanglePi hcontact hspec.2
 
+theorem fifteenTickCertificateValid_exactZero_ticks
+    (x y : FifteenInterval) (ticks : Nat)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hvalid : fifteenTickCertificateValid x y false true ticks = true) :
+    ticks = 0 := by
+  have hnotSum : ¬ x.2 + y.2 < 2 := by linarith
+  simpa [fifteenTickCertificateValid, hnotSum] using hvalid
+
+theorem fifteenTickCertificateValid_sum_spec
+    (x y : FifteenInterval) (positiveZero exactZero : Bool) (ticks : Nat)
+    (hvalid : fifteenTickCertificateValid x y positiveZero exactZero ticks = true) :
+    2 ≤ x.2 + y.2 := by
+  by_contra hsum
+  have hsmall : x.2 + y.2 < 2 := lt_of_not_ge hsum
+  simp [fifteenTickCertificateValid, hsmall] at hvalid
+
+theorem fifteenCosineRuleCap_cast (x y : Rat) :
+    (fifteenCosineRuleCap x y : ℝ) =
+      ((x : ℝ) ^ 2 + (y : ℝ) ^ 2 - 4) /
+        (2 * (x : ℝ) * (y : ℝ)) := by
+  norm_num [fifteenCosineRuleCap]
+
+theorem fifteenPositiveZeroCosineCap_eq_cosineRuleCap
+    (x y : FifteenInterval)
+    (hzero : x.1 = 0 ∨ y.1 = 0)
+    (hxUpperPositive : 0 < x.2) (hyUpperPositive : 0 < y.2)
+    (hxUpperLeTwo : x.2 ≤ 2) (hyUpperLeTwo : y.2 ≤ 2) :
+    fifteenPositiveZeroCosineCap x y = fifteenCosineRuleCap x.2 y.2 := by
+  by_cases hxzero : x.1 = 0
+  · simp [fifteenPositiveZeroCosineCap, hxzero, hyUpperPositive, hyUpperLeTwo]
+  · have hyzero : y.1 = 0 := hzero.resolve_left hxzero
+    simp [fifteenPositiveZeroCosineCap, hxzero, hxUpperPositive, hxUpperLeTwo]
+    unfold fifteenCosineRuleCap
+    ring
+
+theorem fifteenPositiveZeroCosineCap_cast_eq_touchCosine
+    (x y : FifteenInterval)
+    (hzero : x.1 = 0 ∨ y.1 = 0)
+    (hxUpperPositive : 0 < x.2) (hyUpperPositive : 0 < y.2)
+    (hxUpperLeTwo : x.2 ≤ 2) (hyUpperLeTwo : y.2 ≤ 2) :
+    (fifteenPositiveZeroCosineCap x y : ℝ) =
+      touchCosine (x.2 : ℝ) (y.2 : ℝ) 2 := by
+  rw [fifteenPositiveZeroCosineCap_eq_cosineRuleCap x y hzero
+    hxUpperPositive hyUpperPositive hxUpperLeTwo hyUpperLeTwo,
+    fifteenCosineRuleCap_cast]
+  norm_num [touchCosine]
+
+theorem touchCosine_mono_radii_of_le_two
+    {a b A B : ℝ}
+    (ha : 0 < a) (hb : 0 < b)
+    (haA : a ≤ A) (hbB : b ≤ B)
+    (hA : A ≤ 2) (hB : B ≤ 2) :
+    touchCosine a b 2 ≤ touchCosine A B 2 := by
+  have hApos : 0 < A := lt_of_lt_of_le ha haA
+  have hBpos : 0 < B := lt_of_lt_of_le hb hbB
+  have hbSq : b ^ 2 ≤ 4 := by
+    calc
+      b ^ 2 ≤ (2 : ℝ) ^ 2 :=
+        (sq_le_sq₀ (le_of_lt hb) (by norm_num)).2 (le_trans hbB hB)
+      _ = 4 := by norm_num
+  have hASq : A ^ 2 ≤ 4 := by
+    calc
+      A ^ 2 ≤ (2 : ℝ) ^ 2 :=
+        (sq_le_sq₀ (le_of_lt hApos) (by norm_num)).2 hA
+      _ = 4 := by norm_num
+  have hfirstFactor : 0 ≤ (A - a) * (a * A + 4 - b ^ 2) :=
+    mul_nonneg (sub_nonneg.mpr haA) (by nlinarith)
+  have hfirst : touchCosine a b 2 ≤ touchCosine A b 2 := by
+    unfold touchCosine
+    apply (div_le_div_iff₀ (by positivity) (by positivity)).2
+    nlinarith [hfirstFactor]
+  have hsecondFactor : 0 ≤ (B - b) * (b * B + 4 - A ^ 2) :=
+    mul_nonneg (sub_nonneg.mpr hbB) (by nlinarith)
+  have hsecond : touchCosine A b 2 ≤ touchCosine A B 2 := by
+    unfold touchCosine
+    apply (div_le_div_iff₀ (by positivity) (by positivity)).2
+    nlinarith [hsecondFactor]
+  exact le_trans hfirst hsecond
+
+theorem fifteenPositiveZeroCosineCap_bounds_or_one
+    (x y : FifteenInterval) (a b : ℝ)
+    (hzero : x.1 = 0 ∨ y.1 = 0)
+    (hzeroUpperLeTwo : (x.1 = 0 → x.2 ≤ 2) ∧ (y.1 = 0 → y.2 ≤ 2))
+    (ha : 0 < a) (hb : 0 < b)
+    (haUpper : a ≤ (x.2 : ℝ)) (hbUpper : b ≤ (y.2 : ℝ)) :
+    (1 : ℝ) ≤ (fifteenPositiveZeroCosineCap x y : ℝ) ∨
+      touchCosine a b 2 ≤ (fifteenPositiveZeroCosineCap x y : ℝ) := by
+  have hxUpperPositive : 0 < x.2 := by exact_mod_cast lt_of_lt_of_le ha haUpper
+  have hyUpperPositive : 0 < y.2 := by exact_mod_cast lt_of_lt_of_le hb hbUpper
+  by_cases hxUpperLeTwo : x.2 ≤ 2
+  · by_cases hyUpperLeTwo : y.2 ≤ 2
+    · right
+      rw [fifteenPositiveZeroCosineCap_cast_eq_touchCosine x y hzero
+        hxUpperPositive hyUpperPositive hxUpperLeTwo hyUpperLeTwo]
+      exact touchCosine_mono_radii_of_le_two ha hb haUpper hbUpper
+        (by exact_mod_cast hxUpperLeTwo) (by exact_mod_cast hyUpperLeTwo)
+    · left
+      have hxzero : x.1 = 0 := by
+        rcases hzero with hx | hy
+        · exact hx
+        · have hySmall := hzeroUpperLeTwo.2 hy
+          exact False.elim ((not_le_of_gt (lt_of_not_ge hyUpperLeTwo)) hySmall)
+      have hcapEq : fifteenPositiveZeroCosineCap x y = 1 := by
+        simp [fifteenPositiveZeroCosineCap, hxzero, hyUpperLeTwo]
+      simp [hcapEq]
+  · left
+    have hyzero : y.1 = 0 := by
+      rcases hzero with hx | hy
+      · have hxSmall := hzeroUpperLeTwo.1 hx
+        exact False.elim ((not_le_of_gt (lt_of_not_ge hxUpperLeTwo)) hxSmall)
+      · exact hy
+    have hxNotZero : x.1 ≠ 0 := by
+      intro hxzero
+      have hxSmall := hzeroUpperLeTwo.1 hxzero
+      exact (not_le_of_gt (lt_of_not_ge hxUpperLeTwo)) hxSmall
+    have hcapEq : fifteenPositiveZeroCosineCap x y = 1 := by
+      simp [fifteenPositiveZeroCosineCap, hxNotZero, hxUpperLeTwo]
+    simp [hcapEq]
+
+theorem fifteenPositiveZeroTick_lower_bounds_touch_angle
+    (x y : FifteenInterval) (ticks : Nat) (a b : ℝ)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hvalid : fifteenTickCertificateValid x y true false ticks = true)
+    (hcapBound :
+      (1 : ℝ) ≤ (fifteenPositiveZeroCosineCap x y : ℝ) ∨
+        touchCosine a b 2 ≤ (fifteenPositiveZeroCosineCap x y : ℝ)) :
+    (ticks : ℝ) / 2800 ≤ touchAngle a b 2 := by
+  have hnotSum : ¬ x.2 + y.2 < 2 := by linarith
+  let cap := fifteenPositiveZeroCosineCap x y
+  by_cases hupper : 1 ≤ cap
+  · have hticks : ticks = 0 := by
+      simpa [fifteenTickCertificateValid, hnotSum, cap, hupper] using hvalid
+    subst ticks
+    simpa [touchAngle] using (Real.arccos_nonneg (touchCosine a b 2))
+  · have hcapActual : touchCosine a b 2 ≤ (cap : ℝ) := by
+      rcases hcapBound with htrivial | hbound
+      · exact False.elim (hupper (by exact_mod_cast htrivial))
+      · simpa [cap] using hbound
+    by_cases hlower : cap ≤ -1
+    · have hticks : ticks = 8700 := by
+        simpa [fifteenTickCertificateValid, hnotSum, cap, hupper, hlower] using hvalid
+      subst ticks
+      have hcosPi : touchCosine a b 2 ≤ Real.cos Real.pi := by
+        rw [Real.cos_pi]
+        exact le_trans hcapActual (by exact_mod_cast hlower)
+      have hpiLower : Real.pi ≤ touchAngle a b 2 :=
+        certified_touch_angle_lower_bound (le_of_lt Real.pi_pos) le_rfl hcosPi
+      have htickPi : (8700 : ℝ) / 2800 ≤ Real.pi := le_of_lt (by
+        calc
+          (8700 : ℝ) / 2800 < (3.14 : ℝ) := by norm_num
+          _ < Real.pi := Real.pi_gt_d2)
+      exact le_trans htickPi hpiLower
+    · have hspec : ticks ≤ 8790 ∧ cap ≤ fifteenCosineLower ticks := by
+        simpa [fifteenTickCertificateValid, hnotSum, cap, hupper, hlower] using hvalid
+      have hcapTaylor : (cap : ℝ) ≤ (fifteenCosineLower ticks : ℝ) := by
+        exact_mod_cast hspec.2
+      have hcosTick : (fifteenCosineLower ticks : ℝ) ≤
+          Real.cos ((ticks : ℝ) / 2800) :=
+        fifteenCosineLower_le_cos ticks hspec.1
+      have hangle0 : 0 ≤ (ticks : ℝ) / 2800 := by positivity
+      have hanglePi : (ticks : ℝ) / 2800 ≤ Real.pi := by
+        have ht : (ticks : ℝ) / 2800 ≤ (8790 : ℝ) / 2800 :=
+          div_le_div_of_nonneg_right (by exact_mod_cast hspec.1) (by norm_num)
+        have hbound : (8790 : ℝ) / 2800 < Real.pi := by
+          calc
+            (8790 : ℝ) / 2800 < (3.14 : ℝ) := by norm_num
+            _ < Real.pi := Real.pi_gt_d2
+        exact le_of_lt (lt_of_le_of_lt ht hbound)
+      exact certified_touch_angle_lower_bound hangle0 hanglePi
+        (le_trans hcapActual (le_trans hcapTaylor hcosTick))
+
+theorem fifteenPositiveZeroTick_gives_angle_lower_bound
+    (x y : FifteenInterval) (ticks : Nat) (angle : ℝ)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hvalid : fifteenTickCertificateValid x y true false ticks = true)
+    (hangle0 : 0 ≤ angle) (hanglePi : angle ≤ Real.pi)
+    (hcontact : Real.cos angle ≤
+      (fifteenPositiveZeroCosineCap x y : ℝ)) :
+    (ticks : ℝ) / 2800 ≤ angle := by
+  have hnotSum : ¬ x.2 + y.2 < 2 := by linarith
+  let cap := fifteenPositiveZeroCosineCap x y
+  by_cases hupper : 1 ≤ cap
+  · have hticks : ticks = 0 := by
+      simpa [fifteenTickCertificateValid, hnotSum, cap, hupper] using hvalid
+    subst ticks
+    simpa using hangle0
+  · by_cases hlower : cap ≤ -1
+    · have hticks : ticks = 8700 := by
+        simpa [fifteenTickCertificateValid, hnotSum, cap, hupper, hlower] using hvalid
+      subst ticks
+      have hcapLow : (cap : ℝ) ≤ -1 := by exact_mod_cast hlower
+      have hcontact' : Real.cos angle ≤ -1 := le_trans hcontact hcapLow
+      have hcosPi : Real.cos angle ≤ Real.cos Real.pi := by
+        rw [Real.cos_pi]
+        exact hcontact'
+      have hpiLe : Real.pi ≤ angle :=
+        (Real.strictAntiOn_cos.le_iff_ge ⟨hangle0, hanglePi⟩
+          ⟨Real.pi_nonneg, le_rfl⟩).1 hcosPi
+      have htickPi : (8700 : ℝ) / 2800 ≤ Real.pi := le_of_lt (by
+        calc
+          (8700 : ℝ) / 2800 < (3.14 : ℝ) := by norm_num
+          _ < Real.pi := Real.pi_gt_d2)
+      exact le_trans htickPi hpiLe
+    · have hspec : ticks ≤ 8790 ∧ cap ≤ fifteenCosineLower ticks := by
+        simpa [fifteenTickCertificateValid, hnotSum, cap, hupper, hlower] using hvalid
+      have hcap : (cap : ℝ) ≤ (fifteenCosineLower ticks : ℝ) := by
+        exact_mod_cast hspec.2
+      exact fifteenAngleTick_lower_of_cosine_cap ticks hspec.1 angle
+        (cap : ℝ) hangle0 hanglePi hcontact hcap
+
 theorem fifteenBoxCosineCap_corners (x y : FifteenInterval) :
     fifteenCosineRuleCap x.1 y.1 ≤ fifteenBoxCosineCap x y ∧
     fifteenCosineRuleCap x.1 y.2 ≤ fifteenBoxCosineCap x y ∧
@@ -483,5 +693,74 @@ theorem fifteenRegularTick_gives_polar_edge_bound
     exact hsep
   exact fifteen_polar_edge_respects_angular_bound theta tauUpper e a b 2
     ha hb hpi hneq hsorted hthetaLo hthetaHi hsep' hell' htau
+
+theorem fifteenPositiveZeroTick_lower_bounds_touch_angle_of_box
+    (x y : FifteenInterval) (ticks : Nat) (a b : ℝ)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hvalid : fifteenTickCertificateValid x y true false ticks = true)
+    (hzero : x.1 = 0 ∨ y.1 = 0)
+    (hzeroUpperLeTwo : (x.1 = 0 → x.2 ≤ 2) ∧ (y.1 = 0 → y.2 ≤ 2))
+    (ha : 0 < a) (hb : 0 < b)
+    (haUpper : a ≤ (x.2 : ℝ)) (hbUpper : b ≤ (y.2 : ℝ)) :
+    (ticks : ℝ) / 2800 ≤ touchAngle a b 2 := by
+  have hcap := fifteenPositiveZeroCosineCap_bounds_or_one x y a b
+    hzero hzeroUpperLeTwo ha hb haUpper hbUpper
+  exact fifteenPositiveZeroTick_lower_bounds_touch_angle x y ticks a b
+    hsum hvalid hcap
+
+theorem fifteenPositiveZeroTick_gives_polar_edge_bound
+    (x y : FifteenInterval) (ticks : Nat) (e : FifteenAngularEdge)
+    (theta : Fin 15 → ℝ) (a b : ℝ) (tauUpper : ℝ)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hvalid : fifteenTickCertificateValid x y true false ticks = true)
+    (hzero : x.1 = 0 ∨ y.1 = 0)
+    (hzeroUpperLeTwo : (x.1 = 0 → x.2 ≤ 2) ∧ (y.1 = 0 → y.2 ≤ 2))
+    (ha : 0 < a) (hb : 0 < b)
+    (haUpper : a ≤ (x.2 : ℝ)) (hbUpper : b ≤ (y.2 : ℝ))
+    (hlower : e.lower = (ticks : ℝ) / 2800)
+    (hneq : e.src ≠ e.dst)
+    (hsorted : ∀ i j : Fin 15, i.1 < j.1 → theta i ≤ theta j)
+    (hthetaLo : ∀ i : Fin 15, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 15, theta i ≤ 2 * Real.pi)
+    (hsep : 4 ≤ pointNorm
+      ((polarPoint a (theta e.src)).1 - (polarPoint b (theta e.dst)).1,
+       (polarPoint a (theta e.src)).2 - (polarPoint b (theta e.dst)).2) ^ 2)
+    (htau : 2 * Real.pi ≤ tauUpper) :
+    theta e.dst - theta e.src ≤ fifteenAngularEdgeUpper tauUpper e := by
+  have hell := fifteenPositiveZeroTick_lower_bounds_touch_angle_of_box x y
+    ticks a b hsum hvalid hzero hzeroUpperLeTwo ha hb haUpper hbUpper
+  have hell' : e.lower ≤ touchAngle a b 2 := by
+    rw [hlower]
+    exact hell
+  have hpi : e.lower ≤ Real.pi := le_trans hell' (Real.arccos_le_pi _)
+  have hsep' : (2 : ℝ) ^ 2 ≤ pointNorm
+      ((polarPoint a (theta e.src)).1 - (polarPoint b (theta e.dst)).1,
+       (polarPoint a (theta e.src)).2 - (polarPoint b (theta e.dst)).2) ^ 2 := by
+    norm_num at hsep ⊢
+    exact hsep
+  exact fifteen_polar_edge_respects_angular_bound theta tauUpper e a b 2
+    ha hb hpi hneq hsorted hthetaLo hthetaHi hsep' hell' htau
+
+theorem fifteenZeroTick_gives_polar_edge_bound
+    (theta : Fin 15 → ℝ) (tauUpper : ℝ) (e : FifteenAngularEdge)
+    (hlower : e.lower = 0) (hneq : e.src ≠ e.dst)
+    (hsorted : ∀ i j : Fin 15, i.1 < j.1 → theta i ≤ theta j)
+    (hthetaLo : ∀ i : Fin 15, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 15, theta i ≤ 2 * Real.pi)
+    (htau : 2 * Real.pi ≤ tauUpper) :
+    theta e.dst - theta e.src ≤ fifteenAngularEdgeUpper tauUpper e := by
+  by_cases hforward : e.src.1 < e.dst.1
+  · have hdelta2 : theta e.dst - theta e.src ≤ 2 * Real.pi := by
+      have hhi := hthetaHi e.dst
+      have hlo := hthetaLo e.src
+      nlinarith
+    simp [fifteenAngularEdgeUpper, hforward, hlower]
+    linarith
+  · have hback : e.dst.1 < e.src.1 := by
+      have hne : e.src.1 ≠ e.dst.1 := fun heq => hneq (Fin.ext heq)
+      omega
+    have hordered : theta e.dst ≤ theta e.src := hsorted e.dst e.src hback
+    simp [fifteenAngularEdgeUpper, hforward, hlower]
+    linarith
 
 end CirclePacking

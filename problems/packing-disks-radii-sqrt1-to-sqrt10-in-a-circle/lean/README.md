@@ -175,14 +175,39 @@ order argument into one theorem for an individual regular certificate edge.
 It assumes the edge's stored lower angle equals its tick divided by 2800 and
 that the polar angles are sorted in `[0, 2π]`.
 
+The exceptional tick branches now have corresponding Lean lemmas as well.
+`fifteenTickCertificateValid_exactZero_ticks` proves that an exact-origin
+endpoint carries tick zero, and `fifteenZeroTick_gives_polar_edge_bound`
+handles such a directed edge using only the sorted-angle convention. For a
+positive radius whose interval begins at zero,
+`fifteenPositiveZeroCosineCap_bounds_or_one` proves that the special cap is
+either the trivial value 1 or a valid upper bound on the contact cosine, using
+monotonicity on radius boxes bounded by 2. This yields
+`fifteenPositiveZeroTick_gives_polar_edge_bound`, including the checker cases
+where the cap is at least 1 or at most -1.
+The lemmas `fifteenCycleEdgeTickValid_lower_eq` and
+`fifteenCycleEdgeTickValid_upper_eq` expose the exact tick-checker inputs
+selected by an `L` or `U` edge record. Their regular, positive-zero, and
+exact-zero spec lemmas reduce accepted edge records to the corresponding
+tick-checker propositions. An `O` edge's tick-zero rule is proved directly.
+
+The cycle parser and validator now also have a proposition-level interface.
+`fifteenCycleValid_produces_spec` extracts the parsed edge list from a
+successful JSON cycle check and proves every edge-shape and tick check, the
+closed-chain data, and the negative integer weight. Given geometric bounds for
+those edges, `fifteenCycleValid_excludes_with_edge_bounds` derives the cycle
+contradiction without trusting the validator's Boolean result as an opaque
+fact. The remaining certificate connection is to derive each geometric edge
+bound directly from the parsed edge, its current radial box, and the global
+packing hypotheses.
+
 `CirclePacking/FifteenCycleSoundness.lean` proves the generic soundness step
 for negative-cycle witnesses. If each checked edge weight is an upper bound
 for its polar-angle difference after scaling by 1/2800, then a closed edge
 chain cannot have negative total weight. The theorem matches the certificate's
 `O`, `L`, and `U` edge conventions to the 17,600-tick upper bound for a full
-turn. The remaining connections include the exceptional zero-radius and
-out-of-range cap branches, extracting the assumptions of the per-edge theorem
-from each parsed JSON leaf, and lifting the finite Boolean replay to a
+turn. The remaining connections include deriving the per-edge theorem's
+premises from each parsed JSON leaf and lifting the finite Boolean replay to a
 proposition about every geometric configuration. The upstream 760-orbit
 enumeration and final local obstruction also remain outside Lean; this
 certificate replay is not yet the full optimum proof.

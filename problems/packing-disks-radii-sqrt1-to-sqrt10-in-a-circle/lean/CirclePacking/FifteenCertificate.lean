@@ -164,6 +164,10 @@ def fifteenParseCycleEdge? (j : Json) : Option FifteenCycleEdge := do
   let ticks ← fifteenJsonNat? values[3]!
   some ⟨source, target, kind, ticks⟩
 
+def fifteenParseCycleEdges? (j : Json) : Option (List FifteenCycleEdge) := do
+  let rawEdges ← fifteenJsonArray? j
+  rawEdges.toList.mapM fifteenParseCycleEdge?
+
 def fifteenCycleEdgeShape (edge : FifteenCycleEdge) : Bool :=
   decide (edge.source < 15) && decide (edge.target < 15) && decide (edge.ticks ≤ 8790) &&
   (if edge.kind == "O" then
@@ -196,20 +200,37 @@ def fifteenCycleLinkValid : List FifteenCycleEdge → Bool
   | first :: second :: rest =>
       first.target == second.source && fifteenCycleLinkValid (second :: rest)
 
+def fifteenCycleFoldWeight (edges : List FifteenCycleEdge) : Int :=
+  edges.foldl (fun sum edge => sum + fifteenCycleEdgeWeight edge) 0
+
+def fifteenCycleEndsClosed (edges : List FifteenCycleEdge) : Bool :=
+  match edges.head?, edges.getLast? with
+  | some first, some last => decide (last.target = first.source)
+  | _, _ => false
+
+def fifteenCycleEdgesValid (edges : List FifteenCycleEdge) (box : FifteenBox)
+    (positiveZero exactZero : List Nat) : Bool :=
+  decide (2 ≤ edges.length) && decide (edges.length ≤ 15) &&
+    edges.all fifteenCycleEdgeShape &&
+    edges.all (fun edge => fifteenCycleEdgeTickValid edge box positiveZero exactZero) &&
+    fifteenCycleLinkValid edges && fifteenCycleEndsClosed edges &&
+    decide (fifteenCycleFoldWeight edges < 0)
+
 def fifteenCycleValid (j : Json) (box : FifteenBox)
-    (positiveZero exactZero : List Nat) : Bool := Id.run do
-  let some rawEdges := fifteenJsonArray? j | return false
-  let some edges := rawEdges.toList.mapM fifteenParseCycleEdge? | return false
-  if edges.length < 2 || edges.length > 15 then return false
-  if !edges.all fifteenCycleEdgeShape then return false
-  if !edges.all (fun edge => fifteenCycleEdgeTickValid edge box positiveZero exactZero) then
-    return false
-  let some first := edges.head? | return false
-  let some last := edges.getLast? | return false
-  if !fifteenCycleLinkValid edges then return false
-  if last.target != first.source then return false
-  let weight := edges.foldl (fun sum edge => sum + fifteenCycleEdgeWeight edge) (0 : Int)
-  return decide (weight < 0)
+    (positiveZero exactZero : List Nat) : Bool :=
+  match fifteenParseCycleEdges? j with
+  | some edges => fifteenCycleEdgesValid edges box positiveZero exactZero
+  | none => false
+
+theorem fifteenCycleValid_produces_edges
+    (j : Json) (box : FifteenBox) (positiveZero exactZero : List Nat)
+    (hvalid : fifteenCycleValid j box positiveZero exactZero = true) :
+    ∃ edges, fifteenParseCycleEdges? j = some edges ∧
+      fifteenCycleEdgesValid edges box positiveZero exactZero = true := by
+  unfold fifteenCycleValid at hvalid
+  cases hparse : fifteenParseCycleEdges? j with
+  | none => simp [hparse] at hvalid
+  | some edges => simp [hparse] at hvalid; exact ⟨edges, rfl, hvalid⟩
 
 def fifteenLocalLo : Rat := fifteenRational 42 25
 def fifteenLocalHi : Rat := fifteenRational 43 25
