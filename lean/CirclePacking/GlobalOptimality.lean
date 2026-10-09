@@ -70,9 +70,12 @@ deriving contractor preservation from pairwise separation, radius lower
 bounds, and the triangle inequality; endpoint ordering follows from box
 membership. The Packing connection is now formalized for a `Packing 10 R`
 whose anchor is at the container origin and whose other nine circles follow
-the certificate's specified cyclic order. The exact disk-label/radius
-identification, remaining cyclic-order cases, concrete main-order exclusions,
-and final global assembly remain outstanding.
+the certificate's specified cyclic order. For both checked certificates,
+`NineCirclePackingSoundness.lean` proves an injective map from certificate
+slots to the standard ten radii and gives concrete packing-exclusion
+corollaries. Deriving the needed cyclic orders from arbitrary packings,
+covering the remaining order cases, replaying the main-order exclusions, and
+the final global assembly remain outstanding.
 -/
 
 namespace CirclePacking

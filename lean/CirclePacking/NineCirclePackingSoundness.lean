@@ -1,6 +1,7 @@
 import CirclePacking.Basic
 import CirclePacking.SevenNineCoverage
 import CirclePacking.NineCircleCertificateSoundness
+import CirclePacking.NineCircleCertificate
 import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 
 namespace CirclePacking
@@ -101,6 +102,21 @@ theorem nineCertificate_radiusLower_of_spec
   have hlowerNonneg : 0 ≤ (cert.radiiLower[i.1]! : ℝ) / cert.scale :=
     div_nonneg (Nat.cast_nonneg _) (le_of_lt hscale)
   exact (sq_le_sq₀ hlowerNonneg hr).mp hsq
+
+theorem nineCertificate_label_bounds_of_spec
+    {cert : NineCircleCertificate}
+    (hspec : nineCertificateRadiiSpec cert) (i : Fin 9) :
+    2 ≤ cert.diskLabels[i.1]! ∧ cert.diskLabels[i.1]! ≤ 10 := by
+  unfold nineCertificateRadiiSpec at hspec
+  rcases hspec with ⟨_, _, hall⟩
+  have hrow := (List.all_eq_true.mp hall) i.1
+    (List.mem_range.mpr i.isLt)
+  have hdata : 2 ≤ cert.diskLabels[i.1]! ∧
+      cert.diskLabels[i.1]! ≤ 10 ∧
+      cert.radiiLower[i.1]! ^ 2 ≤
+        cert.diskLabels[i.1]! * cert.scale ^ 2 := by
+    simpa using of_decide_eq_true hrow
+  exact ⟨hdata.1, hdata.2.1⟩
 
 /-- A packing with the certificate's prescribed cyclic order is excluded at
 the certificate radius.  The anchor circle is at the container origin; the
@@ -238,6 +254,144 @@ theorem nineCertificate_excludes_packing_order
     simpa [theta] using horder
   exact nineReplayTree_excludes_scaled_configuration htree hrootSize hscale
     hcontains hradialPos hradiusLower hseparated hsorted hthetaLo hthetaHi
+
+/-- Specialized interface for the usual ten-circle radius assignment
+`radius(k)^2 = k + 1`. The caller supplies the embedding of certificate slots
+into those labels and the asserted cyclic order; the certificate's own radius
+lower bounds then provide the geometric inequalities automatically. -/
+theorem nineCertificate_excludes_standard_packing_order
+    {cert : NineCircleCertificate} {R : ℝ}
+    (hcert : nineCertificateSpec cert)
+    (P : Packing 10 R)
+    (index : Fin 9 → Fin 10)
+    (hindexInjective : Function.Injective index)
+    (hindexLabel : ∀ i : Fin 9,
+      (index i).1 + 1 = cert.diskLabels[i.1]!)
+    (hstandardRadius : ∀ k : Fin 10,
+      (P.circles k).radius ^ 2 = ((k.1 + 1 : ℕ) : ℝ))
+    (hanchorCenter : (P.circles (0 : Fin 10)).center = (0, 0))
+    (hcontainer : R ≤ (cert.radiusUpper : ℝ) / cert.scale)
+    (horder : ∀ i j : Fin 9, i.1 < j.1 →
+      pointPolarAngle (P.circles (index i)).center ≤
+        pointPolarAngle (P.circles (index j)).center) :
+    False := by
+  have hcertFull := hcert
+  rcases hcert with ⟨_, _, hradiiSpec, _⟩
+  have hlabelBounds := nineCertificate_label_bounds_of_spec hradiiSpec
+  have hindexAvoidsAnchor : ∀ i : Fin 9, index i ≠ (0 : Fin 10) := by
+    intro i heq
+    have hval := congrArg Fin.val heq
+    have hlower := (hlabelBounds i).1
+    have hlabel := hindexLabel i
+    simp at hval
+    omega
+  have hanchorRadius : 0 < (P.circles (0 : Fin 10)).radius := by
+    have hsq := hstandardRadius (0 : Fin 10)
+    have hnonneg := (P.circles (0 : Fin 10)).radius_nonneg
+    norm_num at hsq
+    rcases hsq with hsq | hsq <;> nlinarith
+  have hradiusSq : ∀ i : Fin 9,
+      (P.circles (index i)).radius ^ 2 =
+        (cert.diskLabels[i.1]! : ℝ) := by
+    intro i
+    calc
+      (P.circles (index i)).radius ^ 2 =
+          (((index i).1 + 1 : ℕ) : ℝ) := hstandardRadius (index i)
+      _ = (cert.diskLabels[i.1]! : ℝ) := by
+        exact_mod_cast hindexLabel i
+  exact nineCertificate_excludes_packing_order hcertFull P (0 : Fin 10) index
+    hindexInjective hindexAvoidsAnchor hanchorCenter hanchorRadius hcontainer
+    hradiusSq horder
+
+def nineCircleProofP_diskIndex (i : Fin 9) : Fin 10 :=
+  ⟨nineCircleProofP.diskLabels[i.1]! - 1, by
+    have hlabel := nineCertificate_label_bounds_of_spec
+      nineCircleProofP_spec.2.2.1 i
+    omega⟩
+
+def nineCircleProofQ_diskIndex (i : Fin 9) : Fin 10 :=
+  ⟨nineCircleProofQ.diskLabels[i.1]! - 1, by
+    have hlabel := nineCertificate_label_bounds_of_spec
+      nineCircleProofQ_spec.2.2.1 i
+    omega⟩
+
+theorem nineCircleProofP_diskIndex_label (i : Fin 9) :
+    (nineCircleProofP_diskIndex i).1 + 1 = nineCircleProofP.diskLabels[i.1]! := by
+  change (nineCircleProofP.diskLabels[i.1]! - 1) + 1 = _
+  exact Nat.sub_add_cancel (by
+    have hlabel := nineCertificate_label_bounds_of_spec
+      nineCircleProofP_spec.2.2.1 i
+    omega)
+
+theorem nineCircleProofQ_diskIndex_label (i : Fin 9) :
+    (nineCircleProofQ_diskIndex i).1 + 1 = nineCircleProofQ.diskLabels[i.1]! := by
+  change (nineCircleProofQ.diskLabels[i.1]! - 1) + 1 = _
+  exact Nat.sub_add_cancel (by
+    have hlabel := nineCertificate_label_bounds_of_spec
+      nineCircleProofQ_spec.2.2.1 i
+    omega)
+
+theorem nineCircleProofP_diskLabels_injective :
+    ∀ i j : Fin 9,
+      nineCircleProofP.diskLabels[i.1]! = nineCircleProofP.diskLabels[j.1]! →
+        i = j := by
+  decide
+
+theorem nineCircleProofQ_diskLabels_injective :
+    ∀ i j : Fin 9,
+      nineCircleProofQ.diskLabels[i.1]! = nineCircleProofQ.diskLabels[j.1]! →
+        i = j := by
+  decide
+
+theorem nineCircleProofP_diskIndex_injective :
+    Function.Injective nineCircleProofP_diskIndex := by
+  intro i j heq
+  apply nineCircleProofP_diskLabels_injective i j
+  have hval := congrArg Fin.val heq
+  have hlabelI := nineCircleProofP_diskIndex_label i
+  have hlabelJ := nineCircleProofP_diskIndex_label j
+  omega
+
+theorem nineCircleProofQ_diskIndex_injective :
+    Function.Injective nineCircleProofQ_diskIndex := by
+  intro i j heq
+  apply nineCircleProofQ_diskLabels_injective i j
+  have hval := congrArg Fin.val heq
+  have hlabelI := nineCircleProofQ_diskIndex_label i
+  have hlabelJ := nineCircleProofQ_diskIndex_label j
+  omega
+
+theorem nineCircleProofP_excludes_standard_packing_order
+    {R : ℝ} (P : Packing 10 R)
+    (hstandardRadius : ∀ k : Fin 10,
+      (P.circles k).radius ^ 2 = ((k.1 + 1 : ℕ) : ℝ))
+    (hanchorCenter : (P.circles (0 : Fin 10)).center = (0, 0))
+    (hcontainer : R ≤
+      (nineCircleProofP.radiusUpper : ℝ) / nineCircleProofP.scale)
+    (horder : ∀ i j : Fin 9, i.1 < j.1 →
+      pointPolarAngle (P.circles (nineCircleProofP_diskIndex i)).center ≤
+        pointPolarAngle (P.circles (nineCircleProofP_diskIndex j)).center) :
+    False := by
+  apply nineCertificate_excludes_standard_packing_order nineCircleProofP_spec
+    P nineCircleProofP_diskIndex nineCircleProofP_diskIndex_injective
+    nineCircleProofP_diskIndex_label hstandardRadius hanchorCenter hcontainer
+  exact horder
+
+theorem nineCircleProofQ_excludes_standard_packing_order
+    {R : ℝ} (P : Packing 10 R)
+    (hstandardRadius : ∀ k : Fin 10,
+      (P.circles k).radius ^ 2 = ((k.1 + 1 : ℕ) : ℝ))
+    (hanchorCenter : (P.circles (0 : Fin 10)).center = (0, 0))
+    (hcontainer : R ≤
+      (nineCircleProofQ.radiusUpper : ℝ) / nineCircleProofQ.scale)
+    (horder : ∀ i j : Fin 9, i.1 < j.1 →
+      pointPolarAngle (P.circles (nineCircleProofQ_diskIndex i)).center ≤
+        pointPolarAngle (P.circles (nineCircleProofQ_diskIndex j)).center) :
+    False := by
+  apply nineCertificate_excludes_standard_packing_order nineCircleProofQ_spec
+    P nineCircleProofQ_diskIndex nineCircleProofQ_diskIndex_injective
+    nineCircleProofQ_diskIndex_label hstandardRadius hanchorCenter hcontainer
+  exact horder
 
 end
 

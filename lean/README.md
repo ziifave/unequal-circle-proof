@@ -151,9 +151,11 @@ one child at every cut. The theorem derives contractor preservation from
 pairwise separation, radius lower bounds, and the triangle inequality: each
 contractor lower bound is at most the corresponding scaled center radius, and
 the finite maximum used by the checker preserves that inequality. Box endpoint
-ordering follows from membership itself. The remaining bridge is to establish
-the certificate's disk-label/radius correspondence and instantiate the
-theorem for every cyclic-order case needed by the global proof.
+ordering follows from membership itself. `NineCirclePackingSoundness.lean`
+also proves that the certificate labels yield an injective map into the ten
+standard radii and packages this as concrete exclusion theorems for both
+checked certificates. The remaining work is to establish the required
+cyclic-order cases and connect their coverage to the global proof.
 
 `NineCirclePackingSoundness.lean` supplies polar coordinates from arbitrary
 center points using `Complex.arg`, with angles in `[0, 2π]`. Its
@@ -162,17 +164,18 @@ anchor circle is centered at the container origin and whose other nine
 circles are supplied in one certificate's cyclic order. It derives the initial
 radial box from containment, obtains outer-circle separation from the packing
 axiom, and invokes the checked split-tree exclusion. Matching each slot to its
-certified disk radius and covering the other cyclic orders still require
-separate proofs.
+certified disk radius is now derived for the two concrete certificates under
+the standard radius assignment `radius(k)^2 = k + 1`. The caller still has to
+establish the relevant cyclic order, and the other cyclic orders still require
+coverage.
 
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
 non-overlap turns this into a directed angle-gap bound; and summing those
 bounds around any closed walk contradicts a strictly negative total. The
-remaining nine-circle work is to prove the certificate's disk-radius
-correspondence, instantiate the recursive theorem for all required cyclic
-orders, and cover the main-order angle-barrier cases. The concrete radial tree
-and those main-order cases also remain to be replayed.
+remaining nine-circle work is to instantiate the recursive theorem for all
+required cyclic orders and cover the main-order angle-barrier cases. The
+concrete radial tree and those main-order cases also remain to be replayed.
 
 The radial tree, angle-barrier certificates, and the analytic connection for
 the alternate nine-circle cycle are therefore not yet fully replayed by Lean.
