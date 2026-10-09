@@ -17,7 +17,7 @@ import CirclePacking.AlternateOrderProjection
 import CirclePacking.LargeFourSemicircle
 import CirclePacking.MainOrderProjection
 import CirclePacking.MainAngleNecessary
-import CirclePacking.MainAngleAnalysis
+import CirclePacking.MainAngleRootExistence
 
 /-!
 # Lean entry point for the global optimality proof
@@ -103,10 +103,14 @@ derivative theorem, replays the strict rational product comparison used for
 `B_t < 0`, and derives strict `t` antitonicity of `B` by the mean value theorem.
 It also proves that both barriers decrease strictly with the container radius
 on the global rational domain, so their radial monotonicity inputs are Lean
-theorems too. Proving the exact root rectangle, checking wall-push
-applicability for each radial box, deriving sector masks and monotone order
-from the exported radial-tree leaves, and the final global assembly remain
-outstanding.
+theorems too. `CirclePacking/MainAngleRootExistence.lean` formalizes the
+intermediate-value step from a continuous curve satisfying `A = B` and
+opposite endpoint signs for `B - 2π` to existence of a simultaneous root;
+the monotonicity results also prove that such a root is unique in the
+certified rectangle. The exact root-boundary signs and continuous root curve,
+wall-push applicability for each radial box, deriving sector masks and
+monotone order from the exported radial-tree leaves, and the final global
+assembly remain outstanding.
 -/
 
 namespace CirclePacking

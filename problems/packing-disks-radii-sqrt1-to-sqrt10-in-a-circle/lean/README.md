@@ -390,15 +390,20 @@ replays the contact-angle derivative formula, Heron-factor positivity, and
 the strict rational product comparison, then applies the mean value theorem.
 It also proves that both barriers decrease strictly with the container radius
 throughout the global rational domain, deriving the radial monotonicity needed
-by the final contradiction. The exact root rectangle, wall-push applicability
-for every radial leaf, and replaying the radial tree remain outstanding.
+by the final contradiction, and that the simultaneous angle root is unique
+inside the certified rectangle. `MainAngleRootExistence.lean` formalizes the
+intermediate-value assembly that turns a continuous `A=B` root curve with
+opposite endpoint signs for `B-2π` into a unique simultaneous root. Constructing
+that curve and replaying its rational endpoint signs, wall-push applicability
+for every radial leaf, and the radial tree remain outstanding.
 
 The two alternate nine-circle certificates, their geometric soundness, the
 finite P/Q and main-core order projections, the main-order geometric
 necessary-angle inequalities, both barriers' `t` and `R` monotonicity, the key
 rational product comparison for the second barrier, and the rational
-four-large-disk path-angle obstruction are replayed by Lean. The exact root,
-radial tree, wall-push applicability, and derivation of the required
+four-large-disk path-angle obstruction are replayed by Lean. The exact root's
+root-curve continuity and rational edge-sign checks, radial tree,
+wall-push applicability, and derivation of the required
 sector-order hypotheses from the global terminal cases are still checked only
 by the Python composition verifier. This remains a partial Lean
 formalization, not yet a Lean proof of global optimality. Build the focused
