@@ -14,4 +14,10 @@ theorem nineCircleProofQ_replays :
     nineCertificateValid nineCircleProofQ = true := by
   native_decide
 
+theorem nineCircleProofP_spec : nineCertificateSpec nineCircleProofP :=
+  nineCertificateValid_spec nineCircleProofP nineCircleProofP_replays
+
+theorem nineCircleProofQ_spec : nineCertificateSpec nineCircleProofQ :=
+  nineCertificateValid_spec nineCircleProofQ nineCircleProofQ_replays
+
 end CirclePacking

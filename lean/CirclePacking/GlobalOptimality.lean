@@ -28,7 +28,9 @@ nine-circle payload has a Lean arithmetic replay.  `NineCircleGeometry.lean`
 now proves the generic bridge from four radial-box corner inequalities and
 non-overlap to directed angular edge bounds, and proves that a negative closed
 cycle of those bounds is impossible.  The concrete finite Boolean checker has
-not yet been connected to the hypotheses of that geometric theorem.
+now been reflected to the proposition `nineCertificateSpec`; connecting its
+per-edge specifications to the hypotheses of that geometric theorem is still
+in progress.
 
 `RationalSplitTree.covered` proves structural coverage for ordinary rational
 splits.  `PropagatedSplitTree.covered` also models contractor-before-split at

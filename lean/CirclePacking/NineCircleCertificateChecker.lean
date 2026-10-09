@@ -149,6 +149,18 @@ def nineCycleTailValid (start current : Nat) (edges : List NineCycleEdge) : Bool
   | edge :: rest => current == edge.1 &&
       nineCycleTailValid start edge.2.1 rest
 
+theorem nineCycleTailValid_spec {start current : Nat}
+    {edges : List NineCycleEdge}
+    (h : nineCycleTailValid start current edges = true) :
+    nineCycleTailSpec start current edges := by
+  induction edges generalizing current with
+  | nil =>
+      simpa [nineCycleTailValid, nineCycleTailSpec] using h
+  | cons edge rest ih =>
+      simp only [nineCycleTailValid, Bool.and_eq_true] at h
+      simp only [nineCycleTailSpec]
+      exact ⟨by simpa using h.1, ih h.2⟩
+
 def nineCycleWeightTicks (edges : List NineCycleEdge) : Int :=
   edges.foldl (fun total edge =>
     let ticks := edge.2.2
@@ -156,8 +168,9 @@ def nineCycleWeightTicks (edges : List NineCycleEdge) : Int :=
       total + Int.ofNat (ninePiUpperTicks - ticks)
     else total - Int.ofNat ticks) 0
 
-def nineLeafSpec (cert : NineCircleCertificate)
-    (box : NineRadialBox) (edges : List NineCycleEdge) : Prop :=
+def nineLeafSpecWithWeight (cert : NineCircleCertificate)
+    (box : NineRadialBox) (weight : Int)
+    (edges : List NineCycleEdge) : Prop :=
   match edges with
   | [] => False
   | first :: rest =>
@@ -165,7 +178,11 @@ def nineLeafSpec (cert : NineCircleCertificate)
       first.1 ≠ first.2.1 ∧
       nineCycleTailSpec first.1 first.2.1 rest ∧
       edges.all (nineEdgeAngleValid cert box) = true ∧
-      nineCycleWeightTicks edges < 0
+      weight < 0
+
+def nineLeafSpec (cert : NineCircleCertificate)
+    (box : NineRadialBox) (edges : List NineCycleEdge) : Prop :=
+  nineLeafSpecWithWeight cert box (nineCycleWeightTicks edges) edges
 
 def nineLeafValid (cert : NineCircleCertificate)
     (box : NineRadialBox) (edges : List NineCycleEdge) : Bool :=
@@ -177,6 +194,49 @@ def nineLeafValid (cert : NineCircleCertificate)
       nineCycleTailValid first.1 first.2.1 rest &&
       edges.all (nineEdgeAngleValid cert box) &&
       decide (nineCycleWeightTicks edges < 0)
+
+theorem nineLeafValid_spec {cert : NineCircleCertificate}
+    {box : NineRadialBox} {edges : List NineCycleEdge}
+    (h : nineLeafValid cert box edges = true) :
+    nineLeafSpec cert box edges := by
+  unfold nineLeafValid at h
+  unfold nineLeafSpec
+  generalize hweight : nineCycleWeightTicks edges = weight at h ⊢
+  have hspec : nineLeafSpecWithWeight cert box weight edges := by
+    clear hweight
+    cases edges with
+    | nil => simp at h
+    | cons first rest =>
+        simp only [Bool.and_eq_true, decide_eq_true_eq] at h
+        rcases h with
+          ⟨⟨⟨⟨⟨hlenLower, hlenUpper⟩, hfirstBool⟩, htail⟩, hedge⟩, hneg⟩
+        have htail' := nineCycleTailValid_spec htail
+        have hfirst : first.1 ≠ first.2.1 := by simpa using hfirstBool
+        have hedge' : ∀ edge ∈ first :: rest,
+            nineEdgeAngleValid cert box edge = true :=
+          List.all_eq_true.mp hedge
+        simp only [nineLeafSpecWithWeight, List.length_cons]
+        refine ⟨?_, ?_, ?_, htail', ?_, hneg⟩
+        · omega
+        · omega
+        · exact hfirst
+        · exact List.all_eq_true.mpr hedge'
+  exact hspec
+
+theorem nineLeafSpec_edges_valid (cert : NineCircleCertificate)
+    (box : NineRadialBox) (edges : List NineCycleEdge)
+    (h : nineLeafSpec cert box edges) :
+    edges.all (nineEdgeAngleValid cert box) = true := by
+  unfold nineLeafSpec at h
+  generalize hweight : nineCycleWeightTicks edges = weight at h
+  have hresult : edges.all (nineEdgeAngleValid cert box) = true := by
+    clear hweight
+    cases edges with
+    | nil => simp [nineLeafSpecWithWeight] at h
+    | cons first rest =>
+        simp only [nineLeafSpecWithWeight] at h
+        exact h.2.2.2.2.1
+  exact hresult
 
 def nineReplayTreeSpec (cert : NineCircleCertificate) :
     NineCycleTree → NineRadialBox → Prop
@@ -201,6 +261,39 @@ def nineReplayTree (cert : NineCircleCertificate) :
       let leftOK := nineReplayTree cert left (nineSetHi contracted axis cut)
       if !leftOK then return false
       return nineReplayTree cert right (nineSetLo contracted axis cut)
+
+theorem nineReplayTree_spec (cert : NineCircleCertificate)
+    (tree : NineCycleTree) (box : NineRadialBox)
+    (h : nineReplayTree cert tree box = true) :
+    nineReplayTreeSpec cert tree box := by
+  induction tree generalizing box with
+  | leaf edges =>
+      exact nineLeafValid_spec h
+  | split axis cut left right ihLeft ihRight =>
+      simp only [nineReplayTree, Id.run] at h
+      split_ifs at h with hAxis hCut hLeft
+      have haxisLt : axis < 9 := by omega
+      have hcutLo : (nineContract cert.radiiLower box)[axis]!.1 < cut := by
+        by_contra hnot
+        exact hCut (by simp [hnot])
+      have hcutHi : cut < (nineContract cert.radiiLower box)[axis]!.2 := by
+        by_contra hnot
+        exact hCut (by simp [hcutLo, hnot])
+      have hleft :
+          nineReplayTree cert left
+            (nineSetHi (nineContract cert.radiiLower box) axis cut) = true := by
+        by_cases hh : nineReplayTree cert left
+            (nineSetHi (nineContract cert.radiiLower box) axis cut) = true
+        · exact hh
+        · exact False.elim (hLeft (by simp [hh]))
+      have hright :
+          nineReplayTree cert right
+            (nineSetLo (nineContract cert.radiiLower box) axis cut) = true := by
+        change _ = true at h
+        exact h
+      simp only [nineReplayTreeSpec]
+      exact ⟨haxisLt, hcutLo, hcutHi,
+        ihLeft _ hleft, ihRight _ hright⟩
 
 def nineCertificateRadiiSpec (cert : NineCircleCertificate) : Prop :=
   cert.diskLabels.size = 9 ∧ cert.radiiLower.size = 9 ∧
@@ -229,5 +322,20 @@ def nineCertificateValid (cert : NineCircleCertificate) : Bool :=
       nineRadiusUpperNumerator * cert.scale &&
     nineCertificateRadiiValid cert &&
     nineReplayTree cert cert.tree (nineInitialBox cert)
+
+theorem nineCertificateRadiiValid_spec (cert : NineCircleCertificate)
+    (h : nineCertificateRadiiValid cert = true) :
+    nineCertificateRadiiSpec cert := by
+  simpa [nineCertificateRadiiValid, nineCertificateRadiiSpec,
+    Bool.and_eq_true, decide_eq_true_eq, and_assoc] using h
+
+theorem nineCertificateValid_spec (cert : NineCircleCertificate)
+    (h : nineCertificateValid cert = true) :
+    nineCertificateSpec cert := by
+  simp only [nineCertificateValid, Bool.and_eq_true, decide_eq_true_eq] at h
+  rcases h with ⟨⟨⟨hscale, hradiusUpper⟩, hradii⟩, htree⟩
+  exact ⟨hscale, by simpa using hradiusUpper,
+    nineCertificateRadiiValid_spec cert hradii,
+    nineReplayTree_spec cert cert.tree (nineInitialBox cert) htree⟩
 
 end CirclePacking

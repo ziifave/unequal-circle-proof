@@ -126,17 +126,27 @@ lake build CirclePacking.NineCircleCertificate
 ```
 
 This finite arithmetic replay uses
-`native_decide`, whose evaluator is an additional trust dependency. It does
-not yet extract real inequalities from the finite checker.
+`native_decide`, whose evaluator is an additional trust dependency. The
+theorems `nineCircleProofP_spec` and `nineCircleProofQ_spec` convert each
+successful Boolean replay into the proposition `nineCertificateSpec`,
+exposing the exact scale, radius bounds, recursive split checks, edge checks,
+and negative cycle weights. `NineCircleCertificateSoundness.lean` now
+continues the edge path: it converts the stored integer Taylor/corner checks
+to a real cosine inequality, normalizes the four radial corners by the
+certificate scale, derives a lower bound on the actual touch angle, and
+turns that into the directed angular inequality for an edge of a separated
+packing.
 
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
 non-overlap turns this into a directed angle-gap bound; and summing those
 bounds around any closed walk contradicts a strictly negative total. The
-remaining connection is to prove that each checked integer Taylor/corner
-comparison in the concrete checker supplies the corresponding real cosine
-inequality, then apply this theorem to all 155 checked leaves. The concrete
-radial tree and its main-order angle-barrier cases also remain to be replayed.
+remaining nine-circle work is to prove the box invariants for every leaf of
+the replayed split tree, assemble each checked natural-number cycle as a
+closed `Fin 9` walk, and connect its negative integer tick sum to the real
+edge-weight sum before applying the closed-walk contradiction to all 155
+leaves. The concrete radial tree and its main-order angle-barrier cases also
+remain to be replayed.
 
 The radial tree, angle-barrier certificates, and the analytic connection for
 the alternate nine-circle cycle are therefore not yet fully replayed by Lean.
