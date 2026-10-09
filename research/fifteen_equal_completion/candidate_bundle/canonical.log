@@ -1,0 +1,7 @@
+START 001001001001001 coarse boxes 1181
+PROGRESS 200 nodes 3216 local leaves 0 elapsed 0.33
+PROGRESS 400 nodes 8376 local leaves 0 elapsed 0.8
+PROGRESS 600 nodes 18226 local leaves 0 elapsed 1.7
+PROGRESS 800 nodes 33168 local leaves 15 elapsed 3.09
+PROGRESS 1000 nodes 50690 local leaves 23 elapsed 4.7
+COMPLETE {'coarse_boxes': 1181, 'nodes': 56573, 'cycles': 28846, 'sums': 0, 'locals': 31, 'maxdepth': 23} elapsed 5.24 cache CacheInfo(hits=5934578, misses=2332, maxsize=200000, currsize=2332)

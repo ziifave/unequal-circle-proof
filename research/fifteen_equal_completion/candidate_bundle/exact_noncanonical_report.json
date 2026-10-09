@@ -1,0 +1,20 @@
+[
+  {
+    "mask": "000100100010101",
+    "coarse_boxes": 47,
+    "certified": 47,
+    "nodes": 1641,
+    "maxdepth": 16,
+    "cycles": 844,
+    "sums": 0
+  },
+  {
+    "mask": "000100100100101",
+    "coarse_boxes": 38,
+    "certified": 38,
+    "nodes": 646,
+    "maxdepth": 10,
+    "cycles": 342,
+    "sums": 0
+  }
+]

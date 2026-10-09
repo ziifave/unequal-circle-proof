@@ -1,0 +1,265 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!60!black,
+  pdftitle={Optimal Packing of Fifteen Equal Disks in a Circle},pdfauthor={}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newcommand{\Rzero}{R_0}
+\newcommand{\ph}{\Phi}
+\newcommand{\cmax}{c_{\max}}
+\newcommand{\Iset}{\mathcal I}
+\newcommand{\Oset}{\mathcal O}
+
+\title{Optimal Packing of Fifteen Equal Disks in a Circle:\\An Exact Computer-Assisted Certificate}
+\author{}
+\date{October 9, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study the minimum radius of a circle containing fifteen pairwise interior-disjoint unit disks. We give an exact construction of radius
+\[
+  R_0=1+\sqrt{1+\bigl(2+\cot(\pi/5)\bigr)^2}
+     =4.521356964706164\ldots
+\]
+and a computer-assisted lower-bound certificate. A radial threshold reduces every putative packing with radius at most $R_0$ to four possible inner/outer counts. For each of the 760 dihedral classes of their cyclic binary words, an integer difference-constraint test either excludes the class or passes it to exact rational interval refinement. Refinement leaves one cyclic type, $(I,O,O)^5$, and confines its five free center radii to $[1.68,1.72]$. An explicit local angular inequality then forces the symmetric candidate radius vector and excludes every smaller container. The certificate uses integer and rational arithmetic, including a Taylor remainder bound for the trigonometric table. Reproduction instructions and the full verifier are supplied with the manuscript.
+\end{abstract}
+
+\paragraph{Verification status.}
+The computational certificate reproduced with the accompanying source bundle. The proof is computer-assisted and should be read together with that verifier. The manuscript and implementation have not yet received independent formal or peer review.
+
+\section{Problem and result}
+
+Let $p_1,\ldots,p_{15}\in\mathbb R^2$ be the centers of fifteen unit disks. A circle of radius $R$ centered at the origin contains the disks without interior overlap exactly when
+\begin{equation}\label{eq:feas}
+  \lVert p_i\rVert\le R-1 \quad(1\le i\le15),\qquad
+  \lVert p_i-p_j\rVert\ge2 \quad(i\ne j).
+\end{equation}
+Write $R_{15}^*$ for the infimum of feasible $R$.
+
+\begin{theorem}\label{thm:main}
+The minimum enclosing radius for fifteen pairwise interior-disjoint unit disks is
+\[
+ R_{15}^*=R_0=1+\sqrt{1+\bigl(2+\cot(\pi/5)\bigr)^2}.
+\]
+\end{theorem}
+
+The upper bound comes from the familiar $D_5$ arrangement with five inner disks and ten outer disks, which is listed among the best-known packings in the standard compilation \cite{Packomania}. A 2024 proof for fourteen disks develops a geometric reduction based on tight partitions \cite{EF2024}; here the fifteen-disk lower bound is reduced to finitely checkable angular constraints and a local analytic inequality. The finite computation never asserts that a surviving radius box contains a packing: it only prunes a box when a necessary condition for a packing fails.
+
+\section{An exact packing of radius \texorpdfstring{$R_0$}{R0}}\label{sec:construction}
+
+Set
+\[
+ \varphi=\frac\pi5,\qquad a_0=\csc\varphi,\qquad
+ b_0=\sqrt{1+\bigl(2+\cot\varphi\bigr)^2},\qquad
+ \alpha=\varphi-\arcsin(1/b_0),\qquad R_0=1+b_0.
+\]
+For $j=0,\ldots,4$, take centers
+\[
+ I_j=(a_0,2j\varphi),\qquad
+ O_j^-=(b_0,2j\varphi-\alpha),\qquad
+ O_j^+=(b_0,2j\varphi+\alpha)
+\]
+in polar coordinates. The five inner centers form a regular pentagon and the ten outer centers alternate around the circle \cite{Packomania}.
+
+Adjacent inner centers have distance $2a_0\sin\varphi=2$. The smaller of the two successive angular gaps between outer centers is $2(\varphi-\alpha)$, and
+\[
+ 2b_0\sin(\varphi-\alpha)=2.
+\]
+The other outer gap is larger because $\alpha>\varphi/2$. For an inner center and either of its two nearest outer centers, the cosine rule gives
+\[
+ a_0^2+b_0^2-2a_0b_0\cos\alpha=4.
+\]
+These are the closest pairs within each type; all other same-type or mixed pairs have a larger angular separation and hence a larger center distance. Every outer disk is tangent to the container boundary, and $a_0<b_0$. Thus the arrangement is feasible in radius $R_0$, proving $R_{15}^*\le R_0$.
+
+\section{Radial reduction}\label{sec:radial}
+
+For a center at distance $s$ from the origin, call it inner if $s<L$ and outer if $s\ge L$, where
+\begin{equation}\label{eq:L}
+ L=b_0-\frac4{b_0}.
+\end{equation}
+The decimal enclosures used by the verifier are rational outward bounds; in particular $2.385431<L<2.385432$ and $b_0<3.522$.
+
+For $x,y>0$ define
+\[
+ c(x,y)=\frac{x^2+y^2-4}{2xy},\qquad \ph(x,y)=\arccos c(x,y)
+\]
+whenever $|x-y|<2\le x+y$. If the two center radii are $x,y$ and their smaller angular separation is $\Delta\in[0,\pi]$, non-overlap requires $\Delta\ge\ph(x,y)$.
+
+\begin{lemma}[Four-corner maximum]\label{lem:corners}
+On every positive rectangle $[u_1,u_2]\times[v_1,v_2]$, the maximum of $c(x,y)$ is attained at a corner.
+\end{lemma}
+\begin{proof}
+For fixed $y$,
+\[
+ \frac{\partial c}{\partial x}=\frac{x^2-y^2+4}{2x^2y}.
+\]
+Its numerator is strictly increasing in $x$, so the derivative can change sign only from negative to positive. Thus an interior critical point in the $x$ direction is a minimum, and a maximum occurs at an endpoint. Apply the same argument in $y$.
+\end{proof}
+
+\begin{lemma}[Pushing outer centers to the wall]\label{lem:push}
+Suppose \eqref{eq:feas} holds with $R\le R_0$. Each outer center can be moved radially to distance $b_0$, with its polar angle fixed, without creating an overlap.
+\end{lemma}
+\begin{proof}
+An inner--outer pair has radii $x<L\le y\le b_0$. During the move, its squared distance has derivative
+\[
+ \frac{d}{dy}\bigl(x^2+y^2-2xy\cos\Delta\bigr)=2(y-x\cos\Delta)>0,
+\]
+so its distance cannot decrease. For an outer--outer pair, \cref{lem:corners} and $L=b_0-4/b_0$ show that
+\[
+ \max_{L\le x,y\le b_0}c(x,y)=c(b_0,b_0),
+\]
+with equality also at $(L,b_0)$ and $(b_0,L)$. Its original angular separation therefore meets the required separation when both centers are moved to radius $b_0$.
+\end{proof}
+
+Let $\theta_0=2\arcsin(1/b_0)$. Any two outer centers, after the preceding move, require angular separation at least $\theta_0$. Since $11\theta_0>2\pi$, there are at most ten outer centers. Nine inner centers would be nine unit disks inside radius $L+1<3.4$, whereas the exact nine-disk minimum radius is $1+\sqrt{2(2+\sqrt2)}>3.6$ \cite{Pirl1969,Packomania}; hence there are at most eight inner centers. Since there are fifteen disks in all,
+\begin{equation}\label{eq:counts}
+ (|\Iset|,|\Oset|)\in\{(5,10),(6,9),(7,8),(8,7)\}.
+\end{equation}
+
+The standard small-packing bounds $s_{(5)}\ge a_0>5/3$ and $s_{(6)}\ge2$ are also used in the radial interval enumeration. Here $s_{(j)}$ denotes the $j$th smallest center radius among all fifteen centers. They follow by applying the known exact five- and six-disk packing radii to the $j$ innermost disks. Consequently, among $k$ inner centers at least $k-4$ have radius at least $5/3$, and at least $k-5$ have radius at least $2$.
+
+\section{Angular difference constraints}\label{sec:angular}
+
+Order the centers by nondecreasing polar angle and lift their angles to $\theta_1\le\cdots\le\theta_{15}<\theta_1+2\pi$. For a pair whose radii lie in positive intervals $X_i,X_j$, let
+\[
+ C_{ij}=\max\{c(x,y):x\in X_i,\ y\in X_j\}.
+\]
+The maximum is obtained at the four interval corners by \cref{lem:corners}. The limiting cases involving radius zero are treated separately by radial-distance or endpoint monotonicity, as implemented in the verifier.
+
+If $C_{ij}<1$, put $\gamma_{ij}=\arccos C_{ij}$. Every feasible angle assignment must satisfy
+\begin{equation}\label{eq:anglepair}
+ \gamma_{ij}\le\theta_j-\theta_i\le2\pi-\gamma_{ij}\qquad(i<j).
+\end{equation}
+If some box has $x+y<2$ throughout, the box is impossible immediately. A box for which $|x-y|\ge2$ throughout imposes no angular restriction for that pair. These rules are relaxed outwards, so every actual packing in a radius box satisfies the resulting difference constraints.
+
+Each inequality $\theta_v-\theta_u\le w$ is a directed edge $u\to v$ with weight $w$. Such a system is feasible only if the directed graph has no negative cycle. The verifier replaces each required angle by a certified rational lower bound $q/2800$ and uses $44/7$ as an upper bound for $2\pi$. Thus a lower-bound edge has weight $-q$, while its complementary upper-bound edge has weight $17600-q$. A negative cycle in these integer weights excludes the entire radial box.
+
+\paragraph{Certified trigonometric bounds.}
+For $x\ge0$, let $P_{18}(x)=\sum_{j=0}^{9}(-1)^j x^{2j}/(2j)!$. Taylor's theorem and $|\cos^{(19)}(t)|\le1$ give the rational lower bound
+\begin{equation}\label{eq:coslower}
+ \cos x\ge P_{18}(x)-\frac{x^{19}}{19!}.
+\end{equation}
+The explicit remainder subtraction is essential: the even Taylor polynomial alone is not used as a lower bound. For an interval pair with corner maximum $C_{ij}$, the integer $q$ is chosen so that the right side of \eqref{eq:coslower} at $x=q/2800$ is at least $C_{ij}$. Since cosine decreases on $[0,\pi]$, this certifies $q/2800\le\gamma_{ij}$. All comparisons are performed with exact fractions.
+
+\section{Exhaustive finite certificate}\label{sec:certificate}
+
+The cyclic inner/outer word is defined up to rotation and reflection, because the disks are congruent and the container is rotationally and reflectively symmetric. Burnside's lemma gives 111, 185, 232, and 232 classes for the four inner counts in \eqref{eq:counts}, for a total of 760.
+
+The finite verifier has four stages. First, it checks every positive entry in a fixed four-type angular table by exact rational arithmetic and applies its negative-cycle test to all 760 words. A word is not discarded by the separate analytic gap-capacity experiment. Second, the surviving words are refined over eight radial bins and then twelve radial bins, using the rank bounds in \cref{sec:radial}. Third, every remaining radial box is enumerated and split exactly until it is excluded by a pair-sum contradiction or a negative cycle. Fourth, a local analytic inequality closes the only remaining type and radius region.
+
+\begin{table}[ht]
+\centering
+\caption{Certificate reduction counts. A closed row means every represented radial box was excluded by a necessary condition.}
+\begin{tabular}{@{}llr@{}}
+\toprule
+Stage & Exact disposition & Count \\
+\midrule
+Dihedral words & total & 760 \\
+Coarse four-type graph & negative-cycle closures & 382 \\
+Coarse four-type graph & passed to refinement & 378 \\
+Eight-bin refinement & passed onward & 23 \\
+Twelve-bin refinement & passed onward & 4 \\
+Final types & $5I+10O$ canonical, $5I+10O$ noncanonical (2), $6I+9O$ (1) & 4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The exact rational subdivision closes the two noncanonical $5I+10O$ words from 47 and 38 coarse radial boxes, respectively. Their branch-and-bound trees contain 1,641 and 646 nodes. The $6I+9O$ word has three coarse boxes; bisecting the unique radius interval below $1/2$ gives six leaves, three excluded by pair-sum contradictions and three by negative cycles.
+
+For the canonical word $(I,O,O)^5$, 1,181 coarse radial boxes generate 56,573 search nodes. There are 28,846 negative-cycle leaves, no pair-sum leaves, and 31 leaves contained in the local cube
+\[
+ [42/25,43/25]^5=[1.68,1.72]^5.
+\]
+The local argument below excludes every point of that cube except the candidate radius vector. It does not assume that the five radii or the packing are symmetric.
+
+The complete data tables, branch rules, exact checkers, generated reports, and a one-command replay are in \url{research/fifteen_equal_completion/candidate_bundle/}. The run script asserts the orbit counts, the surviving word identities, all finite-tree counts, and the local rational inequalities.
+
+\section{The local angular barrier}\label{sec:local}
+
+Assume the cyclic word is $(I,O,O)^5$. Let $a_i$ be the five inner radii in cyclic order, with indices modulo five. Every outer radius is at most $b_0$. Define
+\[
+ h_i=\ph(a_i,a_{i+1}),\qquad
+ k_i=\ph(a_i,b_0)+\ph(b_0,b_0)+\ph(a_{i+1},b_0).
+\]
+For $a_i\in[1.68,1.72]$, the exact interval checks give $k_i>1.175$. The four complementary inner-to-inner gaps therefore sum to more than $4.7>\pi$, so the remaining gap is less than $\pi$. The direct inner pair and the path through the two intervening outer centers then give a lower bound $\max(h_i,k_i)$ on that gap. Summing the five gaps yields the necessary condition
+\begin{equation}\label{eq:budget}
+ \sum_{i=1}^5\max(h_i,k_i)\le2\pi.
+\end{equation}
+When an outer center has radius below $b_0$, the inner--outer angle requirement is at least the value used in $k_i$, because $\ph(a,s)$ decreases with $s$ on the relevant interval. The outer--outer term obeys the analogous bound.
+
+At $a_i=a_0$, one has $h_i=k_i=2\pi/5$. Write $\delta_i=a_i-a_0$ and $\sigma_i=\delta_i+\delta_{i+1}$. Differentiation at the candidate gives
+\[
+ \left.\partial_x\ph(x,y)\right|_{(a_0,a_0)}=-c_0,
+ \qquad
+ \left.\frac{d}{dx}\ph(x,b_0)\right|_{x=a_0}=d_0,
+\]
+where
+\[
+ c_0=\frac{\sin^2(\pi/5)}{\cos(\pi/5)}>\frac{21}{50},
+ \qquad d_0=\cos(\pi/5)>\frac12>c_0.
+\]
+The second derivatives on $[1.68,1.72]^2$ and on $[1.68,1.72]\times\{b_0\}$ are bounded, with exact rational checks, by
+\[
+ |\ph_{xx}(x,y)|<0.3,\qquad |\ph_{xy}(x,y)|<0.8,
+ \qquad |\ph_{xx}(x,b_0)|<5.
+\]
+Taylor's theorem therefore gives
+\begin{align*}
+ h_i&\ge\frac{2\pi}{5}-c_0\sigma_i-\frac52(\delta_i^2+\delta_{i+1}^2),\\
+ k_i&\ge\frac{2\pi}{5}+d_0\sigma_i-\frac52(\delta_i^2+\delta_{i+1}^2).
+\end{align*}
+Since $d_0>c_0>0$, $\max\{-c_0\sigma_i,d_0\sigma_i\}\ge c_0|\sigma_i|$. The odd-cycle identity
+\[
+ 2\delta_i=\sigma_i-\sigma_{i+1}+\sigma_{i+2}-\sigma_{i+3}+\sigma_{i+4}
+\]
+implies $\sum_i|\sigma_i|\ge\frac25\sum_i|\delta_i|$. Moreover $|\delta_i|\le11/500$ throughout the local cube. Hence
+\begin{align*}
+ \sum_i\max(h_i,k_i)
+ &\ge 2\pi+c_0\sum_i|\sigma_i|-5\sum_i\delta_i^2\\
+ &\ge 2\pi+\left(\frac25c_0-5\cdot\frac{11}{500}\right)\sum_i|\delta_i|\\
+ &>2\pi+\frac{29}{500}\sum_i|\delta_i|.
+\end{align*}
+This contradicts \eqref{eq:budget} unless every $\delta_i=0$.
+
+If every $a_i=a_0$ but $R<R_0$, each original outer radius is strictly below $b_0$. Its required inner--outer angle is then strictly larger than the candidate value, so the five-gap sum is strictly larger than $2\pi$, again a contradiction. Thus no packing with $R<R_0$ exists in the final surviving class.
+
+\section{Conclusion and reproducibility}\label{sec:conclusion}
+
+The construction in \cref{sec:construction} proves $R_{15}^*\le R_0$. The radial classification, exhaustive difference-constraint certificate, exact rational subdivision, and local angular barrier prove that every feasible packing has $R\ge R_0$. This proves \cref{thm:main}, subject to the correctness of the finite certificate and its stated geometric reductions.
+
+To replay the computations, use Python 3.10 or newer, GNU C++17, and a POSIX shell:
+\begin{verbatim}
+cd research/fifteen_equal_completion/candidate_bundle
+bash run_all.sh
+\end{verbatim}
+All exclusion decisions use integers or rational fractions. The code's decimal output is diagnostic only. The replay is self-contained and records the branch counts and terminal reasons; independent reimplementation and peer review remain desirable for a result of this scope.
+
+\begin{thebibliography}{9}
+\bibitem{Pirl1969}
+U. Pirl, ``Der Mindestabstand von $n$ in der Einheitskreisscheibe gelegenen Punkten,''
+\emph{Mathematische Nachrichten} 40 (1969), 111--124.
+
+\bibitem{EF2024}
+D. B. Ekanayake and D. J. LaFountain, ``Tight partitions for packing circles in a circle,''
+\emph{Italian Journal of Pure and Applied Mathematics} 51 (2024), 115--136.
+\url{https://ijpam.uniud.it/online_issue/202451/10%20Ekanayake-LaFountain.pdf}.
+
+\bibitem{Packomania}
+E. Specht, ``The best known packings of equal circles in a circle,'' Packomania,
+\url{https://www.packomania.com/cci/cci.html}, accessed October 9, 2026.
+\end{thebibliography}
+
+\end{document}

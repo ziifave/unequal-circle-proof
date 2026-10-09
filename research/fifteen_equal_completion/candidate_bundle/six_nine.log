@@ -1,0 +1,10 @@
+636808 small half 0 => PAIR_SUM weight numerator None cycle length None pair (5, 13)
+636808 small half 1 => NEGATIVE_CYCLE weight numerator -2100 cycle length 10 pair None
+  edges: [(5, 2, -3442), (2, 1, -950), (1, 0, -1612), (0, 14, 16217), (14, 13, -2463), (13, 11, -2463), (11, 10, -1383), (10, 9, -1612), (9, 8, -950), (8, 5, -3442)]
+646808 small half 0 => PAIR_SUM weight numerator None cycle length None pair (5, 13)
+646808 small half 1 => NEGATIVE_CYCLE weight numerator -1968 cycle length 10 pair None
+  edges: [(5, 2, -3376), (2, 1, -950), (1, 0, -1612), (0, 14, 16217), (14, 13, -2463), (13, 11, -2463), (11, 10, -1383), (10, 9, -1612), (9, 8, -950), (8, 5, -3376)]
+656808 small half 0 => PAIR_SUM weight numerator None cycle length None pair (5, 13)
+656808 small half 1 => NEGATIVE_CYCLE weight numerator -1904 cycle length 10 pair None
+  edges: [(5, 2, -3344), (2, 1, -950), (1, 0, -1612), (0, 14, 16217), (14, 13, -2463), (13, 11, -2463), (11, 10, -1383), (10, 9, -1612), (9, 8, -950), (8, 5, -3344)]
+ALL SIX SUBBOXES CLOSED BY EXACT FRACTIONS

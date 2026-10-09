@@ -1,0 +1,2 @@
+PASS: every positive entry of the fixed 4x4 table is a rigorous angular lower bound
+cosine lower bound = P18(x) - x^19/19!, with exact Fraction arithmetic

@@ -1,0 +1,12 @@
+START 000100100010101 coarse survivors 47
+PROGRESS 000100100010101 10 / 47 nodes 158 elapsed 0.0
+PROGRESS 000100100010101 20 / 47 nodes 904 elapsed 0.1
+PROGRESS 000100100010101 30 / 47 nodes 1240 elapsed 0.1
+PROGRESS 000100100010101 40 / 47 nodes 1508 elapsed 0.2
+CERTIFIED {'mask': '000100100010101', 'coarse_boxes': 47, 'certified': 47, 'nodes': 1641, 'maxdepth': 16, 'cycles': 844, 'sums': 0}
+START 000100100100101 coarse survivors 38
+PROGRESS 000100100100101 10 / 38 nodes 196 elapsed 0.2
+PROGRESS 000100100100101 20 / 38 nodes 406 elapsed 0.2
+PROGRESS 000100100100101 30 / 38 nodes 566 elapsed 0.2
+CERTIFIED {'mask': '000100100100101', 'coarse_boxes': 38, 'certified': 38, 'nodes': 646, 'maxdepth': 10, 'cycles': 342, 'sums': 0}
+ALL TWO NONCANONICAL ORBITS CERTIFIED CLOSED IN EXACT ARITHMETIC. Seconds: 0.25 Trig comparisons cached: CacheInfo(hits=239392, misses=743, maxsize=200000, currsize=743)
