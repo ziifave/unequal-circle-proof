@@ -66,10 +66,10 @@ def fifteenBins : Array FifteenInterval := #[
 ]
 
 def fifteenCertificateSource : String :=
-  include_str "../../../../research/fifteen_equal_completion/candidate_bundle/exact_subdivision_certificate.json"
+  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/exact_subdivision_certificate.json"
 
 def fifteenResidualSource : String :=
-  include_str "../../../../research/fifteen_equal_completion/candidate_bundle/full_residuals.txt"
+  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/full_residuals.txt"
 
 def fifteenJsonArray? (j : Json) : Option (Array Json) :=
   match j with

@@ -4,7 +4,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / "research/fifteen_equal_completion/candidate_bundle"
+BASE = ROOT / "problems/packing-15-equal-disks-in-a-circle/candidate_bundle"
 CERT = BASE / "stage3_certificate_000000010101011.txt"
 OUT = ROOT / "problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean/CirclePacking/FifteenStage3CertificateData.lean"
 

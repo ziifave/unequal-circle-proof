@@ -47,7 +47,7 @@ private structure Stage3ManifestEntry where
   closed : Bool
 
 private def fifteenStage3ManifestSource : String :=
-  include_str "../../../../research/fifteen_equal_completion/candidate_bundle/stage3.tsv"
+  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage3.tsv"
 
 private def fifteenStage3ManifestLine? (line : String) : Option Stage3ManifestEntry := do
   let fields := line.splitOn "\t"
@@ -200,6 +200,11 @@ def fifteenStage3ManifestMatchesStageZero : Bool := Id.run do
 theorem fifteenStage3ManifestMatchesStageZero_replays :
     fifteenStage3ManifestMatchesStageZero = true := by
   native_decide
+
+def fifteenStage3ResidualPatterns : List String :=
+  match fifteenStage3ManifestRecords? with
+  | some records => (records.filter (!·.closed)).map (·.pattern)
+  | none => []
 
 def fifteenStage3ClosedCertificateCoverage : Bool := Id.run do
   let some records := fifteenStage3ManifestRecords? | return false

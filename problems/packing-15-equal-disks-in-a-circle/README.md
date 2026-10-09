@@ -9,7 +9,7 @@ This directory gathers the earlier Japanese research notes, the supplied exact-c
 To reproduce the finite certificate, from the repository root run:
 
 ```sh
-cd research/fifteen_equal_completion/candidate_bundle
+cd problems/packing-15-equal-disks-in-a-circle/candidate_bundle
 bash run_all.sh
 ```
 

@@ -3,7 +3,7 @@ import CirclePacking.FifteenStage3Certificate
 namespace CirclePacking
 
 def fifteenStage3Batch021Source : String :=
-  include_str "../../../../research/fifteen_equal_completion/candidate_bundle/stage3_lean_batch_021.txt"
+  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage3_lean_batch_021.txt"
 
 def fifteenStage3Batch021Patterns : List String := [
   "000100111010101",

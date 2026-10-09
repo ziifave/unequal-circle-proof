@@ -171,10 +171,10 @@ private def stage0ParseEdges : List Char → Option (List Stage0Edge)
   | _ => none
 
 private def stage0CycleLinesSource : String :=
-  include_str "../../../../research/fifteen_equal_completion/candidate_bundle/stage0_cycles.txt"
+  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage0_cycles.txt"
 
 private def stage0OrbitLinesSource : String :=
-  include_str "../../../../research/fifteen_equal_completion/candidate_bundle/stage0_orbits.txt"
+  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage0_orbits.txt"
 
 private def stage0NonemptyLines (source : String) : List String :=
   (source.splitOn "\n").filter (· != "")

@@ -4,9 +4,9 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fast_root="${LEAN_FIFTEEN_STAGE0_FAST_ROOT:-/tmp/unequal-fifteen-stage0-lean-fast}"
 lean_root="$fast_root/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean"
-bundle_root="$fast_root/research/fifteen_equal_completion/candidate_bundle"
+bundle_root="$fast_root/problems/packing-15-equal-disks-in-a-circle/candidate_bundle"
 source_lean_root="$repo_root/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean"
-source_bundle_root="$repo_root/research/fifteen_equal_completion/candidate_bundle"
+source_bundle_root="$repo_root/problems/packing-15-equal-disks-in-a-circle/candidate_bundle"
 
 mkdir -p "$lean_root/CirclePacking" "$bundle_root"
 cp "$source_lean_root/lean-toolchain" "$lean_root/"

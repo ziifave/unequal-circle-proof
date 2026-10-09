@@ -14,7 +14,7 @@ import tempfile
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-BUNDLE = ROOT / "research/fifteen_equal_completion/candidate_bundle"
+BUNDLE = ROOT / "problems/packing-15-equal-disks-in-a-circle/candidate_bundle"
 LEAN = ROOT / "problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean/CirclePacking"
 SOURCE = BUNDLE / "export_stage3_certificate.cpp"
 TABLE = BUNDLE / "stage3.tsv"
@@ -104,7 +104,7 @@ def lean_batch_source(index: int, records: list[tuple[str, str, str]]) -> str:
 namespace CirclePacking
 
 def {name}Source : String :=
-  include_str "../../../../research/fifteen_equal_completion/candidate_bundle/{data_name}"
+  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/{data_name}"
 
 def {name}Patterns : List String := [
   {patterns}
@@ -192,7 +192,7 @@ private structure Stage3ManifestEntry where
   closed : Bool
 
 private def fifteenStage3ManifestSource : String :=
-  include_str "../../../../research/fifteen_equal_completion/candidate_bundle/stage3.tsv"
+  include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage3.tsv"
 
 private def fifteenStage3ManifestLine? (line : String) : Option Stage3ManifestEntry := do
   let fields := line.splitOn "\\t"

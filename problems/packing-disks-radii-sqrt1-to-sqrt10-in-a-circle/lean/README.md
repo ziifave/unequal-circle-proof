@@ -144,7 +144,7 @@ entry into a touch-angle lower bound for every radius pair in the corresponding
 radial rectangles, using the general corner and Taylor soundness theorems.
 
 The compact inputs
-`research/fifteen_equal_completion/candidate_bundle/stage0_cycles.txt` and
+`problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage0_cycles.txt` and
 `stage0_orbits.txt` are generated from the tracked compressed source
 certificate by `export_lean_stage0_certificate.py`. The exporter is not part
 of Lean's trust boundary: Lean validates the orbit list, every assignment,
@@ -162,7 +162,7 @@ Boolean certificate theorem uses `native_decide`; `#print axioms` exposes the
 native-evaluation dependency, which remains part of the stated trust boundary.
 
 `CirclePacking/FifteenCertificate.lean` reads the exact JSON subdivision tree
-and `research/fifteen_equal_completion/candidate_bundle/full_residuals.txt`
+and `problems/packing-15-equal-disks-in-a-circle/candidate_bundle/full_residuals.txt`
 directly with `include_str`. Its `fifteenExactCertificate_replays` theorem
 checks that the 1,266 supplied roots match the listed residual assignments,
 then replays all 58,860 tree nodes using rational endpoints. Every split must
