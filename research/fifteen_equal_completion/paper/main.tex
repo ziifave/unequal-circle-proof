@@ -221,11 +221,11 @@ Order the centers by nondecreasing polar angle and lift their angles to $\theta_
 \]
 The maximum is obtained at the four interval corners by \cref{lem:corners}. The exact zero-radius case and positive intervals whose closure touches zero are handled separately; the endpoint rules and their bin ownership are proved in \cref{sec:bins}.
 
-If $C_{ij}<1$, put $\gamma_{ij}=\arccos C_{ij}$. Every feasible angle assignment must satisfy
+If the interval box gives $x+y<2$ for every choice of radii in a pair, that pair cannot be separated, so the box is discarded. For every pair not discarded by this test, $C_{ij}\ge-1$. If $-1\le C_{ij}<1$, put $\gamma_{ij}=\arccos C_{ij}$. Every feasible angle assignment must satisfy
 \begin{equation}\label{eq:anglepair}
  \gamma_{ij}\le\theta_j-\theta_i\le2\pi-\gamma_{ij}\qquad(i<j).
 \end{equation}
-If some box has $x+y<2$ throughout, the box is impossible immediately. A box for which $|x-y|\ge2$ throughout imposes no angular restriction for that pair. These rules are relaxed outwards, so every actual packing in a radius box satisfies the resulting difference constraints. The geometric conversion is illustrated in \cref{fig:angle-conversion}.
+A box for which $|x-y|\ge2$ throughout imposes no angular restriction for that pair. These rules are relaxed outwards, so every actual packing in a radius box satisfies the resulting difference constraints. The geometric conversion is illustrated in \cref{fig:angle-conversion}.
 
 \begin{figure}[htbp]
 \centering
@@ -438,13 +438,13 @@ Taylor's theorem therefore gives
 \end{align*}
 Since $d_0>c_0>0$, $\max\{-c_0\sigma_i,d_0\sigma_i\}\ge c_0|\sigma_i|$: when one route becomes less restrictive, the other becomes more restrictive. The odd cycle length is essential. The linear map from the radial deviations $\delta_i$ to their consecutive sums $\sigma_i$ is invertible; an even cycle would admit a nonzero alternating mode in its kernel. Indeed, the following identity holds:
 \[
- 2\delta_i=\sigma_i-\sigma_{i+1}+\sigma_{i+2}-\sigma_{i+3}+\sigma_{i+4}
+ 2\delta_i=\sigma_i-\sigma_{i+1}+\sigma_{i+2}-\sigma_{i+3}+\sigma_{i+4}.
 \]
 Taking absolute values and summing over all five indices gives
 \[
  \sum_i|\sigma_i|\ge\frac25\sum_i|\delta_i|.
 \]
-Moreover $|\delta_i|\le11/500$ throughout the local cube. Hence
+Moreover $|\delta_i|\le11/500$ throughout the local cube. If at least one $\delta_i$ is nonzero, the final inequality below is strict because $\frac25c_0-5\cdot\frac{11}{500}>\frac{29}{500}$:
 \begin{align*}
 \sum_i\max(h_i,k_i)
  &\ge 2\pi+c_0\sum_i|\sigma_i|-5\sum_i\delta_i^2\\
@@ -502,7 +502,7 @@ bash run_all.sh
 \end{verbatim}
 All exclusion decisions use integers or rational fractions. The code's decimal output is diagnostic only. The replay is self-contained and records the branch counts and terminal reasons.
 
-The proof resolves the fifteen-disk case without assuming a contact graph or symmetry for a minimizing packing. Its central step is the transition from exact finite elimination of cyclic types and radial boxes to an analytic barrier that rules out nonsymmetric radial perturbations in the final region.
+Subject to independent validation of the certificate and geometric reductions, this approach establishes the optimality of the fifteen-disk configuration without assuming a contact graph or symmetry.
 
 \appendix
 \section{Certificate data and exact subdivision}
