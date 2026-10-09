@@ -26,6 +26,11 @@ import CirclePacking.FifteenStageZero
 import CirclePacking.FifteenStageZeroGeometry
 import CirclePacking.FifteenTickSoundness
 import CirclePacking.FifteenCycleSoundness
+import CirclePacking.FifteenPackingAngleOrder
+import CirclePacking.FifteenPackingPolarCoordinates
+import CirclePacking.FifteenPackingSortedGeometry
+import CirclePacking.FifteenPackingCycleEdgeGeometry
+import CirclePacking.FifteenPackingCycleBridge
 
 /-!
 # Formal algebraic core for unequal-circle packing
