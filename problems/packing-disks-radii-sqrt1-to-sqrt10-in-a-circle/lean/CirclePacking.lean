@@ -31,6 +31,9 @@ import CirclePacking.FifteenPackingPolarCoordinates
 import CirclePacking.FifteenPackingSortedGeometry
 import CirclePacking.FifteenPackingCycleEdgeGeometry
 import CirclePacking.FifteenPackingCycleBridge
+import CirclePacking.FifteenTickSymmetry
+import CirclePacking.FifteenPackingCycleExclusion
+import CirclePacking.FifteenLocalBarrierRigidity
 
 /-!
 # Formal algebraic core for unequal-circle packing
