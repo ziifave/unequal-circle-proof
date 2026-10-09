@@ -125,6 +125,49 @@ cd lean
 lake build CirclePacking.NineCircleCertificate
 ```
 
+## 15-disk certificate: first Lean replay layer
+
+`CirclePacking/FifteenCertificate.lean` reads the exact JSON subdivision tree
+and `research/fifteen_equal_completion/candidate_bundle/full_residuals.txt`
+directly with `include_str`. Its `fifteenExactCertificate_replays` theorem
+checks that the 1,266 supplied roots match the listed residual assignments,
+then replays all 58,860 tree nodes using rational endpoints. Every split must
+select an inner coordinate, use its exact rational midpoint, and pass the
+corresponding left and right boxes to its children. The file also proves
+one-coordinate lemmas showing that an in-range split covers its parent
+interval and that both child intervals stay inside the parent.
+
+At terminal leaves Lean checks pair-sum contradictions and replays each
+negative cycle's directed edge connectivity, edge labels, recorded integer
+ticks, and strictly negative integer total. It checks 30,032 cycle leaves,
+31 local leaves, and all nine branches for the three 6+9 residual assignments.
+The integer ticks are still treated as supplied data here: connecting each
+tick to its geometric angle lower bound is the next formalization layer.
+Likewise, matching the roots to `full_residuals.txt` does not yet certify the
+upstream 760-orbit enumeration. This is a replay of the rational subdivision
+certificate, not yet a Lean proof of the 15-disk optimum.
+
+Build this layer with:
+
+```sh
+cd lean
+lake build CirclePacking.FifteenCertificate
+```
+
+For a WSL checkout under `/mnt/c`, the focused build can be much faster by
+running `bash tools/build_fifteen_certificate_fast.sh` from the repository
+root. It copies this module and its two input files to `/tmp`, then builds the
+same target there. This works because the current module imports only core
+Lean. On this machine, the regular target took 123 seconds, while the
+Linux-filesystem copy took 5.7 seconds initially and 1.9 seconds with its cache
+warm. This helper only checks the 15-disk replay module; it is not a
+replacement for building the full Mathlib-backed project, and should be
+updated if this module gains imports.
+
+As with the existing finite replay, this theorem currently uses `native_decide`;
+`#print axioms` reports its native-evaluation axiom in addition to Lean's
+standard logical axioms. The final trust/dependency audit remains outstanding.
+
 This finite arithmetic replay uses
 `native_decide`, whose evaluator is an additional trust dependency. The
 theorems `nineCircleProofP_spec` and `nineCircleProofQ_spec` convert each
@@ -196,8 +239,23 @@ interleaved order is monotone in lifted polar angle. Deriving those premises
 from the global radial-tree terminal cases, replaying the main-order
 exclusions, and the final global assembly remain outstanding.
 
-The two alternate nine-circle certificates, their geometric soundness, and the
-finite P/Q order projection are replayed by Lean. The radial tree, the
+`CirclePacking/LargeFourSemicircle.lean` now proves the four-large-circle
+half-plane obstruction directly from a packing. It replays the rational
+square-root lower bounds, derives each center's radial interval from
+containment and separation, and checks the six angle bounds by exact rational
+corner inequalities plus the cosine Taylor remainder theorem. It then orders
+the four polar angles and derives that a common closed half-plane would put
+them in an interval of width π, contradicting the checked path sums for all
+24 orders. The exported theorem is
+`largeFour_packing_not_in_closed_halfplane`; it assumes `R ≤ U` and that the
+four designated radii are exactly `sqrt 7`, `sqrt 8`, `sqrt 9`, and `sqrt 10`.
+The remaining global work is to show that every candidate packing in the
+certificate's terminal cases satisfies this obstruction's hypotheses and to
+replay/assemble the full radial tree and the main-order angle-barrier cases.
+
+The two alternate nine-circle certificates, their geometric soundness, the
+finite P/Q order projection, and the rational path-angle obstruction are
+replayed by Lean. The radial tree, the
 main-order angle-barrier certificates, and the derivation of the required
 sector-order hypotheses from the global terminal cases are still checked only
 by the exact Python composition verifier. This remains a partial Lean
@@ -210,3 +268,22 @@ Build with:
 lake update
 lake build
 ```
+
+On WSL, the repository may live under `/mnt/c`, where Lake's many small file
+accesses are slow. To build the full `CirclePacking` library on the Linux
+filesystem while keeping the working tree on Windows, run this from the
+repository root:
+
+```text
+./tools/build_lean_linux_mirror.sh
+```
+
+The script syncs the Lean sources and embedded certificate inputs into
+`~/unequal-circle-proof-linux`, seeds its Lake cache once from the existing
+4.6 GB cache, and runs `lake build CirclePacking` there. Later invocations
+incrementally sync source changes and reuse the Linux-side cache. To build a
+different target, pass it as an argument, for example
+`./tools/build_lean_linux_mirror.sh CirclePacking.FifteenCertificate`.
+Set `UNEQUAL_LAKE_MIRROR` to choose a different Linux-native destination. The
+focused `build_fifteen_certificate_fast.sh` remains a separate, smaller check;
+it does not build the full Mathlib-backed library.
