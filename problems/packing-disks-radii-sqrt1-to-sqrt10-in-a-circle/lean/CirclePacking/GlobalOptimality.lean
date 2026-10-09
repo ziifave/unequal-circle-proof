@@ -17,6 +17,7 @@ import CirclePacking.AlternateOrderProjection
 import CirclePacking.LargeFourSemicircle
 import CirclePacking.MainOrderProjection
 import CirclePacking.MainAngleNecessary
+import CirclePacking.MainAngleAnalysis
 
 /-!
 # Lean entry point for the global optimality proof
@@ -95,9 +96,17 @@ from the full interleave to the core. `CirclePacking/MainAngleNecessary.lean`
 now proves the two geometric necessary inequalities `A(t,R) ≤ 2π` and
 `B(t,R) ≤ 2π` from pairwise separation for a wall-pushed core in that order,
 including the route that skips disk 5 in its angular accounting. The exact
-root and derivative-sign proof, wall-push applicability for each radial box,
-deriving sector masks and monotone order from the exported radial-tree leaves,
-and the final global assembly remain outstanding.
+`CirclePacking/MainAngleAnalysis.lean` proves the increasing-in-`t` half for
+`A` on the certified rational rectangle using coarse exact square-root bounds.
+It proves the exact derivative of a contact angle from Mathlib's `arccos`
+derivative theorem, replays the strict rational product comparison used for
+`B_t < 0`, and derives strict `t` antitonicity of `B` by the mean value theorem.
+It also proves that both barriers decrease strictly with the container radius
+on the global rational domain, so their radial monotonicity inputs are Lean
+theorems too. Proving the exact root rectangle, checking wall-push
+applicability for each radial box, deriving sector masks and monotone order
+from the exported radial-tree leaves, and the final global assembly remain
+outstanding.
 -/
 
 namespace CirclePacking

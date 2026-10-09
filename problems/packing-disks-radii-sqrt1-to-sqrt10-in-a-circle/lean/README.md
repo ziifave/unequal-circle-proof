@@ -383,14 +383,21 @@ two geometric barrier expressions are each at most `2π` for a wall-pushed
 core in this order, using only pair separation and the complete cyclic angle
 sum. The second inequality uses the direct arc from disk 10 to disk 7 while
 retaining disk 5 in the packing hypotheses. The Python verifier reports 193
-main residual occurrences with these mask types. Exact-root and derivative
-formalization, wall-push applicability for every radial leaf, and replaying
-the radial tree remain outstanding.
+main residual occurrences with these mask types. `CirclePacking/MainAngleAnalysis.lean`
+proves that the first barrier increases in `t` and that the second barrier
+decreases in `t` on the certified rational rectangle. The second result
+replays the contact-angle derivative formula, Heron-factor positivity, and
+the strict rational product comparison, then applies the mean value theorem.
+It also proves that both barriers decrease strictly with the container radius
+throughout the global rational domain, deriving the radial monotonicity needed
+by the final contradiction. The exact root rectangle, wall-push applicability
+for every radial leaf, and replaying the radial tree remain outstanding.
 
 The two alternate nine-circle certificates, their geometric soundness, the
 finite P/Q and main-core order projections, the main-order geometric
-necessary-angle inequalities, and the rational four-large-disk path-angle
-obstruction are replayed by Lean. The exact root and derivative argument,
+necessary-angle inequalities, both barriers' `t` and `R` monotonicity, the key
+rational product comparison for the second barrier, and the rational
+four-large-disk path-angle obstruction are replayed by Lean. The exact root,
 radial tree, wall-push applicability, and derivation of the required
 sector-order hypotheses from the global terminal cases are still checked only
 by the Python composition verifier. This remains a partial Lean

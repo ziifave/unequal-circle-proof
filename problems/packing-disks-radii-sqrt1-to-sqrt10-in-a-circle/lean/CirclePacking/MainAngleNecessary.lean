@@ -274,40 +274,39 @@ theorem mainBarrierB_le_two_pi
   unfold mainBarrierB mainCommonWallAngles
   linarith
 
-/-- Abstract final step of the angle barrier. The numerical root checker is
-responsible for the monotonicity premises; once they hold, the two geometric
-necessary inequalities exclude every smaller container radius. -/
+/-- Abstract final contradiction for the angle barrier. Once the root
+equalities, barrier monotonicity, and geometric angle bounds are supplied,
+these inequalities exclude the proposed smaller radius. The concrete
+monotonicity proofs are provided by `MainAngleAnalysis`. -/
 theorem main_angle_barrier_excludes_below_critical
-    {t R tcrit Rcrit : ℝ}
-    (hR : R < Rcrit)
+    {t R tcrit Rcrit : ℝ} {T : Set ℝ}
+    (ht : t ∈ T) (htcrit : tcrit ∈ T)
     (hAroot : mainBarrierA tcrit Rcrit = 2 * Real.pi)
     (hBroot : mainBarrierB tcrit Rcrit = 2 * Real.pi)
     (hA_mono_t : ∀ {t₁ t₂ : ℝ}, t₁ ≤ t₂ →
-      mainBarrierA t₁ R ≤ mainBarrierA t₂ R)
+      t₁ ∈ T → t₂ ∈ T →
+      mainBarrierA t₁ Rcrit ≤ mainBarrierA t₂ Rcrit)
     (hB_antitone_t : ∀ {t₁ t₂ : ℝ}, t₁ ≤ t₂ →
-      mainBarrierB t₂ R ≤ mainBarrierB t₁ R)
-    (hA_anti_R : ∀ {r₁ r₂ : ℝ}, r₁ < r₂ →
-      mainBarrierA tcrit r₂ < mainBarrierA tcrit r₁)
-    (hB_anti_R : ∀ {r₁ r₂ : ℝ}, r₁ < r₂ →
-      mainBarrierB tcrit r₂ < mainBarrierB tcrit r₁)
+      t₁ ∈ T → t₂ ∈ T →
+      mainBarrierB t₂ Rcrit ≤ mainBarrierB t₁ Rcrit)
+    (hA_anti_R : mainBarrierA t Rcrit < mainBarrierA t R)
+    (hB_anti_R : mainBarrierB t Rcrit < mainBarrierB t R)
     (hA_geometry : mainBarrierA t R ≤ 2 * Real.pi)
     (hB_geometry : mainBarrierB t R ≤ 2 * Real.pi) :
     False := by
   by_cases hcrit : tcrit ≤ t
-  · have hAnti : mainBarrierA tcrit Rcrit < mainBarrierA tcrit R :=
-      hA_anti_R hR
-    have hrootStrict : 2 * Real.pi < mainBarrierA tcrit R := by
+  · have hmon := hA_mono_t hcrit htcrit ht
+    have hAnti : mainBarrierA t Rcrit < mainBarrierA t R := hA_anti_R
+    have hrootStrict : 2 * Real.pi < mainBarrierA t R := by
       rw [← hAroot]
-      exact hAnti
-    have hmon := hA_mono_t hcrit
+      exact lt_of_le_of_lt hmon hAnti
     linarith
   · have hle : t ≤ tcrit := le_of_not_ge hcrit
-    have hAnti : mainBarrierB tcrit Rcrit < mainBarrierB tcrit R :=
-      hB_anti_R hR
-    have hrootStrict : 2 * Real.pi < mainBarrierB tcrit R := by
+    have hmon := hB_antitone_t hle ht htcrit
+    have hAnti : mainBarrierB t Rcrit < mainBarrierB t R := hB_anti_R
+    have hrootStrict : 2 * Real.pi < mainBarrierB t R := by
       rw [← hBroot]
-      exact hAnti
-    have hmon := hB_antitone_t hle
+      exact lt_of_le_of_lt hmon hAnti
     linarith
 
 end
