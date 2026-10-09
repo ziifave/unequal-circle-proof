@@ -491,4 +491,56 @@ theorem nineLeafSpec_negative_cycle_excluded
         ((ninePiUpperTicks : ℝ) / nineAngleScale) (nineCycleFin first.1)
         (nineCycleAngularEdges (first :: rest)) hcycle hedges hnegative
 
+theorem ninePiUpperTicks_is_twoPi_upper :
+    2 * Real.pi ≤ (ninePiUpperTicks : ℝ) / nineAngleScale := by
+  have hpi := Real.pi_lt_d4
+  have hupper : 2 * Real.pi < 2 * (31416 : ℝ) / 10000 := by nlinarith
+  norm_num [ninePiUpperTicks, nineAngleScale] at hupper ⊢
+  linarith
+
+theorem nineLeafSpec_excludes_polar_configuration
+    {cert : NineCircleCertificate} {box : NineRadialBox}
+    {edges : List NineCycleEdge} {theta radial diskRadius : Fin 9 → ℝ}
+    (hleaf : nineLeafSpec cert box edges)
+    (hscale : 0 < (cert.scale : ℝ))
+    (hboxOrdered : ∀ i : Fin 9, box[i.1]!.1 ≤ box[i.1]!.2)
+    (hradialBounds : ∀ i : Fin 9,
+      (box[i.1]!.1 : ℝ) / cert.scale ≤ radial i ∧
+        radial i ≤ (box[i.1]!.2 : ℝ) / cert.scale)
+    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradiusLower : ∀ i : Fin 9,
+      (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤ diskRadius i)
+    (hseparated : ∀ i j : Fin 9, i ≠ j →
+      (diskRadius i + diskRadius j) ^ 2 ≤ pointNorm
+        ((polarPoint (radial i) (theta i)).1 -
+            (polarPoint (radial j) (theta j)).1,
+         (polarPoint (radial i) (theta i)).2 -
+            (polarPoint (radial j) (theta j)).2) ^ 2)
+    (hsorted : ∀ i j : Fin 9, i.1 < j.1 → theta i ≤ theta j)
+    (hthetaLo : ∀ i : Fin 9, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi) :
+    False := by
+  apply nineLeafSpec_negative_cycle_excluded hleaf
+  intro edge hedge
+  have hspec := nineLeafSpec_edgeAngleSpec hleaf hedge
+  have hspec0 := hspec
+  rcases hspec with ⟨hsrc, hdst, _, _, _⟩
+  let i : Fin 9 := ⟨edge.1, hsrc⟩
+  let j : Fin 9 := ⟨edge.2.1, hdst⟩
+  have hneq : i ≠ j := by
+    intro heq
+    have hval := congrArg Fin.val heq
+    exact (nineLeafSpec_edgeAngleSpec hleaf hedge).2.2.1 hval
+  have hbound := nineCertificateEdge_implies_angularBound
+    (theta := theta) (a := radial i) (b := radial j)
+    (ra := diskRadius i) (rb := diskRadius j)
+    hspec0 hsrc hdst hscale (hboxOrdered i) (hboxOrdered j)
+    (hradialBounds i).1 (hradialBounds i).2
+    (hradialBounds j).1 (hradialBounds j).2
+    (hradialPos i) (hradialPos j) (hradiusLower i) (hradiusLower j)
+    (hseparated i j hneq) hsorted hthetaLo hthetaHi
+    ninePiUpperTicks_is_twoPi_upper
+  simpa [nineCycleAngularEdge, nineCycleFin,
+    Nat.mod_eq_of_lt hsrc, Nat.mod_eq_of_lt hdst] using hbound
+
 end CirclePacking

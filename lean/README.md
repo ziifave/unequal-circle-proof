@@ -140,16 +140,20 @@ specification yields a closed angular walk. The negative integer tick sum is
 also proved to equal the corresponding negative real edge-weight sum. Together
 these give `nineLeafSpec_negative_cycle_excluded`: any checked leaf is
 geometrically impossible once its per-edge angular bounds are supplied.
+`nineLeafSpec_excludes_polar_configuration` supplies those bounds from a
+single normalized polar configuration, assuming its radial coordinates lie
+in the leaf box, its disk radii dominate the certified lower radii, and its
+disks are pairwise separated in the certified cyclic order.
 
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
 non-overlap turns this into a directed angle-gap bound; and summing those
 bounds around any closed walk contradicts a strictly negative total. The
-remaining nine-circle work is to prove the box invariants for every leaf of
-the replayed split tree and obtain the per-edge geometric hypotheses from an
-arbitrary packing at that leaf. Then the leaf exclusion theorem can be applied
-to all 155 leaves. The concrete radial tree and its main-order angle-barrier
-cases also remain to be replayed.
+remaining nine-circle work is to connect an arbitrary packing to a leaf of
+the replayed split tree, prove the radial contractor and split-box invariants,
+and instantiate `nineLeafSpec_excludes_polar_configuration` for that leaf.
+The concrete radial tree and its main-order angle-barrier cases also remain
+to be replayed.
 
 The radial tree, angle-barrier certificates, and the analytic connection for
 the alternate nine-circle cycle are therefore not yet fully replayed by Lean.

@@ -61,8 +61,11 @@ nine-circle certificate: 308 tree nodes, 155 cycle leaves, all exact Taylor
 corner comparisons, and all strict cycle sums.  The source JSON is pinned by
 SHA-256 and converted to a common-scale integer representation.  This replay
 uses Lean's `native_decide`, so its theorem has that evaluator's trust
-dependency.  The geometric theorem connecting these checked edge inequalities
-to the nine-circle exclusion is still a separate formalization step.
+dependency. `NineCircleCertificateSoundness.lean` now connects these checks
+to edge angle bounds and proves that any checked cycle leaf is impossible for
+a normalized polar configuration inside its radial box. The concrete tree
+coverage, contractor soundness for this payload, and the main-order exclusions
+are still separate formalization steps.
 -/
 
 namespace CirclePacking
