@@ -10,13 +10,13 @@ and by the claim being studied.
 The main result is the minimum-container-radius problem for ten pairwise
 disjoint circles of radii `sqrt(1), sqrt(2), ..., sqrt(10)`.
 
-- [Global optimality proof](problems/packing-ten-unequal-circles-in-a-circle/README.md)
+- [Global optimality proof](problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/README.md)
 - [Algebraic identification of the critical radius](problems/ten-circle-critical-radius-algebraic-identification/README.md)
 
 To replay the global-optimality proof from the repository root:
 
 ```bash
-cd problems/packing-ten-unequal-circles-in-a-circle
+cd problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle
 uv run --locked python tools/verify_global_optimality_completion.py
 ```
 
