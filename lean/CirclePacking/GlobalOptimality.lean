@@ -63,9 +63,11 @@ SHA-256 and converted to a common-scale integer representation.  This replay
 uses Lean's `native_decide`, so its theorem has that evaluator's trust
 dependency. `NineCircleCertificateSoundness.lean` now connects these checks
 to edge angle bounds and proves that any checked cycle leaf is impossible for
-a normalized polar configuration inside its radial box. The concrete tree
-coverage, contractor soundness for this payload, and the main-order exclusions
-are still separate formalization steps.
+a normalized polar configuration inside its radial box. The tree exclusion
+theorem now composes the leaf contradiction through the recursive split tree,
+assuming contractor preservation and ordered endpoints. Proving those
+invariants from packing geometry, instantiating the theorem on the checked
+tree, and formalizing the main-order exclusions remain outstanding.
 -/
 
 namespace CirclePacking

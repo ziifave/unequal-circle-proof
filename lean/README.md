@@ -145,15 +145,22 @@ single normalized polar configuration, assuming its radial coordinates lie
 in the leaf box, its disk radii dominate the certified lower radii, and its
 disks are pairwise separated in the certified cyclic order.
 
+`nineReplayTree_excludes_scaled_configuration` now composes this leaf result
+through an arbitrary replayed split tree. It follows the configuration into
+one child at every cut and through each contractor, provided the contractor
+preserves box membership and the boxes retain ordered endpoints. The remaining
+bridge is to prove those contractor and interval invariants from the
+nine-circle geometry and concrete certificate, then instantiate this theorem
+on the checked tree.
+
 `CirclePacking/NineCircleGeometry.lean` formalizes the general geometric
 bridge: four corner bounds over a radial box imply a touch-angle lower bound;
 non-overlap turns this into a directed angle-gap bound; and summing those
 bounds around any closed walk contradicts a strictly negative total. The
-remaining nine-circle work is to connect an arbitrary packing to a leaf of
-the replayed split tree, prove the radial contractor and split-box invariants,
-and instantiate `nineLeafSpec_excludes_polar_configuration` for that leaf.
-The concrete radial tree and its main-order angle-barrier cases also remain
-to be replayed.
+remaining nine-circle work is to derive contractor preservation and ordered
+box invariants from an arbitrary packing, instantiate the recursive theorem
+on the replayed tree, and cover the main-order angle-barrier cases. The
+concrete radial tree and those main-order cases also remain to be replayed.
 
 The radial tree, angle-barrier certificates, and the analytic connection for
 the alternate nine-circle cycle are therefore not yet fully replayed by Lean.

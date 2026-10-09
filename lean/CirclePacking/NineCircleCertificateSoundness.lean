@@ -543,4 +543,137 @@ theorem nineLeafSpec_excludes_polar_configuration
   simpa [nineCycleAngularEdge, nineCycleFin,
     Nat.mod_eq_of_lt hsrc, Nat.mod_eq_of_lt hdst] using hbound
 
+noncomputable def nineScaledBoxContains (scale : ℝ) (box : NineRadialBox)
+    (radial : Fin 9 → ℝ) : Prop :=
+  ∀ i : Fin 9,
+    (box[i.1]!.1 : ℝ) / scale ≤ radial i ∧
+      radial i ≤ (box[i.1]!.2 : ℝ) / scale
+
+theorem nineSetHi_getElem
+    {box : NineRadialBox} {axis cut : ℕ} (haxis : axis < 9)
+    (hsize : box.size = 9) (i : Fin 9) :
+    (nineSetHi box axis cut)[i.1]! =
+      if axis = i.1 then (box[i.1]!.1, cut) else box[i.1]! := by
+  unfold nineSetHi
+  rw [getElem!_pos (box.modify axis (fun interval => (interval.1, cut))) i.1
+    (by simp [hsize])]
+  rw [Array.getElem_modify (by simp [hsize])]
+  have hi : i.1 < box.size := by simpa [hsize] using i.isLt
+  by_cases h : axis = i.1 <;> simp [h] <;>
+    rw [← getElem!_pos box i.1 hi]
+
+theorem nineSetLo_getElem
+    {box : NineRadialBox} {axis cut : ℕ} (haxis : axis < 9)
+    (hsize : box.size = 9) (i : Fin 9) :
+    (nineSetLo box axis cut)[i.1]! =
+      if axis = i.1 then (cut, box[i.1]!.2) else box[i.1]! := by
+  unfold nineSetLo
+  rw [getElem!_pos (box.modify axis (fun interval => (cut, interval.2))) i.1
+    (by simp [hsize])]
+  rw [Array.getElem_modify (by simp [hsize])]
+  have hi : i.1 < box.size := by simpa [hsize] using i.isLt
+  by_cases h : axis = i.1 <;> simp [h] <;>
+    rw [← getElem!_pos box i.1 hi]
+
+theorem nineSetHi_preserves_scaledBoxContains
+    {scale : ℝ} {box : NineRadialBox} {radial : Fin 9 → ℝ}
+    {axis cut : ℕ} (haxis : axis < 9) (hsize : box.size = 9)
+    (hcontains : nineScaledBoxContains scale box radial)
+    (hcut : radial ⟨axis, haxis⟩ ≤ (cut : ℝ) / scale) :
+    nineScaledBoxContains scale (nineSetHi box axis cut) radial := by
+  intro i
+  by_cases h : i.1 = axis
+  · have hi : i = ⟨axis, haxis⟩ := Fin.ext h
+    subst i
+    have hp := hcontains ⟨axis, haxis⟩
+    have hmodify := nineSetHi_getElem (cut := cut) haxis hsize ⟨axis, haxis⟩
+    simp only [if_pos rfl] at hmodify
+    rw [hmodify]
+    constructor
+    · exact hp.1
+    · exact hcut
+  · have hp := hcontains i
+    have hmodify := nineSetHi_getElem (cut := cut) haxis hsize i
+    have hnot : axis ≠ i.1 := fun heq => h heq.symm
+    rw [if_neg hnot] at hmodify
+    rw [hmodify]
+    exact hp
+
+theorem nineSetLo_preserves_scaledBoxContains
+    {scale : ℝ} {box : NineRadialBox} {radial : Fin 9 → ℝ}
+    {axis cut : ℕ} (haxis : axis < 9) (hsize : box.size = 9)
+    (hcontains : nineScaledBoxContains scale box radial)
+    (hcut : (cut : ℝ) / scale ≤ radial ⟨axis, haxis⟩) :
+    nineScaledBoxContains scale (nineSetLo box axis cut) radial := by
+  intro i
+  by_cases h : i.1 = axis
+  · have hi : i = ⟨axis, haxis⟩ := Fin.ext h
+    subst i
+    have hp := hcontains ⟨axis, haxis⟩
+    have hmodify := nineSetLo_getElem (cut := cut) haxis hsize ⟨axis, haxis⟩
+    simp only [if_pos rfl] at hmodify
+    rw [hmodify]
+    constructor
+    · exact hcut
+    · exact hp.2
+  · have hp := hcontains i
+    have hmodify := nineSetLo_getElem (cut := cut) haxis hsize i
+    have hnot : axis ≠ i.1 := fun heq => h heq.symm
+    rw [if_neg hnot] at hmodify
+    rw [hmodify]
+    exact hp
+
+theorem nineReplayTree_excludes_scaled_configuration
+    {cert : NineCircleCertificate} {tree : NineCycleTree}
+    {box : NineRadialBox} {theta radial diskRadius : Fin 9 → ℝ}
+    (htree : nineReplayTreeSpec cert tree box)
+    (hsize : box.size = 9)
+    (hscale : 0 < (cert.scale : ℝ))
+    (hcontains : nineScaledBoxContains (cert.scale : ℝ) box radial)
+    (hcontractor : ∀ currentBox,
+      nineScaledBoxContains (cert.scale : ℝ) currentBox radial →
+        nineScaledBoxContains (cert.scale : ℝ)
+          (nineContract cert.radiiLower currentBox) radial)
+    (hboxOrdered : ∀ (currentBox : NineRadialBox), ∀ i : Fin 9,
+      currentBox[i.1]!.1 ≤ currentBox[i.1]!.2)
+    (hradialPos : ∀ i : Fin 9, 0 < radial i)
+    (hradiusLower : ∀ i : Fin 9,
+      (cert.radiiLower[i.1]! : ℝ) / cert.scale ≤ diskRadius i)
+    (hseparated : ∀ i j : Fin 9, i ≠ j →
+      (diskRadius i + diskRadius j) ^ 2 ≤ pointNorm
+        ((polarPoint (radial i) (theta i)).1 -
+            (polarPoint (radial j) (theta j)).1,
+         (polarPoint (radial i) (theta i)).2 -
+            (polarPoint (radial j) (theta j)).2) ^ 2)
+    (hsorted : ∀ i j : Fin 9, i.1 < j.1 → theta i ≤ theta j)
+    (hthetaLo : ∀ i : Fin 9, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 9, theta i ≤ 2 * Real.pi) :
+    False := by
+  induction tree generalizing box with
+  | leaf edges =>
+      change nineLeafSpec cert (nineContract cert.radiiLower box) edges at htree
+      exact nineLeafSpec_excludes_polar_configuration htree hscale
+        (hboxOrdered _)
+        (hcontractor box hcontains)
+        hradialPos hradiusLower hseparated hsorted hthetaLo hthetaHi
+  | split axis cut left right ihLeft ihRight =>
+      simp only [nineReplayTreeSpec] at htree
+      rcases htree with ⟨haxis, hcutLo, hcutHi, hleft, hright⟩
+      have hcontracted := hcontractor box hcontains
+      have hcontractedSize : (nineContract cert.radiiLower box).size = 9 := by
+        simp [nineContract]
+      have hleftSize : (nineSetHi (nineContract cert.radiiLower box) axis cut).size = 9 := by
+        simpa [nineSetHi] using hcontractedSize
+      have hrightSize : (nineSetLo (nineContract cert.radiiLower box) axis cut).size = 9 := by
+        simpa [nineSetLo] using hcontractedSize
+      by_cases hleftSide : radial ⟨axis, haxis⟩ ≤ (cut : ℝ) / cert.scale
+      · have hleftContains := nineSetHi_preserves_scaledBoxContains haxis
+          hcontractedSize hcontracted hleftSide
+        exact ihLeft hleft hleftSize hleftContains
+      · have hrightSide : (cut : ℝ) / cert.scale ≤ radial ⟨axis, haxis⟩ :=
+          le_of_not_ge hleftSide
+        have hrightContains := nineSetLo_preserves_scaledBoxContains haxis
+          hcontractedSize hcontracted hrightSide
+        exact ihRight hright hrightSize hrightContains
+
 end CirclePacking
