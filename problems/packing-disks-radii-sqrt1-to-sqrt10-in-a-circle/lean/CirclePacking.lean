@@ -34,6 +34,7 @@ import CirclePacking.FifteenPackingCycleBridge
 import CirclePacking.FifteenTickSymmetry
 import CirclePacking.FifteenPackingCycleExclusion
 import CirclePacking.FifteenLocalBarrierRigidity
+import CirclePacking.FifteenLocalTaylor
 
 /-!
 # Formal algebraic core for unequal-circle packing
