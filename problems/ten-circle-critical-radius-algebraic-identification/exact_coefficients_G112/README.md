@@ -77,7 +77,7 @@ The 16 sign embeddings of `K` give 16 conjugate degree-112 polynomials.
 Their product, equivalently the field norm of the monic `G`, is a rational
 polynomial of degree `16 * 112 = 1792`. The complete primitive integer
 coefficient list is stored in the attached algebraic reproducibility data and
-is represented in Lean by `lean/CirclePacking/P1792.lean` as
+is represented in Lean by [`P1792.lean`](../../packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean/CirclePacking/P1792.lean) as
 `p1792PrimitivePolynomial : Polynomial Q`.
 
 The external verification package checks:
@@ -121,12 +121,12 @@ the root being discussed.
 
 The Lean side is intentionally small and exact:
 
-- `lean/CirclePacking/G112.lean` contains the field-basis coefficient table
+- [`G112.lean`](../../packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean/CirclePacking/G112.lean) contains the field-basis coefficient table
   and the degree-112 polynomial interface.
-- `lean/CirclePacking/P1792.lean` contains the 1793 integer coefficients,
+- [`P1792.lean`](../../packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean/CirclePacking/P1792.lean) contains the 1793 integer coefficients,
   the rational polynomial, evaluation lemmas, and the P1792 certificate
   interface.
-- `exact_coefficients_G112/LEAN_INTEGRATION.md` records the detailed import
+- `LEAN_INTEGRATION.md` records the detailed import
   boundary and current audit status.
 
 The key structure is `ContactEliminationBridge`. It packages the exact
