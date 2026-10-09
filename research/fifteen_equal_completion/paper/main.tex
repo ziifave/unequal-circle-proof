@@ -483,7 +483,7 @@ If every $a_i=a_0$ but $R<R_0$, each original outer radius is strictly below $b_
 
 The construction in \cref{sec:construction} proves $R_{15}^*\le R_0$. The radial classification, exhaustive difference-constraint certificate, exact rational subdivision, and local angular barrier prove that every feasible packing has $R\ge R_0$, conditional on the finite certificate and geometric reductions stated above.
 
-To replay the computations, use Python 3.10 or newer, GNU C++17, and a POSIX shell:
+Replay files are in the \href{https://github.com/ziifave/unequal-circle-proof/tree/0f35323fcd59498fe17b3cd394f25f2dd8f2c3aa/research/fifteen_equal_completion/candidate_bundle}{candidate bundle pinned to commit \texttt{0f35323}}. Run it with Python 3.10 or newer, GNU C++17, and a POSIX shell:
 \begin{verbatim}
 cd research/fifteen_equal_completion/candidate_bundle
 bash run_all.sh
@@ -493,7 +493,7 @@ All exclusion decisions use integers or rational fractions. The code's decimal o
 \appendix
 \section{Certificate data and exact subdivision}
 
-The complete data tables, branch rules, generated reports, and one-command replay are in the repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/e6cbd71af7708115fd13c7d59fa56cb819ca555c/research/fifteen_equal_completion/candidate_bundle}{candidate-bundle snapshot pinned to commit \texttt{e6cbd71}}. Stage zero emits a compressed certificate, \texttt{stage0\_certificate.json.gz}: for every excluded binary dihedral class, it records a negative cycle for every radial type assignment not already ruled out by the stated rank constraints. The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 classes, checks complete assignment coverage for each excluded class, verifies every integer cycle, and binds retained and excluded labels to the list used by later stages. The run script also emits a 3.8 MB subdivision certificate containing 1,266 exact roots. The independent \texttt{check\_exact\_certificate.py} verifies every bisection cover, pair-sum leaf, negative-cycle edge and weight, and local-region leaf using rational arithmetic. It also checks that the three $6I+9O$ assignments in the special-case certificate match \texttt{full\_residuals.txt} and verifies all nine endpoint leaves. Stage counts and survivor identities are asserted during replay.
+The repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/0f35323fcd59498fe17b3cd394f25f2dd8f2c3aa/research/fifteen_equal_completion/candidate_bundle}{candidate bundle pinned to commit \texttt{0f35323}} contains the tables, branch rules, reports, and replay scripts. Stage zero writes \texttt{stage0\_certificate.json.gz}, covering every excluded binary dihedral class and each radial type assignment not ruled out by rank constraints. The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 classes and checks assignment coverage and integer cycles. The replay also emits a 3.8 MB subdivision certificate with 1,266 roots. The independent \texttt{check\_exact\_certificate.py} verifies every bisection cover, pair-sum leaf, negative-cycle edge and weight, and local-region leaf using rational arithmetic; it checks the three $6I+9O$ assignments against \texttt{full\_residuals.txt} and verifies all nine endpoint leaves. Stage counts and survivor identities are asserted during replay.
 
 \begin{figure}[htbp]
 \centering
