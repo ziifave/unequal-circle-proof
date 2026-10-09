@@ -22,6 +22,8 @@ import CirclePacking.OptimalitySmokeTest
 import CirclePacking.ParametricOptimality
 import CirclePacking.GlobalAnchorRadius
 import CirclePacking.FifteenCertificate
+import CirclePacking.FifteenStageZero
+import CirclePacking.FifteenStageZeroGeometry
 import CirclePacking.FifteenTickSoundness
 import CirclePacking.FifteenCycleSoundness
 

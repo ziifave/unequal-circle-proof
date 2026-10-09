@@ -127,6 +127,40 @@ lake build CirclePacking.NineCircleCertificate
 
 ## 15-disk certificate: first Lean replay layer
 
+The upstream coarse stage is independently replayed in
+`CirclePacking/FifteenStageZero.lean`. Lean enumerates all 15-bit words with
+5--8 inner positions, takes the minimum over rotations and reflections, and
+checks that the resulting classes are exactly 111, 185, 232, and 232 (760 in
+total). For each of the 382 classes rejected by the coarse graph, it regenerates
+the complete set of radial-type assignments allowed by the rank constraints
+and verifies an integer negative-cycle witness for every assignment. For the
+other 378 classes, it checks a surviving assignment and an integer potential
+that certifies the corresponding coarse difference-constraint graph has no
+negative cycle. The same replay checks all positive entries in the coarse
+4-by-4 angle table against the rational Taylor/corner checker used by the
+subdivision layer.
+`CirclePacking/FifteenStageZeroGeometry.lean` turns each positive coarse-table
+entry into a touch-angle lower bound for every radius pair in the corresponding
+radial rectangles, using the general corner and Taylor soundness theorems.
+
+The compact inputs
+`research/fifteen_equal_completion/candidate_bundle/stage0_cycles.txt` and
+`stage0_orbits.txt` are generated from the tracked compressed source
+certificate by `export_lean_stage0_certificate.py`. The exporter is not part
+of Lean's trust boundary: Lean validates the orbit list, every assignment,
+every referenced edge, and all signed integer sums itself. Build the core-only
+replay quickly on WSL with:
+
+```sh
+bash tools/build_fifteen_stage0_fast.sh
+```
+
+This closes the previously unverified 760-orbit stage in Lean. The later
+378-to-23-to-4 radial-type pruning steps still need a Lean replay before the
+full finite proof is closed. As with the existing finite replays, the bulk
+Boolean certificate theorem uses `native_decide`; `#print axioms` exposes the
+native-evaluation dependency, which remains part of the stated trust boundary.
+
 `CirclePacking/FifteenCertificate.lean` reads the exact JSON subdivision tree
 and `research/fifteen_equal_completion/candidate_bundle/full_residuals.txt`
 directly with `include_str`. Its `fifteenExactCertificate_replays` theorem
@@ -143,8 +177,9 @@ strictly negative integer total. The checker also recomputes each regular
 edge's corner cosine cap and verifies that its recorded tick is safe under an
 exact rational degree-18 Taylor lower bound. It checks 30,032 cycle leaves,
 31 local leaves, and all nine branches for the three 6+9 residual
-assignments. Matching the roots to `full_residuals.txt` does not yet certify
-the upstream 760-orbit enumeration.
+assignments. The upstream 760-orbit enumeration is independently replayed by
+`CirclePacking/FifteenStageZero.lean`; the finer 378-to-23-to-4 radial-type
+filters remain to be replayed in Lean.
 
 `CirclePacking/FifteenTickSoundness.lean` proves that the degree-18 Taylor
 polynomial minus its `x^19 / 18!` remainder is below `cos x` for every
@@ -208,9 +243,9 @@ chain cannot have negative total weight. The theorem matches the certificate's
 `O`, `L`, and `U` edge conventions to the 17,600-tick upper bound for a full
 turn. The remaining connections include deriving the per-edge theorem's
 premises from each parsed JSON leaf and lifting the finite Boolean replay to a
-proposition about every geometric configuration. The upstream 760-orbit
-enumeration and final local obstruction also remain outside Lean; this
-certificate replay is not yet the full optimum proof.
+proposition about every geometric configuration. The 378-to-23-to-4 radial
+filters and final local obstruction also remain outside Lean; the formalized
+finite replays are not yet the full optimum proof.
 
 Build the certificate replay with `lake build CirclePacking.FifteenCertificate`
 and the analytic tick lemmas with `lake build CirclePacking.FifteenTickSoundness`.

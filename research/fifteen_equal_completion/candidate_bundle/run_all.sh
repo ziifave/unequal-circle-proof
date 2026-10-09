@@ -12,6 +12,7 @@ echo '3/11: serialize and independently check all stage-zero exclusions'
 ./.stage0 --certificate 2> stage0_certificate.log | python3 -c 'import gzip,sys; sys.stdout.buffer.write(gzip.compress(sys.stdin.buffer.read(), compresslevel=9, mtime=0))' > stage0_certificate.json.gz
 python3 check_stage0_certificate.py > stage0_certificate_check.log
 cat stage0_certificate_check.log
+python3 export_lean_stage0_certificate.py
 echo '4/11: rational angular table generation'
 python3 build_bounds3.py > q3_report.txt
 python3 build_bounds4.py > q4_report.txt
