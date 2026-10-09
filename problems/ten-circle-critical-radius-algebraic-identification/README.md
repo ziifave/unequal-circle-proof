@@ -10,5 +10,5 @@ globally optimal among all packings.
 The proof documents, exact coefficient tables, scripts, and reproduction data
 are in [exact_coefficients_G112](exact_coefficients_G112/README.md). The
 associated Lean modules are part of the shared Lean project in the
-[global-optimality package](../packing-ten-unequal-circles-in-a-circle/lean/README.md),
+[global-optimality package](../packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean/README.md),
 under `CirclePacking/G112.lean` and `CirclePacking/P1792.lean`.
