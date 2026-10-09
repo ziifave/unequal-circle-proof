@@ -497,6 +497,60 @@ theorem fifteenRegularTick_lower_bounds_touch_angle
       hangle0 hanglePi hcapCos
   exact htouch
 
+/-- The regular-box tick rule is sound in all three numerical branches of the
+checker: a zero tick when the cap is at least one, the `8700` half-turn tick
+when the cap is at most minus one, and the Taylor-certified middle range. -/
+theorem fifteenRegularTick_lower_bounds_touch_angle_all_caps
+    (x y : FifteenInterval) (ticks : Nat) (a b : ℝ)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hvalid : fifteenTickCertificateValid x y false false ticks = true)
+    (hxOrder : x.1 ≤ x.2) (hyOrder : y.1 ≤ y.2)
+    (hx0 : 0 < (x.1 : ℝ)) (hy0 : 0 < (y.1 : ℝ))
+    (haL : (x.1 : ℝ) ≤ a) (haU : a ≤ (x.2 : ℝ))
+    (hbL : (y.1 : ℝ) ≤ b) (hbU : b ≤ (y.2 : ℝ)) :
+    (ticks : ℝ) / 2800 ≤ touchAngle a b 2 := by
+  let cap := fifteenBoxCosineCap x y
+  have hnotSum : ¬ x.2 + y.2 < 2 := by linarith
+  by_cases hupper : 1 ≤ cap
+  · have hticks : ticks = 0 := by
+      simpa [fifteenTickCertificateValid, hnotSum, cap, hupper] using hvalid
+    subst ticks
+    simpa [touchAngle] using (Real.arccos_nonneg (touchCosine a b 2))
+  · by_cases hlower : cap ≤ -1
+    · have hticks : ticks = 8700 := by
+        simpa [fifteenTickCertificateValid, hnotSum, cap, hupper, hlower] using hvalid
+      subst ticks
+      have hcorners := fifteenBoxCosineCap_numerator_bounds x y
+        hxOrder hyOrder hx0 hy0
+      have hcornerData :
+          (x.1 : ℝ) ^ 2 + (y.1 : ℝ) ^ 2 - (2 : ℝ) ^ 2 ≤
+              (cap : ℝ) * (2 * (x.1 : ℝ) * (y.1 : ℝ)) ∧
+          (x.1 : ℝ) ^ 2 + (y.2 : ℝ) ^ 2 - (2 : ℝ) ^ 2 ≤
+              (cap : ℝ) * (2 * (x.1 : ℝ) * (y.2 : ℝ)) ∧
+          (x.2 : ℝ) ^ 2 + (y.1 : ℝ) ^ 2 - (2 : ℝ) ^ 2 ≤
+              (cap : ℝ) * (2 * (x.2 : ℝ) * (y.1 : ℝ)) ∧
+          (x.2 : ℝ) ^ 2 + (y.2 : ℝ) ^ 2 - (2 : ℝ) ^ 2 ≤
+              (cap : ℝ) * (2 * (x.2 : ℝ) * (y.2 : ℝ)) := by
+        have htwo : (2 : ℝ) ^ 2 = 4 := by norm_num
+        simpa [htwo, cap] using hcorners
+      have hcontact := corner_touch_cosine_bound haL haU hbL hbU hx0 hy0
+        hcornerData.1 hcornerData.2.1 hcornerData.2.2.1 hcornerData.2.2.2
+      have hcapReal : (cap : ℝ) ≤ -1 := by exact_mod_cast hlower
+      have hcosPi : touchCosine a b 2 ≤ Real.cos Real.pi := by
+        rw [Real.cos_pi]
+        exact hcontact.trans hcapReal
+      have hpi : Real.pi ≤ touchAngle a b 2 :=
+        certified_touch_angle_lower_bound (le_of_lt Real.pi_pos) le_rfl hcosPi
+      have htickPi : (8700 : ℝ) / 2800 ≤ Real.pi := le_of_lt (by
+        calc
+          (8700 : ℝ) / 2800 < (3.14 : ℝ) := by norm_num
+          _ < Real.pi := Real.pi_gt_d2)
+      exact le_trans htickPi hpi
+    · have hcapUpper : cap < 1 := lt_of_not_ge hupper
+      have hcapLower : -1 < cap := lt_of_not_ge hlower
+      exact fifteenRegularTick_lower_bounds_touch_angle x y ticks a b hsum
+        hcapUpper hcapLower hvalid hxOrder hyOrder hx0 hy0 haL haU hbL hbU
+
 theorem fifteenRegularTick_lower_bounds_center_angle
     (x y : FifteenInterval) (ticks : Nat) (a b : ℝ) (p q : Point)
     (hsum : 2 ≤ x.2 + y.2)
@@ -684,6 +738,43 @@ theorem fifteenRegularTick_gives_polar_edge_bound
         (8790 : ℝ) / 2800 < (3.14 : ℝ) := by norm_num
         _ < Real.pi := Real.pi_gt_d2
     exact le_trans ht (le_of_lt hbound)
+  have ha : 0 < a := lt_of_lt_of_le hx0 haL
+  have hb : 0 < b := lt_of_lt_of_le hy0 hbL
+  have hsep' : (2 : ℝ) ^ 2 ≤ pointNorm
+      ((polarPoint a (theta e.src)).1 - (polarPoint b (theta e.dst)).1,
+       (polarPoint a (theta e.src)).2 - (polarPoint b (theta e.dst)).2) ^ 2 := by
+    norm_num at hsep ⊢
+    exact hsep
+  exact fifteen_polar_edge_respects_angular_bound theta tauUpper e a b 2
+    ha hb hpi hneq hsorted hthetaLo hthetaHi hsep' hell' htau
+
+/-- Polar-edge version of the regular tick theorem without assuming in
+advance that the rational cosine cap lies in its middle branch. -/
+theorem fifteenRegularTick_gives_polar_edge_bound_all_caps
+    (x y : FifteenInterval) (ticks : Nat) (e : FifteenAngularEdge)
+    (theta : Fin 15 → ℝ) (a b : ℝ) (tauUpper : ℝ)
+    (hsum : 2 ≤ x.2 + y.2)
+    (hvalid : fifteenTickCertificateValid x y false false ticks = true)
+    (hxOrder : x.1 ≤ x.2) (hyOrder : y.1 ≤ y.2)
+    (hx0 : 0 < (x.1 : ℝ)) (hy0 : 0 < (y.1 : ℝ))
+    (haL : (x.1 : ℝ) ≤ a) (haU : a ≤ (x.2 : ℝ))
+    (hbL : (y.1 : ℝ) ≤ b) (hbU : b ≤ (y.2 : ℝ))
+    (hlower : e.lower = (ticks : ℝ) / 2800)
+    (hneq : e.src ≠ e.dst)
+    (hsorted : ∀ i j : Fin 15, i.1 < j.1 → theta i ≤ theta j)
+    (hthetaLo : ∀ i : Fin 15, 0 ≤ theta i)
+    (hthetaHi : ∀ i : Fin 15, theta i ≤ 2 * Real.pi)
+    (hsep : 4 ≤ pointNorm
+      ((polarPoint a (theta e.src)).1 - (polarPoint b (theta e.dst)).1,
+       (polarPoint a (theta e.src)).2 - (polarPoint b (theta e.dst)).2) ^ 2)
+    (htau : 2 * Real.pi ≤ tauUpper) :
+    theta e.dst - theta e.src ≤ fifteenAngularEdgeUpper tauUpper e := by
+  have hell := fifteenRegularTick_lower_bounds_touch_angle_all_caps x y ticks a b
+    hsum hvalid hxOrder hyOrder hx0 hy0 haL haU hbL hbU
+  have hell' : e.lower ≤ touchAngle a b 2 := by
+    rw [hlower]
+    exact hell
+  have hpi : e.lower ≤ Real.pi := le_trans hell' (Real.arccos_le_pi _)
   have ha : 0 < a := lt_of_lt_of_le hx0 haL
   have hb : 0 < b := lt_of_lt_of_le hy0 hbL
   have hsep' : (2 : ℝ) ^ 2 ≤ pointNorm

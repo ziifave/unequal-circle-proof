@@ -63,6 +63,22 @@ certificate box membership and signed edge bounds for every cycle leaf, and
 connecting the remaining Stage 3/4 structural pruning predicates to the
 packing model, remain separate obligations.
 
+`CirclePacking.FifteenTickSoundness` now also proves regular tick lower bounds
+for every branch of the checker, including zero ticks and the half-turn tick;
+it no longer assumes the rational cosine cap is already in the Taylor branch.
+`CirclePacking.FifteenPackingPolarCoordinates` extracts polar coordinates for
+each center of an arbitrary packing, transfers unit-disk separation to those
+coordinates, and proves the radius-swap identity needed for backward (`L`)
+edges. The final cycle connection still needs the sorted reindexing and the
+per-edge assembly from these bounds and the radial-box membership data.
+
+Build these geometric interfaces with:
+
+```sh
+lake build CirclePacking.FifteenTickSoundness
+lake build CirclePacking.FifteenPackingPolarCoordinates
+```
+
 Regenerate the Stage 4 certificate data with:
 
 ```sh
