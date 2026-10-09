@@ -30,9 +30,5 @@ These are separate minimum-container problems with disk radii `1, ..., n`:
 - [Radii 1 through 9](problems/packing-disks-radii-1-to-9-in-a-circle/README.md)
 - [Radii 1 through 10](problems/packing-disks-radii-1-to-10-in-a-circle/README.md)
 
-## Fifteen equal circles
-
-- [Working and progress notes](problems/15-equal-circles-in-a-circle-working-notes/README.md) — the included notes do not claim a global-optimality proof.
-
 Each problem directory has its own README with the contents and scope. The
 original nested proof-bundle ZIPs are kept beside their extracted files.
