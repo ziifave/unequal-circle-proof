@@ -80,7 +80,7 @@ The minimum enclosing radius for fifteen pairwise interior-disjoint unit disks i
 \]
 \end{theorem}
 
-The upper bound comes from the familiar $D_5$ arrangement with five inner disks and ten outer disks, listed among the best-known configurations \cite{GrahamEtAl1998,Packomania}. The lower-bound strategy is independent of the tight-partition reduction used for fourteen disks \cite{EF2024}.
+The upper bound comes from the familiar $D_5$-symmetric arrangement, invariant under rotations by $2\pi/5$ and reflections, with five inner disks and ten outer disks; it is listed among the best-known configurations \cite{GrahamEtAl1998,Packomania}. The lower-bound strategy is independent of the tight-partition reduction used for fourteen disks \cite{EF2024}.
 
 \section{An exact packing of radius \texorpdfstring{$R_0$}{R0}}\label{sec:construction}
 
@@ -211,7 +211,7 @@ The threshold and the surviving count ranges are sketched in \cref{fig:radial-sh
 \label{fig:radial-shells}
 \end{figure}
 
-The standard small-packing bounds $s_{(5)}\ge a_0>5/3$ and $s_{(6)}\ge2$ are also used in the radial interval enumeration. Here $s_{(j)}$ denotes the $j$th smallest center radius among all fifteen centers. They follow by applying the known exact five- and six-disk packing radii to the $j$ innermost disks. Consequently, among $k$ inner centers at least $k-4$ have radius at least $5/3$, and at least $k-5$ have radius at least $2$.
+Write $s_{(1)}\le\cdots\le s_{(15)}$ for the fifteen center radii in nondecreasing order. The standard small-packing bounds $s_{(5)}\ge a_0>5/3$ and $s_{(6)}\ge2$ are also used in the radial interval enumeration. They follow by applying the known exact five- and six-disk packing radii to the five and six innermost centers. Consequently, among $k$ inner centers at least $k-4$ have radius at least $5/3$, and at least $k-5$ have radius at least $2$.
 
 \section{Angular difference constraints}\label{sec:angular}
 
@@ -250,6 +250,14 @@ If some box has $x+y<2$ throughout, the box is impossible immediately. A box for
 \end{figure}
 
 Each inequality $\theta_v-\theta_u\le w$ is a directed edge $u\to v$ with weight $w$. Such a system is feasible only if the directed graph has no negative cycle. The verifier replaces each required angle by a certified rational lower bound $q/2800$ and uses $44/7$ as an upper bound for $2\pi$. Thus a lower-bound edge has weight $-q$, while its complementary upper-bound edge has weight $17600-q$. A negative cycle in these integer weights excludes the entire radial box.
+
+For example, suppose three angle constraints require
+\[
+ \theta_2-\theta_1\ge\lambda,\qquad
+ \theta_3-\theta_2\ge\mu,\qquad
+ \theta_3-\theta_1\le\nu.
+\]
+The first two imply $\theta_3-\theta_1\ge\lambda+\mu$, so no angles can satisfy all three if $\lambda+\mu>\nu$. In the difference graph, these inequalities give a directed cycle of total weight $\nu-\mu-\lambda<0$.
 
 
 
@@ -294,7 +302,9 @@ After replacing outer centers by wall centers, every feasible packing of radius 
 This is the conclusion of the finite certificate. A terminal box contained in this cube is passed to the analytic argument; it is not asserted to contain a feasible packing.
 \end{proposition}
 
-The certificate for \cref{prop:finite-reduction} has four stages. First, exact rational arithmetic checks a fixed four-type angular table and an integer negative-cycle test examines all 760 words. The certified computation does not use the separate exploratory gap-capacity filter. Second, the surviving words are refined over eight radial bins and then twelve radial bins, using the rank bounds in \cref{sec:radial}. Third, each remaining radial box is split exactly until a necessary condition excludes it, or, for the canonical type only, until the box is contained in the local cube. Fourth, a local analytic inequality rules out every point of that cube except the candidate radius vector. The flow in \cref{fig:certificate-flow} summarizes the resulting counts.
+The finite certificate for \cref{prop:finite-reduction} has three stages. First, exact rational arithmetic checks a fixed four-type angular table, and an integer negative-cycle test examines all 760 words. Second, the surviving words are refined over eight radial bins and then twelve radial bins, using the rank bounds in \cref{sec:radial}. Third, exact rational subdivision excludes each remaining radial box by a necessary condition, except that the canonical type is retained when a box lies inside the local cube. The finite computation ends there; the local analytic lemma in the next section rules out every point of that cube except the candidate radius vector.
+
+Here a box is called closed only when the entire represented radial region is excluded by a stated necessary condition. A local leaf records a box passed to the analytic proof and makes no existence claim. The flow in \cref{fig:certificate-flow} summarizes the three finite stages and the subsequent local argument.
 
 \begin{figure}[htbp]
 \centering
@@ -317,11 +327,9 @@ The certificate for \cref{prop:finite-reduction} has four stages. First, exact r
   \draw[proofedge] (canonical)--(nodes);
   \draw[proofedge] (nodes)--(local);
 \end{tikzpicture}
-\caption{The replayed reduction path. Unlike an earlier exploratory gap-capacity filter, the certified path tests all 760 dihedral classes directly; the counts here match the included verifier reports.}
+\caption{The first three stages form the finite reduction and test all 760 dihedral classes. The final analytic step handles the boxes passed to local rigidity.}
 \label{fig:certificate-flow}
 \end{figure}
-
-Here a box is called closed only when the entire represented radial region is excluded by a stated necessary condition. A local leaf records a box passed to the analytic proof and makes no existence claim.
 
 The exact rational subdivision closes the two noncanonical $5I+10O$ words from 47 and 38 coarse radial boxes, respectively. Their branch-and-bound trees contain 1,641 and 646 nodes. The $6I+9O$ word has three coarse boxes. Splitting its unique first-bin radius into $0<r<1/4$, $1/4\le r<1/2$, and the exact origin gives nine leaves: six pair-sum contradictions and three negative cycles.
 
@@ -428,11 +436,15 @@ Taylor's theorem therefore gives
  h_i&\ge\frac{2\pi}{5}-c_0\sigma_i-\frac52(\delta_i^2+\delta_{i+1}^2),\\
  k_i&\ge\frac{2\pi}{5}+d_0\sigma_i-\frac52(\delta_i^2+\delta_{i+1}^2).
 \end{align*}
-Since $d_0>c_0>0$, $\max\{-c_0\sigma_i,d_0\sigma_i\}\ge c_0|\sigma_i|$: when one route becomes less restrictive, the other becomes more restrictive. The five-cycle being odd is essential here. Its cyclic sum map is invertible, unlike an even cycle where a nonzero alternating mode can remain; the inverse is witnessed by the identity
+Since $d_0>c_0>0$, $\max\{-c_0\sigma_i,d_0\sigma_i\}\ge c_0|\sigma_i|$: when one route becomes less restrictive, the other becomes more restrictive. The odd cycle length is essential. The linear map from the radial deviations $\delta_i$ to their consecutive sums $\sigma_i$ is invertible; an even cycle would admit a nonzero alternating mode in its kernel. Indeed, the following identity holds:
 \[
  2\delta_i=\sigma_i-\sigma_{i+1}+\sigma_{i+2}-\sigma_{i+3}+\sigma_{i+4}
 \]
-implies $\sum_i|\sigma_i|\ge\frac25\sum_i|\delta_i|$. Moreover $|\delta_i|\le11/500$ throughout the local cube. Hence
+Taking absolute values and summing over all five indices gives
+\[
+ \sum_i|\sigma_i|\ge\frac25\sum_i|\delta_i|.
+\]
+Moreover $|\delta_i|\le11/500$ throughout the local cube. Hence
 \begin{align*}
 \sum_i\max(h_i,k_i)
  &\ge 2\pi+c_0\sum_i|\sigma_i|-5\sum_i\delta_i^2\\
@@ -489,6 +501,8 @@ cd research/fifteen_equal_completion/candidate_bundle
 bash run_all.sh
 \end{verbatim}
 All exclusion decisions use integers or rational fractions. The code's decimal output is diagnostic only. The replay is self-contained and records the branch counts and terminal reasons.
+
+The proof resolves the fifteen-disk case without assuming a contact graph or symmetry for a minimizing packing. Its central step is the transition from exact finite elimination of cyclic types and radial boxes to an analytic barrier that rules out nonsymmetric radial perturbations in the final region.
 
 \appendix
 \section{Certificate data and exact subdivision}
