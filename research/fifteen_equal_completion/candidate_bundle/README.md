@@ -27,3 +27,27 @@ Expected summary:
 - `make_exact_certificate.py` serializes the 1,266 fine-subdivision trees plus the nine 6+9 endpoint leaves to `exact_subdivision_certificate.json`. `check_exact_certificate.py` independently checks their splits, rational angular edge weights, negative cycles, pair-sum exclusions, local-box leaves, and that the three 6+9 special assignments equal those in `full_residuals.txt`. Stages 3 and 4 and the radial-box enumerator remain exhaustive replay steps checked through exact counts, identities, and uniqueness assertions.
 
 The code includes exhaustive search and mathematically justified early-pruning predicates. The accompanying prose is a proof *sketch*, not a substitute for a fully refereed manuscript or an independently checked implementation. Treat any claimed proof of this previously open problem with appropriately high skepticism until independently validated.
+
+## Lean replay of Stage 3 closures
+
+`tools/export_lean_stage3_certificates.py` regenerates 355 compact pruning
+certificates for the patterns marked `CLOSED` in `stage3.tsv`. It invokes the
+C++ producer only to create certificate data, then interns repeated negative
+cycle edge lists in per-pattern dictionaries. Lean checks every prefix-tree
+split and leaf, recomputes each referenced cycle's integer edge weights, and
+checks strict negativity. The aggregator also verifies that the 378 Stage 3
+rows are exactly the Stage 0 survivor patterns, that 355 rows are certified,
+and that the remaining 23 rows are passed onward.
+
+Run the replay with:
+
+```sh
+python3 tools/export_lean_stage3_certificates.py
+cd problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean
+lake build CirclePacking.FifteenStages34
+```
+
+This closes the finite Stage 3 certificate replay only. The Lean cycle checks
+still use `native_decide`, and the geometric soundness theorem connecting the
+Stage 3 pruning predicates and angle table to arbitrary disk packings, the
+Stage 4 certificates, and the final local analysis remain separate obligations.
