@@ -155,11 +155,11 @@ replay quickly on WSL with:
 bash tools/build_fifteen_stage0_fast.sh
 ```
 
-This closes the previously unverified 760-orbit stage in Lean. The later
-378-to-23-to-4 radial-type pruning steps still need a Lean replay before the
-full finite proof is closed. As with the existing finite replays, the bulk
-Boolean certificate theorem uses `native_decide`; `#print axioms` exposes the
-native-evaluation dependency, which remains part of the stated trust boundary.
+This closes the 760-orbit replay in Lean. The 378-to-23 and 23-to-4 radial-type
+pruning steps are now replayed by `CirclePacking.FifteenStages34` and
+`CirclePacking.FifteenStage4`; their Boolean certificate checks use
+`native_decide`, so their native-evaluation dependency remains part of the
+trust boundary.
 
 `CirclePacking/FifteenCertificate.lean` reads the exact JSON subdivision tree
 and `problems/packing-15-equal-disks-in-a-circle/candidate_bundle/full_residuals.txt`
@@ -178,8 +178,10 @@ edge's corner cosine cap and verifies that its recorded tick is safe under an
 exact rational degree-18 Taylor lower bound. It checks 30,032 cycle leaves,
 31 local leaves, and all nine branches for the three 6+9 residual
 assignments. The upstream 760-orbit enumeration is independently replayed by
-`CirclePacking/FifteenStageZero.lean`; the finer 378-to-23-to-4 radial-type
-filters remain to be replayed in Lean.
+`CirclePacking/FifteenStageZero.lean`. The finer radial-type filters are
+replayed in `CirclePacking/FifteenStages34.lean` and
+`CirclePacking/FifteenStage4.lean`; deriving every pruning predicate from the
+geometric packing hypotheses remains a separate soundness task.
 
 `CirclePacking/FifteenTickSoundness.lean` proves that the degree-18 Taylor
 polynomial minus its `x^19 / 18!` remainder is below `cos x` for every
@@ -243,9 +245,24 @@ chain cannot have negative total weight. The theorem matches the certificate's
 `O`, `L`, and `U` edge conventions to the 17,600-tick upper bound for a full
 turn. The remaining connections include deriving the per-edge theorem's
 premises from each parsed JSON leaf and lifting the finite Boolean replay to a
-proposition about every geometric configuration. The 378-to-23-to-4 radial
-filters and final local obstruction also remain outside Lean; the formalized
-finite replays are not yet the full optimum proof.
+proposition about every geometric configuration. The final local obstruction
+and its connection to the packing geometry remain outside Lean; the finite
+replays alone are not the full optimum proof.
+
+The finite replays are collected in the dedicated target
+`CirclePacking.FifteenAllFiniteCertificates`. It combines Stage 0's orbit and
+coarse-angle checks, Stage 3 and Stage 4, the exact radial-subdivision tree,
+and the residual-pattern handoff. It remains opt-in so the default
+`CirclePacking` build does not pay for all 15-disk certificate evaluation.
+Build and audit it from this directory with:
+
+```sh
+lake build CirclePacking.FifteenAllFiniteCertificates
+lake env lean CirclePacking/FifteenTrustAudit.lean
+```
+
+The second command runs `#print axioms` on the combined theorem and reports the
+actual trust dependencies, including any native-evaluation axiom.
 
 Build the certificate replay with `lake build CirclePacking.FifteenCertificate`
 and the analytic tick lemmas with `lake build CirclePacking.FifteenTickSoundness`.
