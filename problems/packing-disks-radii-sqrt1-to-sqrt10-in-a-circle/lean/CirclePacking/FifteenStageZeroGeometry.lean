@@ -25,6 +25,15 @@ theorem fifteenStage0_smallRadialShell_population_bound
       fifteenPackingSortedRadius P i ≤ 5 / 3).card ≤ 4 :=
   fifteen_unit_packing_small_radius_count_le_four P hunit
 
+/-- The other Stage 0 assignment restriction follows from the radial-sum
+bound: at most one center can have radius below one. -/
+theorem fifteenStage0_subunitShell_population_bound
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1) :
+    (Finset.univ.filter fun i : Fin 15 =>
+      fifteenPackingSortedRadius P i < 1).card ≤ 1 :=
+  fifteen_unit_packing_subunit_sorted_count_le_one P hunit
+
 theorem fifteenStage0OuterTypeBox_bounds :
     ((fifteenStage0CoarseTypeBox (0 : Fin 4)).1 : ℝ) =
         (2385 : ℝ) / 1000 ∧

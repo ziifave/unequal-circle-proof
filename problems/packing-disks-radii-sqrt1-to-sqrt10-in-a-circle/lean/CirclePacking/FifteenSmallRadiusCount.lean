@@ -206,4 +206,36 @@ theorem fifteen_unit_packing_small_radius_count_le_four
       have hmem : i ∈ S := hTsub hi
       exact (Finset.mem_filter.mp hmem).2)
 
+theorem fifteen_unit_packing_subunit_sorted_count_le_one
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1) :
+    (Finset.univ.filter fun i : Fin 15 =>
+      fifteenPackingSortedRadius P i < 1).card ≤ 1 := by
+  classical
+  let S := Finset.univ.filter fun i : Fin 15 =>
+    fifteenPackingSortedRadius P i < 1
+  change S.card ≤ 1
+  by_contra hnot
+  have hcard : 2 ≤ S.card := by omega
+  obtain ⟨T, hTsub, hTcard⟩ := Finset.exists_subset_card_eq hcard
+  let order : Fin 2 ↪o Fin 15 := T.orderEmbOfFin hTcard
+  have hmem (k : Fin 2) : order k ∈ T := by
+    simpa [order] using T.orderEmbOfFin_mem hTcard k
+  have hsmall (k : Fin 2) : fifteenPackingSortedRadius P (order k) < 1 := by
+    have hmemS : order k ∈ S := hTsub (hmem k)
+    exact (Finset.mem_filter.mp hmemS).2
+  have hlt : order (0 : Fin 2) < order (1 : Fin 2) :=
+    order.strictMono (by decide)
+  have hindexNe : fifteenPackingSortedIndex P (order 0) ≠
+      fifteenPackingSortedIndex P (order 1) := by
+    intro heq
+    have hinj := fifteenPackingAngleOrder_injective (fifteenPackingPolarAngle P)
+    exact (ne_of_lt hlt) (hinj heq)
+  have hsmallOriginal (k : Fin 2) :
+      fifteenCenterRadius P (fifteenPackingSortedIndex P (order k)) < 1 := by
+    simpa [fifteenPackingSortedRadius] using hsmall k
+  have hsame := fifteen_unit_packing_subunit_centers_unique P hunit
+    (hsmallOriginal 0) (hsmallOriginal 1)
+  exact hindexNe hsame
+
 end CirclePacking
