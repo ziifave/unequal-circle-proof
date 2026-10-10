@@ -1,4 +1,5 @@
 import CirclePacking.FifteenPackingPolarCoordinates
+import CirclePacking.FifteenPackingSortedGeometry
 import CirclePacking.FifteenCandidateDetourCurvature
 
 /-! The wall-replacement step for outer centers.  The main inequality is
@@ -356,5 +357,45 @@ theorem fifteen_unit_packing_wall_push_preserves_unit_radii
     (hR : R ≤ fifteenCandidateOuterRadius + 1) (i : Fin 15) :
     ((fifteen_unit_packing_wall_push P hunit hR).circles i).radius = 1 := by
   simp [fifteen_unit_packing_wall_push, hunit i]
+
+/-- In angular order, the wall-pushed packing supplies the two radial classes
+used by the finite reduction: wall radius `b`, or strictly below `L`. -/
+theorem fifteen_unit_packing_wall_push_sorted_radial_classification
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) (k : Fin 15) :
+    fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) k =
+        fifteenCandidateOuterRadius ∨
+      fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) k <
+        fifteenCandidateInnerThreshold := by
+  have hclass := fifteen_wall_pushed_center_radial_classification P
+    (fifteenPackingSortedIndex (fifteen_unit_packing_wall_push P hunit hR) k)
+  simpa [fifteenPackingSortedRadius, fifteenCenterRadius,
+    fifteen_unit_packing_wall_push] using hclass
+
+/-- The same ordered packing retains the pairwise separation hypothesis
+required by the certificate soundness lemmas. -/
+theorem fifteen_unit_packing_wall_push_sorted_pair_separated
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1)
+    {i j : Fin 15} (hij : i ≠ j) :
+    4 ≤ pointNorm
+      ((polarPoint
+          (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) i)
+          (fifteenPackingSortedAngle (fifteen_unit_packing_wall_push P hunit hR) i)).1 -
+          (polarPoint
+          (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) j)
+          (fifteenPackingSortedAngle (fifteen_unit_packing_wall_push P hunit hR) j)).1,
+       (polarPoint
+          (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) i)
+          (fifteenPackingSortedAngle (fifteen_unit_packing_wall_push P hunit hR) i)).2 -
+          (polarPoint
+          (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) j)
+          (fifteenPackingSortedAngle (fifteen_unit_packing_wall_push P hunit hR) j)).2) ^ 2 := by
+  exact fifteen_unit_packing_sorted_pair_separated
+    (fifteen_unit_packing_wall_push P hunit hR)
+    (fifteen_unit_packing_wall_push_preserves_unit_radii P hunit hR)
+    hij
 
 end CirclePacking
