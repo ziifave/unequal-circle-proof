@@ -398,4 +398,47 @@ theorem fifteen_unit_packing_wall_push_sorted_pair_separated
     (fifteen_unit_packing_wall_push_preserves_unit_radii P hunit hR)
     hij
 
+/-- Encode the angularly sorted inner/outer classification in the same
+`0`/`1` convention consumed by the finite pattern checker (`1` means inner). -/
+noncomputable def fifteen_unit_packing_wall_push_sorted_pattern
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) : String :=
+  String.ofList (List.ofFn fun k : Fin 15 =>
+    if fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) k <
+        fifteenCandidateInnerThreshold then '1' else '0')
+
+theorem fifteen_unit_packing_wall_push_sorted_pattern_length
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    (fifteen_unit_packing_wall_push_sorted_pattern P hunit hR).length = 15 := by
+  simp [fifteen_unit_packing_wall_push_sorted_pattern]
+
+theorem fifteen_unit_packing_wall_push_sorted_pattern_bit
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) (k : Fin 15) :
+    (fifteen_unit_packing_wall_push_sorted_pattern P hunit hR).toList[k.1]? =
+      some (if fifteenPackingSortedRadius
+          (fifteen_unit_packing_wall_push P hunit hR) k <
+          fifteenCandidateInnerThreshold then '1' else '0') := by
+  rw [fifteen_unit_packing_wall_push_sorted_pattern, String.toList_ofList]
+  rw [List.getElem?_ofFn]
+  simp
+
+theorem fifteen_unit_packing_wall_push_sorted_pattern_is_binary
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    (fifteen_unit_packing_wall_push_sorted_pattern P hunit hR).toList.all
+      (fun c => c == '0' || c == '1') = true := by
+  unfold fifteen_unit_packing_wall_push_sorted_pattern
+  rw [String.toList_ofList, List.all_eq_true, List.forall_mem_ofFn_iff]
+  intro k
+  by_cases h : fifteenPackingSortedRadius
+      (fifteen_unit_packing_wall_push P hunit hR) k < fifteenCandidateInnerThreshold
+  · simp [h]
+  · simp [h]
+
 end CirclePacking
