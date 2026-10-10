@@ -44,6 +44,7 @@ import CirclePacking.FifteenCandidateDetour
 import CirclePacking.FifteenCandidateLocalBarrier
 import CirclePacking.FifteenCandidateBounds
 import CirclePacking.FifteenCandidateBoxLocalBarrier
+import CirclePacking.FifteenLocalAngleGeometry
 
 /-!
 # Formal algebraic core for unequal-circle packing
