@@ -24,7 +24,7 @@ weights directly with exact finite arithmetic.
 namespace CirclePacking
 
 private def stage0N : Nat := 15
-private def stage0TwoPiUpper : Nat := 17600
+def fifteenStage0TwoPiUpper : Nat := 17600
 
 def fifteenStage0CoarseQ (i j : Nat) : Nat :=
   if i == 0 then
@@ -178,11 +178,13 @@ private def stage0DecodeVertex (c : Char) : Option Nat :=
   else if 'A' ≤ c && c ≤ 'E' then some (10 + c.toNat - 65)
   else none
 
-private structure Stage0Edge where
+structure FifteenStage0CycleStep where
   source : Nat
   target : Nat
   kind : Nat
   deriving DecidableEq, BEq, Repr
+
+private abbrev Stage0Edge := FifteenStage0CycleStep
 
 private def stage0ParseEdges : List Char → Option (List Stage0Edge)
   | [] => some []
@@ -262,12 +264,13 @@ private def stage0Labels (pattern assignment : String) : Array Nat := Id.run do
     labels := labels.set! position digit
   return labels
 
-private def stage0EdgeWeight (labels : Array Nat) (edge : Stage0Edge) : Int :=
+def fifteenStage0EdgeWeight
+    (labels : Array Nat) (edge : FifteenStage0CycleStep) : Int :=
   if edge.kind == 0 then 0
   else if edge.kind == 1 then
     -(Int.ofNat (fifteenStage0CoarseQ labels[edge.target]! labels[edge.source]!))
   else
-    Int.ofNat (stage0TwoPiUpper -
+    Int.ofNat (fifteenStage0TwoPiUpper -
       fifteenStage0CoarseQ labels[edge.source]! labels[edge.target]!)
 
 private def stage0EdgeShape (edge : Stage0Edge) : Bool :=
@@ -289,13 +292,24 @@ private def stage0CycleValid (pattern assignment : String)
   let some last := edges.getLast? | return false
   if last.target != first.source then return false
   let labels := stage0Labels pattern assignment
-  let weight := edges.foldl (fun sum edge => sum + stage0EdgeWeight labels edge) 0
+  let weight := edges.foldl
+    (fun sum edge => sum + fifteenStage0EdgeWeight labels edge) 0
   return weight < 0
 
 structure FifteenStage0GraphEdge where
   source : Nat
   target : Nat
   weight : Int
+  deriving DecidableEq, Repr
+
+/-- One finite negative-cycle witness from the Stage 0 certificate.  Each
+step stores its source, target, and kind (`0` for radial order, `1` for a
+lower pair bound, and `2` for an upper pair bound).  The weights are
+reconstructed from the pattern and assignment by Lean. -/
+structure FifteenStage0CycleWitness where
+  pattern : String
+  assignment : String
+  steps : List (Nat × Nat × Nat)
   deriving DecidableEq, Repr
 
 private def stage0GraphEdges (labels : Array Nat) : List FifteenStage0GraphEdge :=
@@ -305,8 +319,47 @@ private def stage0GraphEdges (labels : Array Nat) : List FifteenStage0GraphEdge 
       let j := i + offset + 1
       let q := fifteenStage0CoarseQ labels[i]! labels[j]!
       [⟨j, i, -(Int.ofNat q)⟩,
-       ⟨i, j, Int.ofNat (stage0TwoPiUpper - q)⟩]
+       ⟨i, j, Int.ofNat (fifteenStage0TwoPiUpper - q)⟩]
   orderEdges ++ pairEdges
+
+def fifteenStage0StepGraphEdge (labels : Array Nat)
+    (step : Nat × Nat × Nat) : FifteenStage0GraphEdge :=
+  let edge : Stage0Edge := ⟨step.1, step.2.1, step.2.2⟩
+  ⟨edge.source, edge.target, fifteenStage0EdgeWeight labels edge⟩
+
+/-- Reconstruct the graph edge represented by one encoded certificate step. -/
+def fifteenStage0CycleWitnessStepEdge
+    (witness : FifteenStage0CycleWitness)
+    (step : Nat × Nat × Nat) : FifteenStage0GraphEdge :=
+  fifteenStage0StepGraphEdge
+    (stage0Labels witness.pattern witness.assignment) step
+
+/-- Reconstruct the weighted graph walk encoded by a Stage 0 witness. -/
+def fifteenStage0CycleWitnessEdges
+    (witness : FifteenStage0CycleWitness) : List FifteenStage0GraphEdge :=
+  witness.steps.map (fifteenStage0CycleWitnessStepEdge witness)
+
+private def stage0CycleWitnesses? : Option (List FifteenStage0CycleWitness) := do
+  let cycles ← stage0Cycles?
+  let orbits ← stage0Orbits?
+  let groups ← orbits.mapM fun orbit =>
+    if orbit.excluded then
+      orbit.cases.mapM fun (assignment, cycleId) => do
+        let edges ← cycles[cycleId]?
+        pure {
+          pattern := orbit.pattern
+          assignment := assignment
+          steps := edges.map fun edge =>
+            (edge.source, edge.target, edge.kind)
+        }
+    else
+      pure []
+  pure groups.flatten
+
+/-- The assignment-specific Stage 0 negative-cycle witnesses decoded from the
+checked source bundle.  They reference the 10,832 shared cycle encodings. -/
+def fifteenStage0NegativeCycleWitnesses : List FifteenStage0CycleWitness :=
+  (stage0CycleWitnesses?).getD []
 
 private def stage0PotentialValid (pattern witness : String)
     (potential : List Nat) : Bool := Id.run do
@@ -334,7 +387,7 @@ private def stage0OrbitValid (cycles : Array (List Stage0Edge))
     if !orbit.cases.isEmpty then return false
     return stage0PotentialValid orbit.pattern orbit.witness orbit.potential
 
-private def stage0CertificateReplay : Bool := Id.run do
+private def stage0OrbitCertificateReplay : Bool := Id.run do
   let some cycles := stage0Cycles? | return false
   let some orbits := stage0Orbits? | return false
   if cycles.size != 10832 || orbits.length != 760 then return false
@@ -349,18 +402,136 @@ private def stage0CertificateReplay : Bool := Id.run do
     (orbits.filter fun orbit => (stage0InnerPositions orbit.pattern).length == k).length
   return counts == [111, 185, 232, 232]
 
+def FifteenStage0GraphChain (start : Nat) :
+    List FifteenStage0GraphEdge → Nat → Prop
+  | [], finish => finish = start
+  | edge :: rest, finish =>
+      edge.source = start ∧ FifteenStage0GraphChain edge.target rest finish
+
+def FifteenStage0CycleStepWellFormed (step : Nat × Nat × Nat) : Prop :=
+  step.1 < 15 ∧ step.2.1 < 15 ∧
+    ((step.2.2 = 0 ∧ step.1 = step.2.1 + 1 ∧ step.2.1 < 14) ∨
+      (step.2.2 = 1 ∧ step.1 > step.2.1) ∨
+      (step.2.2 = 2 ∧ step.1 < step.2.1))
+
+private def stage0CycleStepCheck (step : Nat × Nat × Nat) : Bool :=
+  decide (step.1 < 15 ∧ step.2.1 < 15 ∧
+    ((step.2.2 = 0 ∧ step.1 = step.2.1 + 1 ∧ step.2.1 < 14) ∨
+      (step.2.2 = 1 ∧ step.1 > step.2.1) ∨
+      (step.2.2 = 2 ∧ step.1 < step.2.1)))
+
+private theorem stage0CycleStepCheck_sound
+    (step : Nat × Nat × Nat)
+    (hcheck : stage0CycleStepCheck step = true) :
+    FifteenStage0CycleStepWellFormed step := by
+  change (step.1 < 15 ∧ step.2.1 < 15 ∧
+    ((step.2.2 = 0 ∧ step.1 = step.2.1 + 1 ∧ step.2.1 < 14) ∨
+      (step.2.2 = 1 ∧ step.1 > step.2.1) ∨
+      (step.2.2 = 2 ∧ step.1 < step.2.1)))
+  exact of_decide_eq_true hcheck
+
+private def stage0CycleWitnessStepsCheck
+    (witness : FifteenStage0CycleWitness) : Bool :=
+  witness.steps.all stage0CycleStepCheck
+
+private def stage0CycleWitnessLabelsCheck
+    (witness : FifteenStage0CycleWitness) : Bool :=
+  let labels := stage0Labels witness.pattern witness.assignment
+  decide (∀ i : Fin 15, labels[i.1]! < 4)
+
+/-- The finite radial-type label attached to a sorted center by a Stage 0
+pattern/assignment.  The modulo makes this a total `Fin 4`-valued function;
+certificate soundness separately proves that the unwrapped label is below 4. -/
+def fifteenStage0CycleWitnessLabel
+    (witness : FifteenStage0CycleWitness) (i : Fin 15) : Nat :=
+  (stage0Labels witness.pattern witness.assignment)[i.1]!
+
+private def stage0CycleWitnessShapeCheck
+    (witness : FifteenStage0CycleWitness) : Bool :=
+  stage0CycleWitnessStepsCheck witness &&
+    stage0CycleWitnessLabelsCheck witness
+
+def FifteenStage0CycleWitnessShapeCertified
+    (witness : FifteenStage0CycleWitness) : Prop :=
+  (∀ step ∈ witness.steps, FifteenStage0CycleStepWellFormed step) ∧
+    (∀ i : Fin 15, fifteenStage0CycleWitnessLabel witness i < 4)
+
+private theorem stage0CycleWitnessShapeCheck_sound
+    (witness : FifteenStage0CycleWitness)
+    (hcheck : stage0CycleWitnessShapeCheck witness = true) :
+    FifteenStage0CycleWitnessShapeCertified witness := by
+  simp only [stage0CycleWitnessShapeCheck, Bool.and_eq_true] at hcheck
+  constructor
+  · intro step hstep
+    have hs := (List.all_eq_true.mp hcheck.1) step hstep
+    exact stage0CycleStepCheck_sound step hs
+  · intro i
+    have hlabels := of_decide_eq_true hcheck.2
+    simpa [fifteenStage0CycleWitnessLabel] using hlabels i
+
+def fifteenStage0CycleWitnessTypeIndex
+    (witness : FifteenStage0CycleWitness) (i : Fin 15) : Fin 4 :=
+  let label := fifteenStage0CycleWitnessLabel witness i
+  ⟨label % 4, Nat.mod_lt label (by omega)⟩
+
+def FifteenStage0GraphChainCheck (start : Nat) :
+    List FifteenStage0GraphEdge → Nat → Bool
+  | [], finish => decide (finish = start)
+  | edge :: rest, finish =>
+      decide (edge.source = start) &&
+        FifteenStage0GraphChainCheck edge.target rest finish
+
+theorem fifteenStage0GraphChainCheck_correct (start finish : Nat)
+    (edges : List FifteenStage0GraphEdge) :
+    FifteenStage0GraphChainCheck start edges finish = true ↔
+      FifteenStage0GraphChain start edges finish := by
+  induction edges generalizing start finish with
+  | nil => simp [FifteenStage0GraphChainCheck, FifteenStage0GraphChain]
+  | cons edge rest ih =>
+      simp [FifteenStage0GraphChainCheck, FifteenStage0GraphChain, ih]
+
+def fifteenStage0CycleWitnessCheck
+    (witness : FifteenStage0CycleWitness) : Bool :=
+  let edges := fifteenStage0CycleWitnessEdges witness
+  let start := (edges.headD ⟨0, 0, 0⟩).source
+  decide (edges ≠ []) &&
+    FifteenStage0GraphChainCheck start edges start &&
+    decide ((edges.map fun edge => edge.weight).sum < 0)
+
+def FifteenStage0NegativeCycleWitnessCertified
+    (witness : FifteenStage0CycleWitness) : Prop :=
+  fifteenStage0CycleWitnessCheck witness = true
+
+theorem fifteenStage0CycleWitnessCheck_sound
+    (witness : FifteenStage0CycleWitness)
+    (hcheck : fifteenStage0CycleWitnessCheck witness = true) :
+    let edges := fifteenStage0CycleWitnessEdges witness
+    let start := (edges.headD ⟨0, 0, 0⟩).source
+    edges ≠ [] ∧ FifteenStage0GraphChain start edges start ∧
+      (edges.map fun edge => edge.weight).sum < 0 := by
+  simp only [fifteenStage0CycleWitnessCheck, Bool.and_eq_true] at hcheck
+  constructor
+  · exact of_decide_eq_true hcheck.1.1
+  constructor
+  · exact (fifteenStage0GraphChainCheck_correct _ _ _).mp hcheck.1.2
+  · exact of_decide_eq_true hcheck.2
+
+private def stage0CycleWitnessCertificateReplay : Bool :=
+  fifteenStage0NegativeCycleWitnesses.all fifteenStage0CycleWitnessCheck
+
+private def stage0CycleWitnessShapeReplay : Bool :=
+  fifteenStage0NegativeCycleWitnesses.all stage0CycleWitnessShapeCheck
+
+private def stage0CertificateReplay : Bool :=
+  stage0OrbitCertificateReplay &&
+    (stage0CycleWitnessCertificateReplay && stage0CycleWitnessShapeReplay)
+
 def fifteenStage0CertificateReplay : Bool := stage0CertificateReplay
 
 def fifteenStage0OrbitCountByWeight : List Nat :=
   [5, 6, 7, 8].map fun k =>
     (fifteenStage0OrbitWords.filter fun word =>
       (stage0InnerPositions word).length == k).length
-
-def FifteenStage0GraphChain (start : Nat) :
-    List FifteenStage0GraphEdge → Nat → Prop
-  | [], finish => finish = start
-  | edge :: rest, finish =>
-      edge.source = start ∧ FifteenStage0GraphChain edge.target rest finish
 
 private def stage0PotentialDifference (potential : Nat → Int)
     (edge : FifteenStage0GraphEdge) : Int :=
@@ -481,6 +652,63 @@ set_option maxHeartbeats 0
 
 theorem fifteenStage0Certificate_replays : fifteenStage0CertificateReplay = true := by
   native_decide
+
+/-- Every excluded assignment in the Stage 0 table has an explicit, Lean-
+reconstructed negative closed walk; this is the Prop-level interface consumed
+by the geometric soundness theorem in `FifteenStageZeroGeometry`. -/
+theorem fifteenStage0NegativeCycleWitnesses_certified :
+    ∀ witness ∈ fifteenStage0NegativeCycleWitnesses,
+      FifteenStage0NegativeCycleWitnessCertified witness := by
+  have h := fifteenStage0Certificate_replays
+  unfold fifteenStage0CertificateReplay stage0CertificateReplay
+    stage0CycleWitnessCertificateReplay at h
+  simp only [Bool.and_eq_true] at h
+  intro witness hw
+  have hcheck := (List.all_eq_true.mp h.2.1) witness hw
+  simpa [FifteenStage0NegativeCycleWitnessCertified] using hcheck
+
+theorem fifteenStage0NegativeCycleWitnesses_shape_certified :
+    ∀ witness ∈ fifteenStage0NegativeCycleWitnesses,
+      FifteenStage0CycleWitnessShapeCertified witness := by
+  have h := fifteenStage0Certificate_replays
+  unfold fifteenStage0CertificateReplay stage0CertificateReplay at h
+  simp only [Bool.and_eq_true] at h
+  intro witness hw
+  have hcheck := (List.all_eq_true.mp h.2.2) witness hw
+  exact stage0CycleWitnessShapeCheck_sound witness hcheck
+
+/-- A checked Stage 0 negative cycle rules out every real angle potential
+satisfying its reconstructed difference constraints. -/
+theorem fifteenStage0NegativeCycleWitness_no_real_potential
+    (witness : FifteenStage0CycleWitness)
+    (hwitness : witness ∈ fifteenStage0NegativeCycleWitnesses)
+    (potential : Nat → ℝ)
+    (hpotential : ∀ edge ∈ fifteenStage0CycleWitnessEdges witness,
+      potential edge.target ≤ potential edge.source + (edge.weight : ℝ)) :
+    False := by
+  have hcert := fifteenStage0NegativeCycleWitnesses_certified witness hwitness
+  rcases fifteenStage0CycleWitnessCheck_sound witness hcert with
+    ⟨_hne, hchain, hnegative⟩
+  have hnegativeReal :
+      ((fifteenStage0CycleWitnessEdges witness).map
+        (fun edge => (edge.weight : ℝ))).sum < 0 := by
+    let edges := fifteenStage0CycleWitnessEdges witness
+    have hnegativeInt :
+        (edges.map fun edge => edge.weight).sum < 0 := by
+      simpa [edges] using hnegative
+    have hcast :
+        (edges.map fun edge => (edge.weight : ℝ)).sum =
+          (((edges.map fun edge => edge.weight).sum : Int) : ℝ) := by
+      induction edges with
+      | nil => simp
+      | cons edge rest ih => simp [ih]
+    calc
+      (edges.map fun edge => (edge.weight : ℝ)).sum =
+          (((edges.map fun edge => edge.weight).sum : Int) : ℝ) := hcast
+      _ < 0 := by exact_mod_cast hnegativeInt
+  exact fifteenStage0GraphChain_real_potential_excludes potential
+    ((fifteenStage0CycleWitnessEdges witness).headD ⟨0, 0, 0⟩).source
+    (fifteenStage0CycleWitnessEdges witness) hchain hnegativeReal hpotential
 
 theorem fifteenStage0CoarseAngleTable_replays :
     fifteenStage0CoarseAngleTableReplay = true := by

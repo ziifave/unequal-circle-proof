@@ -250,6 +250,160 @@ theorem fifteenStage0Packing_pair_difference_bounds
     P hunit typeI typeJ i j hij hri hrj
   constructor <;> nlinarith [hgap.1, hgap.2]
 
+/-- Pairwise Stage 0 difference constraints can be stated directly using the
+raw labels stored in a finite-cycle witness.  The label-range hypothesis
+ensures that the total `Fin 4` conversion used by the geometric angle table
+agrees with the witness's unwrapped labels. -/
+theorem fifteenStage0Packing_witness_pair_difference_bounds
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (witness : FifteenStage0CycleWitness)
+    (hlabels : ∀ i : Fin 15,
+      fifteenStage0CycleWitnessLabel witness i < 4)
+    (hboxes : ∀ i : Fin 15,
+      ((fifteenStage0CoarseTypeBox
+        (fifteenStage0CycleWitnessTypeIndex witness i)).1 : ℝ) ≤
+          fifteenPackingSortedRadius P i ∧
+      fifteenPackingSortedRadius P i ≤
+        ((fifteenStage0CoarseTypeBox
+          (fifteenStage0CycleWitnessTypeIndex witness i)).2 : ℝ))
+    (i j : Fin 15) (hij : i.1 < j.1) :
+    2800 * (fifteenPackingSortedAngle P i -
+        fifteenPackingSortedAngle P j) ≤
+        - (fifteenStage0CoarseQ
+          (fifteenStage0CycleWitnessLabel witness i)
+          (fifteenStage0CycleWitnessLabel witness j) : ℝ) ∧
+      2800 * (fifteenPackingSortedAngle P j -
+        fifteenPackingSortedAngle P i) ≤
+        17600 - (fifteenStage0CoarseQ
+          (fifteenStage0CycleWitnessLabel witness i)
+          (fifteenStage0CycleWitnessLabel witness j) : ℝ) := by
+  let typeI := fifteenStage0CycleWitnessTypeIndex witness i
+  let typeJ := fifteenStage0CycleWitnessTypeIndex witness j
+  have htypeI : typeI.1 = fifteenStage0CycleWitnessLabel witness i := by
+    simp [typeI, fifteenStage0CycleWitnessTypeIndex,
+      Nat.mod_eq_of_lt (hlabels i)]
+  have htypeJ : typeJ.1 = fifteenStage0CycleWitnessLabel witness j := by
+    simp [typeJ, fifteenStage0CycleWitnessTypeIndex,
+      Nat.mod_eq_of_lt (hlabels j)]
+  have hpair := fifteenStage0Packing_pair_difference_bounds P hunit
+    typeI typeJ i j hij (hboxes i) (hboxes j)
+  have hq : fifteenStage0CoarseAngleTick typeI typeJ =
+      fifteenStage0CoarseQ
+        (fifteenStage0CycleWitnessLabel witness i)
+        (fifteenStage0CycleWitnessLabel witness j) := by
+    simp only [fifteenStage0CoarseAngleTick]
+    rw [htypeI, htypeJ]
+  rw [hq] at hpair
+  exact hpair
+
+/-- No unit-disk packing can realize a Stage 0 cycle witness when every
+sorted radius lies in the box named by that witness's radial labels.  The
+proof sends the actual sorted angles through the certified difference graph. -/
+theorem fifteenStage0Packing_excludes_cycle_witness
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (witness : FifteenStage0CycleWitness)
+    (hwitness : witness ∈ fifteenStage0NegativeCycleWitnesses)
+    (hboxes : ∀ i : Fin 15,
+      ((fifteenStage0CoarseTypeBox
+        (fifteenStage0CycleWitnessTypeIndex witness i)).1 : ℝ) ≤
+          fifteenPackingSortedRadius P i ∧
+      fifteenPackingSortedRadius P i ≤
+        ((fifteenStage0CoarseTypeBox
+          (fifteenStage0CycleWitnessTypeIndex witness i)).2 : ℝ)) :
+    False := by
+  have hshape := fifteenStage0NegativeCycleWitnesses_shape_certified
+    witness hwitness
+  let potential : Nat → ℝ := fun n =>
+    2800 * fifteenPackingSortedAngle P
+      ⟨n % 15, Nat.mod_lt n (by omega)⟩
+  apply fifteenStage0NegativeCycleWitness_no_real_potential
+    witness hwitness potential
+  intro edge hedge
+  have hmem : edge ∈ witness.steps.map
+      (fifteenStage0CycleWitnessStepEdge witness) := by
+    simpa [fifteenStage0CycleWitnessEdges] using hedge
+  obtain ⟨step, hstep, hstepEdge⟩ := List.mem_map.mp hmem
+  subst edge
+  have hstepShape := hshape.1 step hstep
+  rcases hstepShape with ⟨hsourceLt, htargetLt, hkind⟩
+  let source : Fin 15 := ⟨step.1, hsourceLt⟩
+  let target : Fin 15 := ⟨step.2.1, htargetLt⟩
+  have hpotentialSource : potential step.1 =
+      2800 * fifteenPackingSortedAngle P source := by
+    simp [potential, source, Nat.mod_eq_of_lt hsourceLt]
+  have hpotentialTarget : potential step.2.1 =
+      2800 * fifteenPackingSortedAngle P target := by
+    simp [potential, target, Nat.mod_eq_of_lt htargetLt]
+  change potential step.2.1 ≤ potential step.1 +
+    ((fifteenStage0CycleWitnessStepEdge witness step).weight : ℝ)
+  rcases hkind with ⟨horder, hsuccessor, _⟩ |
+      ⟨hlower, hdescending⟩ | ⟨hupper, hascending⟩
+  · have hangle := fifteenPackingSortedAngle_monotone P (by
+      change target.1 < source.1
+      dsimp [target, source]
+      omega)
+    have hweight :
+        (fifteenStage0CycleWitnessStepEdge witness step).weight = 0 := by
+      simp [fifteenStage0CycleWitnessStepEdge,
+        fifteenStage0StepGraphEdge, fifteenStage0EdgeWeight,
+        fifteenStage0CycleWitnessLabel, horder]
+    rw [hpotentialTarget, hpotentialSource, hweight]
+    have hscaled := mul_le_mul_of_nonneg_left hangle
+      (by norm_num : (0 : ℝ) ≤ 2800)
+    simpa using hscaled
+  · have hpair := fifteenStage0Packing_witness_pair_difference_bounds
+      P hunit witness hshape.2 hboxes target source (by
+        change target.1 < source.1
+        dsimp [target, source]
+        omega)
+    have hweight :
+        (fifteenStage0CycleWitnessStepEdge witness step).weight =
+          -(Int.ofNat (fifteenStage0CoarseQ
+            (fifteenStage0CycleWitnessLabel witness target)
+            (fifteenStage0CycleWitnessLabel witness source))) := by
+      simp [fifteenStage0CycleWitnessStepEdge,
+        fifteenStage0StepGraphEdge, fifteenStage0EdgeWeight,
+        fifteenStage0CycleWitnessLabel, source, target, hlower]
+    have hweightReal :
+        ((fifteenStage0CycleWitnessStepEdge witness step).weight : ℝ) =
+          -(fifteenStage0CoarseQ
+            (fifteenStage0CycleWitnessLabel witness target)
+            (fifteenStage0CycleWitnessLabel witness source) : ℝ) := by
+      rw [hweight]
+      simp
+    rw [hpotentialTarget, hpotentialSource, hweightReal]
+    nlinarith [hpair.1]
+  · have hpair := fifteenStage0Packing_witness_pair_difference_bounds
+      P hunit witness hshape.2 hboxes source target (by
+        change source.1 < target.1
+        dsimp [target, source]
+        omega)
+    let q := fifteenStage0CoarseQ
+      (fifteenStage0CycleWitnessLabel witness source)
+      (fifteenStage0CycleWitnessLabel witness target)
+    have hqle : q ≤ 17600 := by
+      dsimp [q, fifteenStage0CoarseQ]
+      split_ifs <;> omega
+    have hweight :
+        (fifteenStage0CycleWitnessStepEdge witness step).weight =
+          Int.ofNat (17600 - q) := by
+      simp [fifteenStage0CycleWitnessStepEdge,
+        fifteenStage0StepGraphEdge, fifteenStage0EdgeWeight,
+        fifteenStage0CycleWitnessLabel, fifteenStage0TwoPiUpper,
+        source, target, hupper, q]
+    have hcastSub : ((17600 - q : ℕ) : ℝ) =
+        (17600 : ℝ) - q := by
+      exact Nat.cast_sub hqle
+    have hweightReal :
+        ((fifteenStage0CycleWitnessStepEdge witness step).weight : ℝ) =
+          (17600 : ℝ) - q := by
+      rw [hweight]
+      exact hcastSub
+    rw [hpotentialTarget, hpotentialSource, hweightReal]
+    linarith [hpair.2]
+
 theorem fifteenStage0ZeroTick_gives_polar_edge_bound
     (edge : FifteenAngularEdge) (theta : Fin 15 → ℝ) (tauUpper : ℝ)
     (hzero : edge.lower = 0) (hneq : edge.src ≠ edge.dst)

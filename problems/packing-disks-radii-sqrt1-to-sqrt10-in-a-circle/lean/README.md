@@ -142,6 +142,13 @@ subdivision layer.
 `CirclePacking/FifteenStageZeroGeometry.lean` turns each positive coarse-table
 entry into a touch-angle lower bound for every radius pair in the corresponding
 radial rectangles, using the general corner and Taylor soundness theorems.
+It also reconstructs the 10,832 shared cycle encodings as public Lean
+witnesses for all 169,419 excluded-assignment cases. The replay exposes each
+witness's closed negative walk and radial labels as propositions;
+`fifteenStage0Packing_excludes_cycle_witness` then proves that no unit-disk
+packing can realize any such witness when its sorted radii occupy the recorded
+boxes. This connects the checked Stage 0 cycle weights to actual packing
+angles, including order, lower-contact, and upper-contact edges.
 `CirclePacking/FifteenStageZeroInnerCount.lean` now proves the missing upper
 endpoint for the geometric handoff: after wall replacement, there are at most
 eight centers below the inner threshold. The proof bounds the pairwise contact
@@ -262,15 +269,17 @@ in `[42/25, 43/25]` is impossible below the candidate radius. It derives each
 outer radius from the wall-push radial classification, and the resulting
 local theorem depends only on Lean's standard logical axioms.
 
-The full optimum theorem is not yet closed. The missing bridge is still to
-derive the radial pattern and certified local box for every geometric packing
-from the Stage 0/3/4 and subdivision certificate data, including the other
-residual roots and the special six-inner case. The finite Boolean replays
-alone do not establish that every packing reaches the hypotheses of the local
-obstruction. For Stage 0 in particular, the encoded cycle witnesses still need
-to be exposed as propositions and matched to the packing's actual pattern and
-radial-type assignment; Stage 3/4 and the exact subdivision tree need the same
-certificate-to-geometry connection.
+The full optimum theorem is not yet closed. The remaining bridge is to derive,
+for every geometric packing, the radial pattern and type assignment covered
+by the Stage 0/3/4 certificates and the exact subdivision tree, including the
+residual roots and the special six-inner case. Stage 0 now has a geometric
+soundness theorem for each decoded negative-cycle witness; the unresolved
+part is proving that every arbitrary wall-pushed packing either has one of
+those excluded assignments or lies in a certified survivor class. Stage 3/4
+and the exact subdivision tree still need their per-certificate geometric
+edge/leaf soundness connected to the full packing classification. The finite
+Boolean replays alone do not establish that every packing reaches the local
+obstruction's hypotheses.
 
 The finite replays are collected in the dedicated target
 `CirclePacking.FifteenAllFiniteCertificates`. It combines Stage 0's orbit and
