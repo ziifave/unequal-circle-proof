@@ -184,4 +184,38 @@ theorem fifteen_unit_packing_wall_push_stage0_profile
   · intro i
     simpa [Q] using hbox i
 
+/-- The angle-sorted inner/outer word of every candidate-radius wall-pushed
+packing belongs to one of the 760 canonical Stage 0 dihedral classes. -/
+theorem fifteen_unit_packing_wall_push_stage0_canonical_pattern
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    fifteenStage0CanonicalProfileWord
+      (fun i : Fin 15 => decide
+        (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) i <
+          fifteenCandidateInnerThreshold)) ∈ fifteenStage0OrbitWords := by
+  classical
+  let Q := fifteen_unit_packing_wall_push P hunit hR
+  let profile : Fin 15 → Bool := fun i => decide
+    (fifteenPackingSortedRadius Q i < fifteenCandidateInnerThreshold)
+  change fifteenStage0CanonicalProfileWord profile ∈ fifteenStage0OrbitWords
+  apply fifteenStage0ProfileCanonicalWord_mem_orbitWords_of_card profile
+  let inner : Finset (Fin 15) := Finset.univ.filter fun i =>
+    fifteenPackingSortedRadius Q i < fifteenCandidateInnerThreshold
+  have hprofileSet :
+      Finset.univ.filter (fun i : Fin 15 => profile i = true) = inner := by
+    ext i
+    simp [profile, inner]
+  have hlow : 5 ≤ inner.card := by
+    simpa [Q, inner] using
+      fifteen_unit_packing_wall_push_inner_count_ge_five P hunit hR
+  have hhigh : inner.card ≤ 8 := by
+    simpa [Q, inner] using
+      fifteen_unit_packing_wall_push_inner_count_le_eight P hunit hR
+  constructor
+  · rw [hprofileSet]
+    exact hlow
+  · rw [hprofileSet]
+    exact hhigh
+
 end CirclePacking

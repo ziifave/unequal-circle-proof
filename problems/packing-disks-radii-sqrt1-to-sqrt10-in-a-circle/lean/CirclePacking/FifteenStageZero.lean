@@ -1,5 +1,9 @@
 import Lean
 import Mathlib.Basic.Real.Basic
+import Mathlib.Data.Nat.Bits
+import Mathlib.Data.Finset.Card
+import Mathlib.Data.Finset.Range
+import Mathlib.Data.Fintype.Basic
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 import CirclePacking.FifteenTickBounds
@@ -113,6 +117,114 @@ private def stage0CanonicalMask (mask : Nat) : Nat := Id.run do
 private def stage0MaskWord (mask : Nat) : String :=
   String.ofList ((List.range stage0N).map fun i =>
     if Nat.testBit mask (14 - i) then '1' else '0')
+
+private def stage0ProfileBitAt (profile : Fin 15 → Bool) (i : Nat) : Bool :=
+  if h : i < 15 then profile ⟨i, h⟩ else false
+
+private def stage0ProfileMaskAux (profile : Fin 15 → Bool) : Nat → Nat
+  | 0 => 0
+  | n + 1 => Nat.bit (stage0ProfileBitAt profile n)
+      (stage0ProfileMaskAux profile n)
+
+private theorem stage0ProfileMaskAux_lt_pow (profile : Fin 15 → Bool) :
+    ∀ n, stage0ProfileMaskAux profile n < 2 ^ n := by
+  intro n
+  induction n with
+  | zero => simp [stage0ProfileMaskAux]
+  | succ n ih =>
+      rw [stage0ProfileMaskAux, Nat.bit_val]
+      have hb : (stage0ProfileBitAt profile n).toNat ≤ 1 := by
+        cases stage0ProfileBitAt profile n <;> simp
+      omega
+
+/-- Encode the ordered inner/outer profile as the same 15-bit convention used
+by the Stage 0 dihedral enumerator: position zero is the most significant bit. -/
+def fifteenStage0ProfileMask (profile : Fin 15 → Bool) : Nat :=
+  stage0ProfileMaskAux profile 15
+
+/-- The canonical binary word of an ordered inner/outer profile. -/
+def fifteenStage0CanonicalProfileWord (profile : Fin 15 → Bool) : String :=
+  stage0MaskWord (stage0CanonicalMask (fifteenStage0ProfileMask profile))
+
+private theorem stage0ProfileMaskAux_testBit (profile : Fin 15 → Bool) :
+    ∀ n k, k < n →
+      Nat.testBit (stage0ProfileMaskAux profile n) k =
+        stage0ProfileBitAt profile (n - 1 - k) := by
+  intro n
+  induction n with
+  | zero => intro k hk; omega
+  | succ n ih =>
+      intro k hk
+      by_cases hk0 : k = 0
+      · subst k
+        simp [stage0ProfileMaskAux, Nat.testBit_bit_zero]
+      · obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hk0
+        have hj : j < n := by omega
+        have h := ih j hj
+        rw [stage0ProfileMaskAux, Nat.testBit_bit_succ]
+        have hidx : n - 1 - j = n + 1 - 1 - j.succ := by omega
+        rw [← hidx]
+        exact h
+
+/-- Each bit in the packed mask is exactly the corresponding profile entry. -/
+theorem fifteenStage0ProfileMask_testBit
+    (profile : Fin 15 → Bool) (i : Fin 15) :
+    Nat.testBit (fifteenStage0ProfileMask profile) (14 - i.1) = profile i := by
+  have h := stage0ProfileMaskAux_testBit profile 15 (14 - i.1) (by omega)
+  change Nat.testBit (stage0ProfileMaskAux profile 15) (14 - i.1) = _
+  rw [show 15 - 1 - (14 - i.1) = i.1 by omega] at h
+  simpa [stage0ProfileBitAt, i.isLt] using h
+
+private theorem stage0_fold_count (p : Nat → Bool) :
+    ∀ (items : List Nat) (initial : Nat),
+      items.foldl (fun count i => if p i then count + 1 else count) initial =
+        initial + (items.filter p).length := by
+  intro items
+  induction items with
+  | nil => intro initial; simp
+  | cons item rest ih =>
+      intro initial
+      simp only [List.foldl_cons, List.filter_cons, List.length_cons]
+      rw [ih]
+      cases hp : p item <;> simp [hp] <;> omega
+
+private theorem stage0_fold_congr
+    (items : List Nat) (left right : Nat → Nat → Nat)
+    (initial : Nat)
+    (h : ∀ i, i ∈ items → ∀ n, left n i = right n i) :
+    items.foldl left initial = items.foldl right initial := by
+  induction items generalizing initial with
+  | nil => rfl
+  | cons item rest ih =>
+      simp only [List.foldl_cons]
+      rw [h item (by simp)]
+      apply ih
+      intro i hi n
+      exact h i (by simp [hi]) n
+
+/-- The integer popcount of an encoded profile agrees with its number of true
+entries.  This is the quantitative bridge from the geometric inner-center
+count to the finite 760-pattern enumeration. -/
+theorem fifteenStage0ProfileMask_weight
+    (profile : Fin 15 → Bool) :
+    stage0MaskWeight (fifteenStage0ProfileMask profile) =
+      ((List.range 15).filter (stage0ProfileBitAt profile)).length := by
+  unfold stage0MaskWeight
+  change (List.range 15).foldl
+      (fun count i => if Nat.testBit (fifteenStage0ProfileMask profile) (14 - i)
+        then count + 1 else count) 0 = _
+  rw [stage0_fold_congr (List.range 15)
+    (fun count i => if Nat.testBit (fifteenStage0ProfileMask profile) (14 - i)
+      then count + 1 else count)
+    (fun count i => if stage0ProfileBitAt profile i then count + 1 else count)
+    0]
+  · simpa using stage0_fold_count
+      (stage0ProfileBitAt profile) (List.range 15) 0
+  · intro i hi count
+    have hi' : i < 15 := by simpa using hi
+    have hbit := fifteenStage0ProfileMask_testBit profile ⟨i, hi'⟩
+    simpa [stage0ProfileBitAt, hi'] using
+      congrArg (fun b => if b then count + 1 else count) hbit
 
 private def stage0CanonicalWords : List String :=
   ((List.range 32768).filter fun mask =>
@@ -773,5 +885,69 @@ theorem fifteenStage0CanonicalWord_mem_orbitWords
       5 ≤ weight && weight ≤ 8 &&
         stage0CanonicalMask candidate == candidate) (List.range 32768))
   exact List.mem_map.mpr ⟨canonical, hfiltered, rfl⟩
+
+private theorem stage0Profile_list_count_eq_card
+    (profile : Fin 15 → Bool) :
+    ((List.range 15).filter (stage0ProfileBitAt profile)).length =
+      (Finset.univ.filter fun i : Fin 15 => profile i = true).card := by
+  classical
+  let positions := (List.range 15).filter (stage0ProfileBitAt profile)
+  have hnodup : positions.Nodup := by
+    exact List.Nodup.filter (stage0ProfileBitAt profile)
+      (List.nodup_range : (List.range 15).Nodup)
+  have hpositions : positions.toFinset =
+      (Finset.range 15).filter (fun n => stage0ProfileBitAt profile n = true) := by
+    ext n
+    simp [positions, stage0ProfileBitAt]
+  have hcard :
+      ((Finset.range 15).filter (fun n => stage0ProfileBitAt profile n = true)).card =
+        (Finset.univ.filter fun i : Fin 15 => profile i = true).card := by
+    apply Finset.card_bij (fun n hn =>
+      ⟨n, (Finset.mem_range.mp (Finset.mem_filter.mp hn).1)⟩)
+    · intro n hn
+      rcases Finset.mem_filter.mp hn with ⟨_, hprofile⟩
+      refine Finset.mem_filter.mpr ⟨Finset.mem_univ _, ?_⟩
+      simpa [stage0ProfileBitAt, (Finset.mem_range.mp (Finset.mem_filter.mp hn).1)]
+        using hprofile
+    · intro n hn m hm heq
+      exact congrArg Fin.val heq
+    · intro i hi
+      rcases Finset.mem_filter.mp hi with ⟨_, hprofile⟩
+      refine ⟨i.1, Finset.mem_filter.mpr ⟨Finset.mem_range.mpr i.2, ?_⟩, rfl⟩
+      simpa [stage0ProfileBitAt, i.isLt] using hprofile
+  calc
+    positions.length = positions.toFinset.card :=
+      (List.toFinset_card_of_nodup hnodup).symm
+    _ = ((Finset.range 15).filter
+        (fun n => stage0ProfileBitAt profile n = true)).card := by rw [hpositions]
+    _ = (Finset.univ.filter fun i : Fin 15 => profile i = true).card := hcard
+
+/-- Every ordered profile with five through eight inner entries has a
+canonical word in the independently replayed 760-element Stage 0 orbit list. -/
+theorem fifteenStage0ProfileCanonicalWord_mem_orbitWords
+    (profile : Fin 15 → Bool)
+    (hcount : 5 ≤ ((List.range 15).filter (stage0ProfileBitAt profile)).length ∧
+      ((List.range 15).filter (stage0ProfileBitAt profile)).length ≤ 8) :
+    fifteenStage0CanonicalProfileWord profile ∈ fifteenStage0OrbitWords := by
+  change stage0MaskWord (stage0CanonicalMask (fifteenStage0ProfileMask profile)) ∈
+    fifteenStage0OrbitWords
+  apply fifteenStage0CanonicalWord_mem_orbitWords
+    (fifteenStage0ProfileMask profile) (by
+      have hbound := stage0ProfileMaskAux_lt_pow profile 15
+      norm_num [fifteenStage0ProfileMask] at hbound ⊢
+      exact hbound)
+  rw [fifteenStage0ProfileMask_weight]
+  exact hcount
+
+/-- Cardinality-oriented form of the orbit coverage theorem for direct use by
+geometric profiles defined as a finite set of inner centers. -/
+theorem fifteenStage0ProfileCanonicalWord_mem_orbitWords_of_card
+    (profile : Fin 15 → Bool)
+    (hcount : 5 ≤ (Finset.univ.filter fun i : Fin 15 => profile i = true).card ∧
+      (Finset.univ.filter fun i : Fin 15 => profile i = true).card ≤ 8) :
+    fifteenStage0CanonicalProfileWord profile ∈ fifteenStage0OrbitWords := by
+  apply fifteenStage0ProfileCanonicalWord_mem_orbitWords
+  rw [stage0Profile_list_count_eq_card]
+  exact hcount
 
 end CirclePacking

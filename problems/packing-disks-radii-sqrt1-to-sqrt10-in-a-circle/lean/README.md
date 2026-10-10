@@ -162,7 +162,14 @@ third inner type box, and assigns every angle-sorted wall-pushed center to one
 of the four Stage 0 boxes. The bundled
 `fifteen_unit_packing_wall_push_stage0_profile` theorem now provides all these
 population and per-position box hypotheses from an arbitrary packing below
-the candidate radius.
+the candidate radius. `fifteen_unit_packing_wall_push_stage0_canonical_pattern`
+now converts the angle-sorted inner/outer predicates to the exact 15-bit mask
+convention, proves its popcount agrees with the geometric inner-center count,
+and shows that its dihedral canonical word belongs to the replayed list of 760
+Stage 0 patterns. The remaining handoff is to transport the radial-type
+assignment and its angle constraints through the chosen rotation or reflection
+to the canonical representative, so the appropriate finite exclusion witness
+can be applied to the packing.
 
 The compact inputs
 `problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage0_cycles.txt` and
