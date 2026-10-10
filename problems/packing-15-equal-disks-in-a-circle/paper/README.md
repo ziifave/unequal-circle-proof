@@ -4,4 +4,4 @@
 
 Build from this directory with `xelatex -interaction=nonstopmode -halt-on-error main.tex` twice, or open `main.tex` in Codex for the built-in LaTeX preview.
 
-The manuscript presents a candidate computer-assisted proof. Its Lean-status appendix maps the mathematical argument to the partial formalization at a fixed commit: the finite replays and local obstruction are checked, while the packing-level finite reduction, explicit feasible candidate object, and unconditional optimum theorem remain unfinished. It also documents alternative intermediate proofs and the finite replays' `native_decide` trust dependencies.
+The manuscript presents a candidate computer-assisted proof. Its Lean-status appendix maps the mathematical argument to the partial formalization at a fixed commit: the finite replays, local obstruction, and canonical radius/angle normalization are checked, while the full packing-level finite reduction, explicit feasible candidate object, and unconditional optimum theorem remain unfinished. It also documents alternative intermediate proofs and the finite replays' `native_decide` trust dependencies.

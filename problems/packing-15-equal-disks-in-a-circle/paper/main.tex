@@ -536,7 +536,7 @@ The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 class
 \section{Scope of the Lean formalization}\label{sec:lean-status}
 
 The partial formalization is available in the repository's
-\href{https://github.com/ziifave/unequal-circle-proof/tree/4a96098df3a468859f4147705ceb0835c2445bdd/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{4a96098}}.
+\href{https://github.com/ziifave/unequal-circle-proof/tree/9a6433376b054d19df628e6f5c3734e105858234/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{9a64333}}.
 The project is hosted under the unequal-disk problem directory, but its
 \texttt{Fifteen} modules concern the equal-disk problem in this manuscript.
 They use the same candidate radii $a_0,b_0$ and the same local cube
@@ -553,8 +553,9 @@ Radius and contact-angle identities are proved. An explicit feasible
 \texttt{Packing 15} at radius $R_0$ remains to be constructed.\\[5pt]
 Radial reduction (\cref{sec:radial}) &
 Wall replacement, the 5--8 inner-center count, and coarse radial-box
-membership are proved. The complete passage to a canonical cyclic angle
-profile remains unfinished.\\[5pt]
+membership are proved, together with canonical dihedral radius/angle
+normalization. Matching every normalized radial assignment to a certificate
+record remains unfinished.\\[5pt]
 Finite reduction (\cref{prop:finite-reduction}) &
 All finite certificate replays are collected in one theorem. Their
 packing-level soundness and coverage have not yet been assembled into this
@@ -581,11 +582,16 @@ The separate theorem
 \nolinkurl{fifteen_unit_packing_canonical_pattern_local_box_impossible}, in
 \nolinkurl{CirclePacking/FifteenLocalFinalAssembly.lean}, excludes a packing
 with $R<R_0$ once its wall-replaced, angle-sorted profile has inner positions
-$0,3,6,9,12$ and those five radii lie in the local interval. The missing
-connection is to derive these hypotheses from an arbitrary feasible packing,
-including dihedral angle transport, refined rank and leaf soundness, and
-coverage of the residual roots and the six-inner special case. A successful
-Boolean replay alone does not supply that implication.
+$0,3,6,9,12$ and those five radii lie in the local interval. The theorem
+\nolinkurl{fifteen_unit_packing_wall_push_stage0_canonical_geometry}, in
+\nolinkurl{CirclePacking/FifteenStageZeroCanonicalGeometry.lean}, now produces
+an exact canonical word and an ordered real polar profile from an arbitrary
+candidate-radius packing, preserving separation and coarse radius boxes and
+deriving the coarse angular difference constraints. The missing connection
+is to classify every normalized radial assignment using the checked
+exclusion or survivor records, and complete the refined rank and leaf
+soundness and coverage of the residual roots and the six-inner special
+case. A successful Boolean replay alone does not supply that implication.
 
 \paragraph{Alternative intermediate proofs.}
 The Lean development sometimes proves the same required bound by a different
@@ -603,8 +609,9 @@ sharper individual Hessian bounds quoted in \cref{sec:local}.
 \paragraph{Trust dependencies.}
 Several finite replays use \texttt{native\_decide} and carry native-evaluation
 axioms. Their trust dependencies must be distinguished from proofs using
-only ordinary kernel reduction. The local packing-exclusion theorem has
-been audited and depends only on Lean's standard logical axioms. The
+only ordinary kernel reduction. The abstract mask and angle transport lemmas
+and the local packing-exclusion theorem have been audited and depend only on
+Lean's standard logical axioms. The
 combined finite theorem can be built and audited from the Lean directory
 with:
 \begin{verbatim}
@@ -613,6 +620,16 @@ lake env lean CirclePacking/FifteenTrustAudit.lean
 \end{verbatim}
 The audit prints the actual axiom dependencies; it is not a proof of the
 remaining geometric connection.
+The geometric normalization bridge has a separate targeted audit:
+\begin{verbatim}
+lake build CirclePacking.FifteenStageZeroCanonicalGeometry
+lake env lean CirclePacking/FifteenStageZeroTransportAudit.lean
+\end{verbatim}
+The packing-level normalization theorem inherits one existing native axiom
+for canonical coverage and seven for the coarse angle table. The
+normalized-profile cycle exclusion inherits one existing Stage 0 replay
+native axiom and the same seven table axioms; the mask and angle transport
+proofs introduce no new native-evaluation axiom.
 
 \begin{thebibliography}{9}
 \bibitem{Graham1968}
