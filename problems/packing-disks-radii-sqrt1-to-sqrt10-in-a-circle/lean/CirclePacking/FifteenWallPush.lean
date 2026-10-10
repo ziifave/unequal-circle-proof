@@ -223,6 +223,22 @@ noncomputable def fifteenWallPushedCenter {R : ℝ}
     polarPoint fifteenCandidateOuterRadius (fifteenPackingPolarAngle P i)
   else (P.circles i).center
 
+/-- After the wall replacement, each center is either exactly on the wall or
+strictly inside the radial threshold used for the inner class. -/
+theorem fifteen_wall_pushed_center_radial_classification
+    {R : ℝ} (P : Packing 15 R) (i : Fin 15) :
+    pointNorm (fifteenWallPushedCenter P i) = fifteenCandidateOuterRadius ∨
+      pointNorm (fifteenWallPushedCenter P i) < fifteenCandidateInnerThreshold := by
+  by_cases h : fifteenCandidateInnerThreshold ≤ fifteenCenterRadius P i
+  · left
+    simp [fifteenWallPushedCenter, h, pointNorm_polarPoint
+      (θ := fifteenPackingPolarAngle P i)
+      (le_of_lt fifteenCandidateOuterRadius_pos)]
+  · right
+    have hlt : fifteenCenterRadius P i < fifteenCandidateInnerThreshold := lt_of_not_ge h
+    rw [fifteenWallPushedCenter, if_neg h]
+    simpa [fifteenCenterRadius] using hlt
+
 /-- A single formula covers outer--outer, outer--inner, inner--outer, and
 inner--inner pairs.  Thus the wall replacement preserves the complete
 pairwise-separation relation. -/
@@ -333,5 +349,12 @@ noncomputable def fifteen_unit_packing_wall_push
     have hRj := (fifteen_unit_packing_center_radius_le_container P hunit j).trans
       (by linarith : R - 1 ≤ fifteenCandidateOuterRadius)
     exact fifteen_unit_packing_wall_push_pair_separated P hunit i j hij hRi hRj
+
+theorem fifteen_unit_packing_wall_push_preserves_unit_radii
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) (i : Fin 15) :
+    ((fifteen_unit_packing_wall_push P hunit hR).circles i).radius = 1 := by
+  simp [fifteen_unit_packing_wall_push, hunit i]
 
 end CirclePacking
