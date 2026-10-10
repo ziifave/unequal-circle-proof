@@ -1,4 +1,7 @@
 import Lean
+import Mathlib.Basic.Real.Basic
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Ring
 import CirclePacking.FifteenTickBounds
 
 /-!
@@ -373,6 +376,16 @@ theorem fifteenStage0ListSumMapLe {α : Type} (items : List α)
       exact Int.add_le_add (h item (by simp))
         (ih (fun next hnext => h next (by simp [hnext])))
 
+theorem fifteenStage0ListSumMapLeReal {α : Type} (items : List α)
+    (f g : α → ℝ) (h : ∀ item ∈ items, f item ≤ g item) :
+    (items.map f).sum ≤ (items.map g).sum := by
+  induction items with
+  | nil => simp
+  | cons item rest ih =>
+      simp only [List.map_cons, List.sum_cons]
+      exact add_le_add (h item (by simp))
+        (ih (fun next hnext => h next (by simp [hnext])))
+
 theorem fifteenStage0GraphChain_telescope
     (potential : Nat → Int) (start finish : Nat)
     (edges : List FifteenStage0GraphEdge)
@@ -412,6 +425,56 @@ theorem fifteenStage0Potential_cycle_nonnegative
   rw [Int.sub_self] at htelescope
   rw [htelescope] at hsum
   exact hsum
+
+private def stage0RealPotentialDifference (potential : Nat → ℝ)
+    (edge : FifteenStage0GraphEdge) : ℝ :=
+  potential edge.target - potential edge.source
+
+theorem fifteenStage0GraphChain_real_telescope
+    (potential : Nat → ℝ) (start finish : Nat)
+    (edges : List FifteenStage0GraphEdge)
+    (hchain : FifteenStage0GraphChain start edges finish) :
+    (edges.map (stage0RealPotentialDifference potential)).sum =
+      potential finish - potential start := by
+  induction edges generalizing start finish with
+  | nil =>
+      simp only [FifteenStage0GraphChain] at hchain
+      subst finish
+      simp
+  | cons edge rest ih =>
+      simp only [FifteenStage0GraphChain] at hchain
+      rcases hchain with ⟨hsource, hrest⟩
+      subst start
+      simp only [List.map_cons, List.sum_cons]
+      rw [ih edge.target finish hrest]
+      simp only [stage0RealPotentialDifference]
+      ring
+
+/-- A real-valued angle assignment satisfying every weighted edge inequality
+cannot realize a negative closed walk.  The edge weights may be integer ticks
+cast to `ℝ`; the only semantic input is the per-edge upper bound. -/
+theorem fifteenStage0GraphChain_real_potential_excludes
+    (potential : Nat → ℝ) (start : Nat)
+    (edges : List FifteenStage0GraphEdge)
+    (hchain : FifteenStage0GraphChain start edges start)
+    (hnegative : (edges.map fun edge => (edge.weight : ℝ)).sum < 0)
+    (hpotential : ∀ edge ∈ edges,
+      potential edge.target ≤ potential edge.source + (edge.weight : ℝ)) :
+    False := by
+  have hterm : ∀ edge ∈ edges,
+      stage0RealPotentialDifference potential edge ≤ (edge.weight : ℝ) := by
+    intro edge hedge
+    have h := hpotential edge hedge
+    dsimp [stage0RealPotentialDifference]
+    linarith
+  have hsum := fifteenStage0ListSumMapLeReal edges
+    (stage0RealPotentialDifference potential)
+    (fun edge => (edge.weight : ℝ)) hterm
+  have htelescope := fifteenStage0GraphChain_real_telescope
+    potential start start edges hchain
+  rw [htelescope] at hsum
+  simp at hsum
+  linarith
 
 set_option maxRecDepth 1000000
 set_option maxHeartbeats 0

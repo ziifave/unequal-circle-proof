@@ -251,11 +251,20 @@ for negative-cycle witnesses. If each checked edge weight is an upper bound
 for its polar-angle difference after scaling by 1/2800, then a closed edge
 chain cannot have negative total weight. The theorem matches the certificate's
 `O`, `L`, and `U` edge conventions to the 17,600-tick upper bound for a full
-turn. The remaining connections include deriving the per-edge theorem's
-premises from each parsed JSON leaf and lifting the finite Boolean replay to a
-proposition about every geometric configuration. The final local obstruction
-and its connection to the packing geometry remain outside Lean; the finite
-replays alone are not the full optimum proof.
+turn. `FifteenStageZero` now also contains the real-potential form of the
+closed-walk argument for its coarse difference-constraint graph.
+`FifteenLocalFinalAssembly` formalizes the analytic last step: a wall-pushed
+packing with the canonical `(I,O,O)^5` radial pattern and the five inner radii
+in `[42/25, 43/25]` is impossible below the candidate radius. It derives each
+outer radius from the wall-push radial classification, and the resulting
+local theorem depends only on Lean's standard logical axioms.
+
+The full optimum theorem is not yet closed. The missing bridge is still to
+derive the radial pattern and certified local box for every geometric packing
+from the Stage 0/3/4 and subdivision certificate data, including the other
+residual roots and the special six-inner case. The finite Boolean replays
+alone do not establish that every packing reaches the hypotheses of the local
+obstruction.
 
 The finite replays are collected in the dedicated target
 `CirclePacking.FifteenAllFiniteCertificates`. It combines Stage 0's orbit and
