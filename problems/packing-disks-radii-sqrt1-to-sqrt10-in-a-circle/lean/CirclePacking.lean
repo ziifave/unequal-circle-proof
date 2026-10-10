@@ -51,6 +51,7 @@ import CirclePacking.FifteenStageZeroHandoff
 import CirclePacking.FifteenLocalAngleGeometry
 import CirclePacking.FifteenStrictWallBarrier
 import CirclePacking.FifteenPackingLocalRigidity
+import CirclePacking.FifteenLocalFinalAssembly
 
 /-!
 # Formal algebraic core for unequal-circle packing
