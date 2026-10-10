@@ -4,6 +4,7 @@ import Mathlib.Data.Nat.Bits
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Range
 import Mathlib.Data.Fintype.Basic
+import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 import CirclePacking.FifteenTickBounds
@@ -156,6 +157,10 @@ by the Stage 0 dihedral enumerator: position zero is the most significant bit. -
 def fifteenStage0ProfileMask (profile : Fin 15 → Bool) : Nat :=
   stage0ProfileMaskAux profile 15
 
+/-- The uncanonicalized binary word of a geometric profile. -/
+def fifteenStage0ProfileWord (profile : Fin 15 → Bool) : String :=
+  stage0MaskWord (fifteenStage0ProfileMask profile)
+
 /-- The canonical binary word of an ordered inner/outer profile. -/
 def fifteenStage0CanonicalProfileWord (profile : Fin 15 → Bool) : String :=
   stage0MaskWord (stage0CanonicalMask (fifteenStage0ProfileMask profile))
@@ -188,6 +193,41 @@ theorem fifteenStage0ProfileMask_testBit
   change Nat.testBit (stage0ProfileMaskAux profile 15) (14 - i.1) = _
   rw [show 15 - 1 - (14 - i.1) = i.1 by omega] at h
   simpa [stage0ProfileBitAt, i.isLt] using h
+
+private theorem stage0ProfileMaskAux_sum (profile : Fin 15 → Bool) :
+    ∀ n, stage0ProfileMaskAux profile n =
+      ∑ i ∈ Finset.range n,
+        (stage0ProfileBitAt profile i).toNat * 2 ^ (n - 1 - i) := by
+  intro n
+  induction n with
+  | zero => simp [stage0ProfileMaskAux]
+  | succ n ih =>
+      rw [stage0ProfileMaskAux, Nat.bit_val, ih, Finset.sum_range_succ]
+      have hsum :
+          (∑ i ∈ Finset.range n,
+            (stage0ProfileBitAt profile i).toNat * 2 ^ (n + 1 - 1 - i)) =
+          2 * ∑ i ∈ Finset.range n,
+            (stage0ProfileBitAt profile i).toNat * 2 ^ (n - 1 - i) := by
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro i hi
+        have hi' := Finset.mem_range.mp hi
+        rw [show n + 1 - 1 - i = (n - 1 - i) + 1 by omega, pow_succ]
+        ring
+      rw [hsum]
+      simp
+
+/-- The profile encoder is the positional sum used by the rotation and
+reflection routines. This identity lets later proofs reindex the sum rather
+than evaluate all possible binary profiles. -/
+theorem fifteenStage0ProfileMask_sum (profile : Fin 15 → Bool) :
+    fifteenStage0ProfileMask profile =
+      ∑ i : Fin 15, (profile i).toNat * 2 ^ (14 - i.val) := by
+  rw [fifteenStage0ProfileMask, stage0ProfileMaskAux_sum]
+  rw [Finset.sum_range]
+  apply Finset.sum_congr rfl
+  intro i _
+  simp [stage0ProfileBitAt, i.isLt]
 
 private theorem stage0_fold_count (p : Nat → Bool) :
     ∀ (items : List Nat) (initial : Nat),

@@ -7,8 +7,8 @@ import Mathlib.Data.Fintype.Basic
 The permutation sends an old slot to its new slot; a transformed profile is
 therefore pulled back by its inverse. These lemmas preserve population counts,
 pointwise box bounds and pairwise separation, independently of certificate
-data. The lifted-angle order and exact mask correspondence remain separate
-obligations. -/
+data. The exact mask correspondence and lifted-angle order are proved in
+`FifteenStageZeroMaskTransport` and `FifteenStageZeroAngleTransport`. -/
 
 namespace CirclePacking
 

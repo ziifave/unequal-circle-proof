@@ -175,10 +175,25 @@ Pulling profiles back by the inverse permutation preserves population counts,
 pointwise radial-box relations, and pairwise separation.
 `fifteen_unit_packing_wall_push_stage0_dihedral_profile` applies this transport
 to an arbitrary candidate-radius unit-disk packing, preserving the 5--8 inner
-count and every coarse radial box. The remaining handoff is to prove that
-this reindexing produces the enumerator's exact mask,
-transport lifted cyclic angle constraints, and match the radial type word to
-the appropriate finite exclusion witness.
+count and every coarse radial box.
+`FifteenStageZeroMaskTransport.lean` now proves that the reindexed profile
+encodes exactly the enumerator's rotated or reflected mask, and that some
+such reindexing attains its canonical representative. It uses a positional
+sum identity and permutation invariance of finite sums, without evaluating
+all binary profiles.
+`FifteenStageZeroAngleTransport.lean` normalizes the same cyclic permutation
+into monotone real angles in `[0, 2π]`, accounting for the cyclic cut and
+reflection, and proves that every polar pair distance is preserved.
+`fifteen_unit_packing_wall_push_stage0_canonical_geometry`, in
+`FifteenStageZeroCanonicalGeometry.lean`, combines these bridges for an
+arbitrary candidate-radius unit packing: its normalized profile has the
+exact canonical mask and a word in the 760-element list, retains the inner
+count and all coarse boxes, and satisfies the integer-scaled angular
+difference constraints. The same module's
+`fifteenStage0PolarProfile_excludes_cycle_witness` proves that such a
+separated ordered profile cannot occupy the boxes of a checked negative-cycle
+witness. The remaining Stage 0 handoff is to match every normalized radial
+assignment to the recorded exclusion or survivor case.
 
 Axiom auditing of the canonical-mask origin and abstract profile-transport
 lemmas reports only standard logical axioms. The packing-level dihedral
@@ -297,13 +312,12 @@ in `[42/25, 43/25]` is impossible below the candidate radius. It derives each
 outer radius from the wall-push radial classification, and the resulting
 local theorem depends only on Lean's standard logical axioms.
 
-The full optimum theorem is not yet closed. The binary profile is already
-encoded and its canonical word lies in the 760-element orbit list. The
-remaining Stage 0 bridge is to reindex the inner type word to that exact
-canonical representative while preserving the lifted cyclic angle constraints.
-The resulting profile must
-either match one of the checked negative-cycle witnesses or lie in the
-certified survivor class. Stage 3/4 and the exact subdivision tree also need
+The full optimum theorem is not yet closed. An arbitrary packing now has a
+dihedrally normalized real profile with the exact canonical word, coarse
+radial boxes, preserved separation, and angular difference constraints.
+Every normalized radial assignment still needs to be matched to a checked
+negative-cycle witness or a certified survivor record. Stage 3/4 and the
+exact subdivision tree also need
 their per-certificate geometric edge/leaf soundness connected to the full
 packing classification, including the residual roots and the special
 six-inner case. The finite Boolean replays alone do not establish that every
@@ -311,6 +325,26 @@ packing reaches the local obstruction's hypotheses. A complete optimality
 theorem also needs an explicit feasible `Packing 15` at the candidate radius;
 the candidate's radius and contact-angle identities do not yet supply that
 construction.
+
+Build and audit the geometric normalization bridge separately with:
+
+```sh
+lake build CirclePacking.FifteenStageZeroCanonicalGeometry
+lake env lean CirclePacking/FifteenStageZeroTransportAudit.lean
+```
+
+This audit distinguishes the abstract mask/angle transport lemmas from the
+packing and certificate interfaces that inherit existing finite-evaluation
+axioms. The new transport proofs contain no `native_decide`, `sorry`, or
+additional axiom declarations.
+
+The transport audit reports only `propext`, `Classical.choice`, and
+`Quot.sound` for canonical-mask selection, ordered angle transport, and
+distance preservation. The packing-level canonical geometry theorem
+inherits the existing canonical-coverage native axiom and seven coarse-table
+native axioms. The normalized-profile exclusion theorem instead inherits
+the existing Stage 0 replay native axiom and the same seven coarse-table
+axioms. Neither interface adds a new native-evaluation axiom.
 
 The finite replays are collected in the dedicated target
 `CirclePacking.FifteenAllFiniteCertificates`. It combines Stage 0's orbit and
