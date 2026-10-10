@@ -11,6 +11,7 @@ namespace CirclePacking
 theorem fifteenAllFiniteCertificates_replay :
     fifteenStage0CertificateReplay = true ∧
     fifteenStage0CoarseAngleTableReplay = true ∧
+    fifteenStage0CanonicalCoverageReplay = true ∧
     (fifteenStage0OrbitWords.length = 760 ∧
       fifteenStage0OrbitCountByWeight = [111, 185, 232, 232]) ∧
     (fifteenStage3TableValid && fifteenStage3ManifestMatchesStageZero &&
@@ -22,6 +23,7 @@ theorem fifteenAllFiniteCertificates_replay :
     fifteenStage4ExactHandoffValid = true := by
   exact ⟨fifteenStage0Certificate_replays,
     fifteenStage0CoarseAngleTable_replays,
+    fifteenStage0CanonicalCoverage_replays,
     fifteenStage0DihedralClassCounts,
     fifteenStage3AndStage4FiniteCertificates_replay.1,
     fifteenStage3AndStage4FiniteCertificates_replay.2,

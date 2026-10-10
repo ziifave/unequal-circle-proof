@@ -107,6 +107,23 @@ private def stage0CanonicalWords : List String :=
     5 ≤ weight && weight ≤ 8 && stage0CanonicalMask mask == mask).map
       stage0MaskWord
 
+/-! The search certificate below records the canonical representative of each
+dihedral orbit.  This finite check makes the coverage direction explicit too:
+every 15-bit mask of weight 5 through 8 canonicalizes to a word in the
+enumerated list. -/
+private def stage0CanonicalCoverageCheck : Bool :=
+  (List.range 32768).all fun mask =>
+    let weight := stage0MaskWeight mask
+    let canonical := stage0CanonicalMask mask
+    if _hweight : 5 ≤ weight ∧ weight ≤ 8 then
+      (canonical < 32768) &&
+        (stage0MaskWeight canonical == weight) &&
+        (stage0CanonicalMask canonical == canonical)
+    else true
+
+def fifteenStage0CanonicalCoverageReplay : Bool :=
+  stage0CanonicalCoverageCheck
+
 def fifteenStage0OrbitWords : List String := stage0CanonicalWords
 
 private def stage0InnerPositionsAux : Nat → List Char → List Nat
@@ -410,5 +427,50 @@ theorem fifteenStage0DihedralClassCounts :
     fifteenStage0OrbitWords.length = 760 ∧
       fifteenStage0OrbitCountByWeight = [111, 185, 232, 232] := by
   native_decide
+
+theorem fifteenStage0CanonicalCoverage_replays :
+    fifteenStage0CanonicalCoverageReplay = true := by
+  native_decide
+
+theorem fifteenStage0CanonicalWord_mem_orbitWords
+    (mask : Nat) (hmask : mask < 32768)
+    (hweight : 5 ≤ stage0MaskWeight mask ∧ stage0MaskWeight mask ≤ 8) :
+    stage0MaskWord (stage0CanonicalMask mask) ∈ fifteenStage0OrbitWords := by
+  have hmem : mask ∈ List.range 32768 := by simp; omega
+  have hcoverage := (List.all_eq_true.mp
+    fifteenStage0CanonicalCoverage_replays) mask hmem
+  let canonical := stage0CanonicalMask mask
+  have hproperties : canonical < 32768 ∧
+    stage0MaskWeight canonical = stage0MaskWeight mask ∧
+      stage0CanonicalMask canonical = canonical := by
+    have hparts :
+        (decide (canonical < 32768) = true ∧
+          (stage0MaskWeight canonical == stage0MaskWeight mask) = true) ∧
+        (stage0CanonicalMask canonical == canonical) = true := by
+      simpa [hweight, canonical, Bool.and_eq_true, beq_iff_eq] using hcoverage
+    rcases hparts with ⟨⟨hcanonical, hweightEq⟩, hfixed⟩
+    refine ⟨of_decide_eq_true hcanonical, ?_, ?_⟩
+    · simpa [beq_iff_eq] using hweightEq
+    · simpa [beq_iff_eq] using hfixed
+  have hcanonicalWeight :
+      5 ≤ stage0MaskWeight canonical ∧ stage0MaskWeight canonical ≤ 8 := by
+    rw [hproperties.2.1]
+    exact hweight
+  have hcanonicalMem : canonical ∈ List.range 32768 := by
+    simp only [List.mem_range]
+    exact hproperties.1
+  have hfiltered : canonical ∈ List.filter (fun candidate =>
+      let weight := stage0MaskWeight candidate
+      5 ≤ weight && weight ≤ 8 &&
+        stage0CanonicalMask candidate == candidate) (List.range 32768) := by
+    apply List.mem_filter.mpr
+    refine ⟨hcanonicalMem, ?_⟩
+    simp [hcanonicalWeight, hproperties.2.2]
+  change stage0MaskWord canonical ∈
+    List.map stage0MaskWord (List.filter (fun candidate =>
+      let weight := stage0MaskWeight candidate
+      5 ≤ weight && weight ≤ 8 &&
+        stage0CanonicalMask candidate == candidate) (List.range 32768))
+  exact List.mem_map.mpr ⟨canonical, hfiltered, rfl⟩
 
 end CirclePacking
