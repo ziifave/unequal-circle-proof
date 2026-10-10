@@ -253,6 +253,9 @@ chain cannot have negative total weight. The theorem matches the certificate's
 `O`, `L`, and `U` edge conventions to the 17,600-tick upper bound for a full
 turn. `FifteenStageZero` now also contains the real-potential form of the
 closed-walk argument for its coarse difference-constraint graph.
+`FifteenStageZeroGeometry` derives both scaled difference constraints for an
+angle-sorted pair directly from the packing separation and its assigned
+radial boxes, including the zero-tick case.
 `FifteenLocalFinalAssembly` formalizes the analytic last step: a wall-pushed
 packing with the canonical `(I,O,O)^5` radial pattern and the five inner radii
 in `[42/25, 43/25]` is impossible below the candidate radius. It derives each
@@ -264,7 +267,10 @@ derive the radial pattern and certified local box for every geometric packing
 from the Stage 0/3/4 and subdivision certificate data, including the other
 residual roots and the special six-inner case. The finite Boolean replays
 alone do not establish that every packing reaches the hypotheses of the local
-obstruction.
+obstruction. For Stage 0 in particular, the encoded cycle witnesses still need
+to be exposed as propositions and matched to the packing's actual pattern and
+radial-type assignment; Stage 3/4 and the exact subdivision tree need the same
+certificate-to-geometry connection.
 
 The finite replays are collected in the dedicated target
 `CirclePacking.FifteenAllFiniteCertificates`. It combines Stage 0's orbit and

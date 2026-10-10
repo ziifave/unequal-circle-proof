@@ -1,6 +1,7 @@
 import CirclePacking.FifteenStageZero
 import CirclePacking.FifteenTickSoundness
 import CirclePacking.FifteenSmallRadiusCount
+import Mathlib.Tactic.FinCases
 
 /-!
 # Geometric meaning of the coarse 15-disk angle table
@@ -123,6 +124,131 @@ theorem fifteenStage0CoarsePair_gives_polar_edge_bound
     (by exact_mod_cast hx0)
     (by exact_mod_cast hy0)
     haL haU hbL hbU hlower hneq hsorted hthetaLo hthetaHi hsep htau
+
+theorem fifteenStage0CoarseAngleTick_symmetric
+    (typeI typeJ : Fin 4) :
+    fifteenStage0CoarseAngleTick typeI typeJ =
+      fifteenStage0CoarseAngleTick typeJ typeI := by
+  fin_cases typeI <;> fin_cases typeJ <;>
+    norm_num [fifteenStage0CoarseAngleTick, fifteenStage0CoarseQ]
+
+theorem fifteen_two_pi_le_stage0_tau :
+    2 * Real.pi ≤ (17600 : ℝ) / 2800 := by
+  apply le_of_lt ?_
+  calc
+    2 * Real.pi < 2 * (3.1416 : ℝ) := by
+      nlinarith [Real.pi_lt_d4]
+    _ ≤ (17600 : ℝ) / 2800 := by norm_num
+
+/-- The coarse Stage 0 table gives both directed gap bounds for every pair of
+angle-sorted centers whose radii lie in their assigned radial boxes. The
+reverse direction uses table symmetry; a zero tick uses only angle order and
+the full-turn bound. -/
+theorem fifteenStage0Packing_pair_angle_gaps
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (typeI typeJ : Fin 4) (i j : Fin 15) (hij : i.1 < j.1)
+    (hri : ((fifteenStage0CoarseTypeBox typeI).1 : ℝ) ≤
+        fifteenPackingSortedRadius P i ∧
+      fifteenPackingSortedRadius P i ≤
+        ((fifteenStage0CoarseTypeBox typeI).2 : ℝ))
+    (hrj : ((fifteenStage0CoarseTypeBox typeJ).1 : ℝ) ≤
+        fifteenPackingSortedRadius P j ∧
+      fifteenPackingSortedRadius P j ≤
+        ((fifteenStage0CoarseTypeBox typeJ).2 : ℝ)) :
+    (fifteenStage0CoarseAngleTick typeI typeJ : ℝ) / 2800 ≤
+        fifteenPackingSortedAngle P j - fifteenPackingSortedAngle P i ∧
+      fifteenPackingSortedAngle P j - fifteenPackingSortedAngle P i ≤
+        (17600 : ℝ) / 2800 -
+          (fifteenStage0CoarseAngleTick typeI typeJ : ℝ) / 2800 := by
+  let q := fifteenStage0CoarseAngleTick typeI typeJ
+  by_cases hqzero : q = 0
+  · constructor
+    · have hqzero' : fifteenStage0CoarseAngleTick typeI typeJ = 0 := by
+        simpa [q] using hqzero
+      simpa [hqzero'] using fifteenPackingSortedAngle_monotone P hij
+    · have hdelta : fifteenPackingSortedAngle P j -
+        fifteenPackingSortedAngle P i ≤ 2 * Real.pi := by
+        have hj := (fifteenPackingSortedAngle_range P j).2
+        have hi := (fifteenPackingSortedAngle_range P i).1
+        linarith
+      have hqzero' : fifteenStage0CoarseAngleTick typeI typeJ = 0 := by
+        simpa [q] using hqzero
+      simpa [hqzero'] using hdelta.trans fifteen_two_pi_le_stage0_tau
+  · have hqpos : 0 < q := Nat.pos_of_ne_zero hqzero
+    have hqpos' : 0 < fifteenStage0CoarseAngleTick typeI typeJ := by
+      simpa [q] using hqpos
+    have hqposRev : 0 < fifteenStage0CoarseAngleTick typeJ typeI := by
+      rw [fifteenStage0CoarseAngleTick_symmetric]
+      exact hqpos'
+    have hne : i ≠ j := by
+      intro heq
+      subst j
+      omega
+    let forward : FifteenAngularEdge :=
+      ⟨i, j, (fifteenStage0CoarseAngleTick typeI typeJ : ℝ) / 2800⟩
+    let backward : FifteenAngularEdge :=
+      ⟨j, i, (fifteenStage0CoarseAngleTick typeJ typeI : ℝ) / 2800⟩
+    have hsepForward := fifteen_unit_packing_sorted_pair_separated
+      P hunit hne
+    have hsepBackward := fifteen_unit_packing_sorted_pair_separated
+      P hunit hne.symm
+    have hforward := fifteenStage0CoarsePair_gives_polar_edge_bound
+      typeI typeJ hqpos' forward (fifteenPackingSortedAngle P)
+      (fifteenPackingSortedRadius P i) (fifteenPackingSortedRadius P j)
+      ((17600 : ℝ) / 2800)
+      hri.1 hri.2 hrj.1 hrj.2 rfl hne
+      (fun x y hxy => fifteenPackingSortedAngle_monotone P hxy)
+      (fun x => (fifteenPackingSortedAngle_range P x).1)
+      (fun x => (fifteenPackingSortedAngle_range P x).2)
+      hsepForward fifteen_two_pi_le_stage0_tau
+    have hbackward := fifteenStage0CoarsePair_gives_polar_edge_bound
+      typeJ typeI hqposRev backward (fifteenPackingSortedAngle P)
+      (fifteenPackingSortedRadius P j) (fifteenPackingSortedRadius P i)
+      ((17600 : ℝ) / 2800)
+      hrj.1 hrj.2 hri.1 hri.2 rfl hne.symm
+      (fun x y hxy => fifteenPackingSortedAngle_monotone P hxy)
+      (fun x => (fifteenPackingSortedAngle_range P x).1)
+      (fun x => (fifteenPackingSortedAngle_range P x).2)
+      hsepBackward fifteen_two_pi_le_stage0_tau
+    have hforward' : fifteenPackingSortedAngle P j -
+        fifteenPackingSortedAngle P i ≤
+          (17600 : ℝ) / 2800 -
+            (fifteenStage0CoarseAngleTick typeI typeJ : ℝ) / 2800 := by
+      simpa [fifteenAngularEdgeUpper, forward, hij] using hforward
+    have hbackward' : fifteenPackingSortedAngle P i -
+        fifteenPackingSortedAngle P j ≤
+          -((fifteenStage0CoarseAngleTick typeI typeJ : ℝ) / 2800) := by
+      have hreverse : ¬ j.1 < i.1 := by omega
+      simpa [fifteenAngularEdgeUpper, backward, hreverse,
+        fifteenStage0CoarseAngleTick_symmetric] using hbackward
+    constructor
+    · nlinarith [hbackward']
+    · exact hforward'
+
+/-- The two scaled pair constraints in the Stage 0 difference graph follow
+from geometric separation whenever the radii occupy the assigned boxes. -/
+theorem fifteenStage0Packing_pair_difference_bounds
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (typeI typeJ : Fin 4) (i j : Fin 15) (hij : i.1 < j.1)
+    (hri : ((fifteenStage0CoarseTypeBox typeI).1 : ℝ) ≤
+        fifteenPackingSortedRadius P i ∧
+      fifteenPackingSortedRadius P i ≤
+        ((fifteenStage0CoarseTypeBox typeI).2 : ℝ))
+    (hrj : ((fifteenStage0CoarseTypeBox typeJ).1 : ℝ) ≤
+        fifteenPackingSortedRadius P j ∧
+      fifteenPackingSortedRadius P j ≤
+        ((fifteenStage0CoarseTypeBox typeJ).2 : ℝ)) :
+    2800 * (fifteenPackingSortedAngle P i -
+        fifteenPackingSortedAngle P j) ≤
+        - (fifteenStage0CoarseAngleTick typeI typeJ : ℝ) ∧
+      2800 * (fifteenPackingSortedAngle P j -
+        fifteenPackingSortedAngle P i) ≤
+        17600 - (fifteenStage0CoarseAngleTick typeI typeJ : ℝ) := by
+  have hgap := fifteenStage0Packing_pair_angle_gaps
+    P hunit typeI typeJ i j hij hri hrj
+  constructor <;> nlinarith [hgap.1, hgap.2]
 
 theorem fifteenStage0ZeroTick_gives_polar_edge_bound
     (edge : FifteenAngularEdge) (theta : Fin 15 → ℝ) (tauUpper : ℝ)
