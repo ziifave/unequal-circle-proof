@@ -705,6 +705,191 @@ theorem mainBeta57_rmid_rational_angle_bounds :
       mainBeta57RmidQHi]
   exact ⟨le_trans hnumLo hTaylor.1, le_trans hTaylor.2 hnumHi⟩
 
+def mainAlpha7TlowRmidQLo : ℝ :=
+  4328133469793697276198 / 10000000000000000000000
+
+def mainAlpha7TlowRmidQHi : ℝ :=
+  4328133469793697276199 / 10000000000000000000000
+
+/-- The other contact angle in the lower-edge difference, evaluated at the
+radius midpoint, has a certified quarter-angle parameter interval as well. -/
+theorem mainAlpha7_tlow_rmid_quarter_parameter_bounds :
+    touchCosine 1.0037160860750841
+        ((8.3034681221114890 + 8.3034681221114900) / 2 - Real.sqrt 7)
+        (Real.sqrt 10 + Real.sqrt 7) ∈ Set.Ioo (-1) 1 ∧
+      mainAlpha7TlowRmidQLo ≤
+        mainQuarterAlpha7 1.0037160860750841
+          ((8.3034681221114890 + 8.3034681221114900) / 2) ∧
+      mainQuarterAlpha7 1.0037160860750841
+          ((8.3034681221114890 + 8.3034681221114900) / 2) ≤
+        mainAlpha7TlowRmidQHi := by
+  let t : ℝ := 1.0037160860750841
+  let R : ℝ := (8.3034681221114890 + 8.3034681221114900) / 2
+  let r7 : ℝ := Real.sqrt 7
+  let r10 : ℝ := Real.sqrt 10
+  let a : ℝ := R - r7
+  let d : ℝ := r10 + r7
+  let N : ℝ := d ^ 2 - (a - t) ^ 2
+  let D : ℝ := (a + t) ^ 2 - d ^ 2
+  let z : ℝ := N / D
+  have hr7sq : r7 ^ 2 = 7 := by
+    dsimp [r7]
+    exact Real.sq_sqrt (by norm_num)
+  have hr10sq : r10 ^ 2 = 10 := by
+    dsimp [r10]
+    exact Real.sq_sqrt (by norm_num)
+  have hr7 :
+      2.645751311064590590501615 ≤ r7 ∧
+        r7 ≤ 2.645751311064590590501616 := by
+    constructor
+    · apply (sq_le_sq₀ (by norm_num) (Real.sqrt_nonneg _)).mp
+      nlinarith [hr7sq]
+    · apply (sq_le_sq₀ (Real.sqrt_nonneg _) (by norm_num)).mp
+      nlinarith [hr7sq]
+  have hr10 :
+      3.162277660168379331998893 ≤ r10 ∧
+        r10 ≤ 3.162277660168379331998894 := by
+    constructor
+    · apply (sq_le_sq₀ (by norm_num) (Real.sqrt_nonneg _)).mp
+      nlinarith [hr10sq]
+    · apply (sq_le_sq₀ (Real.sqrt_nonneg _) (by norm_num)).mp
+      nlinarith [hr10sq]
+  have htpos : 0 < t := by norm_num [t]
+  have hapos : 0 < a := by
+    dsimp [a, R, r7]
+    nlinarith [hr7.2]
+  have hdpos : 0 < d := by
+    dsimp [d, r7, r10]
+    positivity
+  have hDpos : 0 < D := by
+    dsimp [D, a, d, R, t]
+    nlinarith [hr7.1, hr7.2, hr10.1, hr10.2]
+  have hdiff : |t - a| < d := by
+    apply abs_lt.mpr
+    constructor <;> dsimp [a, d, R, t] <;>
+      nlinarith [hr7.1, hr7.2, hr10.1, hr10.2]
+  have hsum : d < t + a := by
+    dsimp [a, d, R, t]
+    nlinarith [hr7.1, hr7.2, hr10.1, hr10.2]
+  have hcos : touchCosine t a d ∈ Set.Ioo (-1) 1 :=
+    touchCosine_mem_Ioo_of_triangle_bounds htpos hapos hdiff hsum
+  have hratio :
+      (1 - touchCosine t a d) / (1 + touchCosine t a d) = z := by
+    have hside := touchCosine_halfAngleRatio
+      (a := t) (b := a) (d := d) (by linarith [htpos]) (by linarith [hapos])
+      (by dsimp [a, d, R, t]; nlinarith [hr7.1, hr7.2, hr10.1, hr10.2])
+    dsimp [z, N, D]
+    convert hside using 1
+    ring
+  have hQL : 0 ≤ mainAlpha7TlowRmidQLo := by
+    norm_num [mainAlpha7TlowRmidQLo]
+  have hQLt1 : mainAlpha7TlowRmidQLo < 1 := by
+    norm_num [mainAlpha7TlowRmidQLo]
+  have hQU0 : 0 ≤ mainAlpha7TlowRmidQHi := by
+    norm_num [mainAlpha7TlowRmidQHi]
+  have hQU : mainAlpha7TlowRmidQHi < 1 := by
+    norm_num [mainAlpha7TlowRmidQHi]
+  have hthresholdLo :
+      ((1 + mainAlpha7TlowRmidQLo ^ 2) /
+        (1 - mainAlpha7TlowRmidQLo ^ 2)) ^ 2 ≤ 1 + z := by
+    have hcleared :
+        (((1 + mainAlpha7TlowRmidQLo ^ 2) /
+          (1 - mainAlpha7TlowRmidQLo ^ 2)) ^ 2 - 1) * D ≤ N := by
+      dsimp [D, N, a, d, R, t, r7, r10]
+      norm_num [mainAlpha7TlowRmidQLo]
+      nlinarith [hr7.1, hr7.2, hr10.1, hr10.2, hr7sq, hr10sq]
+    have hform : (((1 + mainAlpha7TlowRmidQLo ^ 2) /
+          (1 - mainAlpha7TlowRmidQLo ^ 2)) ^ 2 - 1) ≤ z := by
+      dsimp [z]
+      exact (le_div_iff₀ hDpos).2 hcleared
+    linarith
+  have hthresholdHi :
+      1 + z ≤ ((1 + mainAlpha7TlowRmidQHi ^ 2) /
+        (1 - mainAlpha7TlowRmidQHi ^ 2)) ^ 2 := by
+    have hcleared :
+        N ≤ (((1 + mainAlpha7TlowRmidQHi ^ 2) /
+          (1 - mainAlpha7TlowRmidQHi ^ 2)) ^ 2 - 1) * D := by
+      dsimp [D, N, a, d, R, t, r7, r10]
+      norm_num [mainAlpha7TlowRmidQHi]
+      nlinarith [hr7.1, hr7.2, hr10.1, hr10.2, hr7sq, hr10sq]
+    have hform : z ≤ (((1 + mainAlpha7TlowRmidQHi ^ 2) /
+          (1 - mainAlpha7TlowRmidQHi ^ 2)) ^ 2 - 1) := by
+      dsimp [z]
+      exact (div_le_iff₀ hDpos).2 hcleared
+    linarith
+  have hlo := le_arccosQuarterParameter_of_ratio_bound
+    hcos.1 hcos.2 hQL hQLt1 (by rw [hratio]; exact hthresholdLo)
+  have hhi := arccosQuarterParameter_le_of_ratio_bound
+    hcos.1 hcos.2 hQU0 hQU (by rw [hratio]; exact hthresholdHi)
+  refine ⟨?_, ?_, ?_⟩
+  · simpa [t, R, a, d, r7, r10] using hcos
+  · simpa [mainQuarterAlpha7, t, R] using hlo
+  · simpa [mainQuarterAlpha7, t, R] using hhi
+
+theorem mainAlpha7_tlow_rmid_taylor_enclosure (n : ℕ) :
+    4 * (arctanTaylorPartial mainAlpha7TlowRmidQLo n -
+        arctanTaylorTerm mainAlpha7TlowRmidQLo n) ≤
+      mainAlpha7 1.0037160860750841
+        ((8.3034681221114890 + 8.3034681221114900) / 2) ∧
+    mainAlpha7 1.0037160860750841
+        ((8.3034681221114890 + 8.3034681221114900) / 2) ≤
+      4 * (arctanTaylorPartial mainAlpha7TlowRmidQHi n +
+        arctanTaylorTerm mainAlpha7TlowRmidQHi n) := by
+  have hq := mainAlpha7_tlow_rmid_quarter_parameter_bounds
+  have h := arccos_quarterTaylor_enclosure hq.1.1 hq.1.2
+    (by norm_num [mainAlpha7TlowRmidQLo])
+    (by norm_num [mainAlpha7TlowRmidQHi]) hq.2.1 hq.2.2 n
+  simpa [mainAlpha7, touchAngle] using h
+
+theorem mainAlpha7_tlow_rmid_rational_angle_bounds :
+    (16338798602934189657 : ℝ) / 10000000000000000000 ≤
+      mainAlpha7 1.0037160860750841
+        ((8.3034681221114890 + 8.3034681221114900) / 2) ∧
+    mainAlpha7 1.0037160860750841
+        ((8.3034681221114890 + 8.3034681221114900) / 2) ≤
+      (16338798602934189662 : ℝ) / 10000000000000000000 := by
+  have hTaylor := mainAlpha7_tlow_rmid_taylor_enclosure 24
+  have hnumLo :
+      (16338798602934189657 : ℝ) / 10000000000000000000 ≤
+        4 * (arctanTaylorPartial mainAlpha7TlowRmidQLo 24 -
+          arctanTaylorTerm mainAlpha7TlowRmidQLo 24) := by
+    norm_num [arctanTaylorPartial, arctanTaylorTerm,
+      mainAlpha7TlowRmidQLo]
+  have hnumHi :
+      4 * (arctanTaylorPartial mainAlpha7TlowRmidQHi 24 +
+          arctanTaylorTerm mainAlpha7TlowRmidQHi 24) ≤
+        (16338798602934189662 : ℝ) / 10000000000000000000 := by
+    norm_num [arctanTaylorPartial, arctanTaylorTerm,
+      mainAlpha7TlowRmidQHi]
+  exact ⟨le_trans hnumLo hTaylor.1, le_trans hTaylor.2 hnumHi⟩
+
+theorem mainBarrier_difference_eq_three_contacts (t R : ℝ) :
+    mainBarrierA t R - mainBarrierB t R =
+      mainAlpha5 t R + mainBeta57 R - mainAlpha7 t R := by
+  unfold mainBarrierA mainBarrierB
+  ring
+
+/-- A first concrete replay of the lower-edge sign at the midpoint of the
+certified radius box. This is a pointwise check, not yet the uniform edge
+bound needed by the root-curve theorem. -/
+theorem mainBarrier_difference_tlow_rmid_negative :
+    mainBarrierA 1.0037160860750841
+        ((8.3034681221114890 + 8.3034681221114900) / 2) -
+      mainBarrierB 1.0037160860750841
+        ((8.3034681221114890 + 8.3034681221114900) / 2) < 0 := by
+  have h5 := mainAlpha5_tlow_rmid_rational_angle_bounds
+  have h57 := mainBeta57_rmid_rational_angle_bounds
+  have h7 := mainAlpha7_tlow_rmid_rational_angle_bounds
+  have hsum :
+      (77768542231667638732 : ℝ) / 100000000000000000000 +
+        (8561944379767423103494 : ℝ) / 10000000000000000000000 <
+          (16338798602934189657 : ℝ) / 10000000000000000000 := by
+    norm_num
+  rw [mainBarrier_difference_eq_three_contacts
+    1.0037160860750841
+      ((8.3034681221114890 + 8.3034681221114900) / 2)]
+  linarith [h5.2, h57.2, h7.1]
+
 end
 
 end CirclePacking
