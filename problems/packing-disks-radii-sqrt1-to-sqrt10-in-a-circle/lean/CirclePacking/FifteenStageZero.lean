@@ -108,11 +108,25 @@ private def stage0ReverseMask (mask : Nat) : Nat :=
   (List.range stage0N).foldl (fun result i =>
     if Nat.testBit mask (14 - i) then result + 2 ^ i else result) 0
 
-private def stage0CanonicalMask (mask : Nat) : Nat := Id.run do
-  let reflected := stage0ReverseMask mask
-  let rotations := (List.range stage0N).flatMap fun shift =>
-    [stage0RotateMask mask shift, stage0RotateMask reflected shift]
-  return rotations.foldl Nat.min mask
+/- Public wrappers let downstream geometry lemmas reason about the exact
+   dihedral action used by the certificate enumerator. -/
+def fifteenStage0RotateMask (mask shift : Nat) : Nat :=
+  stage0RotateMask mask shift
+
+def fifteenStage0ReverseMask (mask : Nat) : Nat :=
+  stage0ReverseMask mask
+
+def fifteenStage0DihedralMaskCandidates (mask : Nat) : List Nat :=
+  let reflected := fifteenStage0ReverseMask mask
+  (List.range 15).flatMap fun shift =>
+    [fifteenStage0RotateMask mask shift,
+      fifteenStage0RotateMask reflected shift]
+
+def fifteenStage0CanonicalMask (mask : Nat) : Nat :=
+  (fifteenStage0DihedralMaskCandidates mask).foldl Nat.min mask
+
+private def stage0CanonicalMask (mask : Nat) : Nat :=
+  fifteenStage0CanonicalMask mask
 
 private def stage0MaskWord (mask : Nat) : String :=
   String.ofList ((List.range stage0N).map fun i =>

@@ -166,10 +166,25 @@ the candidate radius. `fifteen_unit_packing_wall_push_stage0_canonical_pattern`
 now converts the angle-sorted inner/outer predicates to the exact 15-bit mask
 convention, proves its popcount agrees with the geometric inner-center count,
 and shows that its dihedral canonical word belongs to the replayed list of 760
-Stage 0 patterns. The remaining handoff is to transport the radial-type
-assignment and its angle constraints through the chosen rotation or reflection
-to the canonical representative, so the appropriate finite exclusion witness
-can be applied to the packing.
+Stage 0 patterns. `FifteenStageZeroSymmetry.lean` now proves that the canonical
+mask is attained by the original mask or one of its rotations/reflected
+rotations, exposing the symmetry choice as an exact finite theorem. The
+permutation convention in `FifteenStageZeroProfileTransport.lean` sends an old
+slot to `(i + shift) % 15`, or to `(14 - i + shift) % 15` after reflection.
+Pulling profiles back by the inverse permutation preserves population counts,
+pointwise radial-box relations, and pairwise separation.
+`fifteen_unit_packing_wall_push_stage0_dihedral_profile` applies this transport
+to an arbitrary candidate-radius unit-disk packing, preserving the 5--8 inner
+count and every coarse radial box. The remaining handoff is to prove that
+this reindexing produces the enumerator's exact mask,
+transport lifted cyclic angle constraints, and match the radial type word to
+the appropriate finite exclusion witness.
+
+Axiom auditing of the canonical-mask origin and abstract profile-transport
+lemmas reports only standard logical axioms. The packing-level dihedral
+profile theorem also inherits the seven existing native-evaluation axioms of
+`fifteenStage0CoarsePair_numeric_spec`; no new `native_decide` check is added
+by the symmetry or transport modules.
 
 The compact inputs
 `problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage0_cycles.txt` and
@@ -282,16 +297,20 @@ in `[42/25, 43/25]` is impossible below the candidate radius. It derives each
 outer radius from the wall-push radial classification, and the resulting
 local theorem depends only on Lean's standard logical axioms.
 
-The full optimum theorem is not yet closed. From the profile theorem, the
-remaining Stage 0 bridge is to encode the resulting binary pattern and inner
-type word, then relate them to the table's canonical dihedral representative
-while preserving the cyclic angle constraints. The resulting profile must
+The full optimum theorem is not yet closed. The binary profile is already
+encoded and its canonical word lies in the 760-element orbit list. The
+remaining Stage 0 bridge is to reindex the inner type word to that exact
+canonical representative while preserving the lifted cyclic angle constraints.
+The resulting profile must
 either match one of the checked negative-cycle witnesses or lie in the
 certified survivor class. Stage 3/4 and the exact subdivision tree also need
 their per-certificate geometric edge/leaf soundness connected to the full
 packing classification, including the residual roots and the special
 six-inner case. The finite Boolean replays alone do not establish that every
-packing reaches the local obstruction's hypotheses.
+packing reaches the local obstruction's hypotheses. A complete optimality
+theorem also needs an explicit feasible `Packing 15` at the candidate radius;
+the candidate's radius and contact-angle identities do not yet supply that
+construction.
 
 The finite replays are collected in the dedicated target
 `CirclePacking.FifteenAllFiniteCertificates`. It combines Stage 0's orbit and

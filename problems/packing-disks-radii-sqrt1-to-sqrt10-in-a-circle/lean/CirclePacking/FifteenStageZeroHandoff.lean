@@ -1,5 +1,6 @@
 import CirclePacking.FifteenStageZeroAssignments
 import CirclePacking.FifteenStageZeroInnerCount
+import CirclePacking.FifteenStageZeroProfileTransport
 
 /-! Packing-level interface to the finite Stage 0 assignment conditions. -/
 
@@ -217,5 +218,45 @@ theorem fifteen_unit_packing_wall_push_stage0_canonical_pattern
     exact hlow
   · rw [hprofileSet]
     exact hhigh
+
+/-- The geometric radius profile can be transported through any Stage 0
+rotation/reflection without losing the five-to-eight inner count or its
+per-position coarse radius boxes. This does not yet assert that the selected
+permutation encodes the canonical mask or preserves lifted angular order. -/
+theorem fifteen_unit_packing_wall_push_stage0_dihedral_profile
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1)
+    (reflected : Bool) (shift : Fin 15) :
+    let Q := fifteen_unit_packing_wall_push P hunit hR
+    let radii := fifteenStage0TransformProfile (fifteenPackingSortedRadius Q)
+      reflected shift
+    let labels := fifteenStage0TransformProfile
+      (fun i => fifteenStage0RadialTypeIndex (fifteenPackingSortedRadius Q i))
+      reflected shift
+    5 ≤ (Finset.univ.filter fun i : Fin 15 =>
+      radii i < fifteenCandidateInnerThreshold).card ∧
+    (Finset.univ.filter fun i : Fin 15 =>
+      radii i < fifteenCandidateInnerThreshold).card ≤ 8 ∧
+    (∀ i : Fin 15,
+      ((fifteenStage0CoarseTypeBox (labels i)).1 : ℝ) ≤ radii i ∧
+        radii i ≤ ((fifteenStage0CoarseTypeBox (labels i)).2 : ℝ)) := by
+  classical
+  dsimp only
+  have hcount := fifteenStage0TransformProfile_population
+    (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR))
+    (fun r => r < fifteenCandidateInnerThreshold) reflected shift
+  refine ⟨?_, ?_, ?_⟩
+  · rw [hcount]
+    exact fifteen_unit_packing_wall_push_inner_count_ge_five P hunit hR
+  · rw [hcount]
+    exact fifteen_unit_packing_wall_push_inner_count_le_eight P hunit hR
+  · exact fifteenStage0TransformProfile_pointwise
+      (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR))
+      (fun i => fifteenStage0RadialTypeIndex
+        (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR) i))
+      (fun r label => ((fifteenStage0CoarseTypeBox label).1 : ℝ) ≤ r ∧
+        r ≤ ((fifteenStage0CoarseTypeBox label).2 : ℝ)) reflected shift
+      (fifteen_unit_packing_wall_push_sorted_radial_type_box P hunit hR)
 
 end CirclePacking
