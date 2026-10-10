@@ -224,4 +224,91 @@ theorem fifteen_unit_packing_last_survivor_impossible
     hI₀ hI₃ hI₆ hI₉ hI₁₂
     hO₁ hO₂ hO₄ hO₅ hO₇ hO₈ hO₁₀ hO₁₁ hO₁₃ hO₁₄
 
+/-- A compact geometric interface for the last finite survivor.  It is enough
+to know that the wall-pushed sorted radii follow `(I,O,O)^5`, and that the
+five inner radii lie in the rational local box.  Every `O` entry is then
+identified with the wall radius by the wall-push classification theorem. -/
+theorem fifteen_unit_packing_canonical_pattern_local_box_impossible
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R < fifteenCandidateOuterRadius + 1)
+    (hpattern : ∀ k : Fin 15,
+      (fifteenPackingSortedRadius (fifteenStrictWallPush P hunit hR) k <
+        fifteenCandidateInnerThreshold) ↔ k.1 % 3 = 0)
+    (hr₀ : fifteenPackingSortedRadius
+      (fifteenStrictWallPush P hunit hR) 0 ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
+    (hr₁ : fifteenPackingSortedRadius
+      (fifteenStrictWallPush P hunit hR) 3 ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
+    (hr₂ : fifteenPackingSortedRadius
+      (fifteenStrictWallPush P hunit hR) 6 ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
+    (hr₃ : fifteenPackingSortedRadius
+      (fifteenStrictWallPush P hunit hR) 9 ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
+    (hr₄ : fifteenPackingSortedRadius
+      (fifteenStrictWallPush P hunit hR) 12 ∈ Set.Icc (42 / 25 : ℝ) (43 / 25)) :
+    False := by
+  let Q := fifteenStrictWallPush P hunit hR
+  let r₀ := fifteenPackingSortedRadius Q 0
+  let r₁ := fifteenPackingSortedRadius Q 3
+  let r₂ := fifteenPackingSortedRadius Q 6
+  let r₃ := fifteenPackingSortedRadius Q 9
+  let r₄ := fifteenPackingSortedRadius Q 12
+  have hQpattern (k : Fin 15) :
+      (fifteenPackingSortedRadius Q k < fifteenCandidateInnerThreshold) ↔
+        k.1 % 3 = 0 := by
+    simpa [Q] using hpattern k
+  have houter (k : Fin 15) (hk : k.1 % 3 ≠ 0) :
+      fifteenPackingSortedRadius Q k = fifteenCandidateOuterRadius := by
+    have hnotinner : ¬ fifteenPackingSortedRadius Q k <
+        fifteenCandidateInnerThreshold := by
+      intro hinner
+      exact hk (hQpattern k |>.1 hinner)
+    have hclass := fifteen_unit_packing_wall_push_sorted_radial_classification
+      P hunit (le_of_lt hR) k
+    have hclassQ : fifteenPackingSortedRadius Q k =
+        fifteenCandidateOuterRadius ∨
+        fifteenPackingSortedRadius Q k < fifteenCandidateInnerThreshold := by
+      simpa [Q, fifteenStrictWallPush] using hclass
+    exact hclassQ.resolve_right hnotinner
+  have hQ₀ : fifteenPackingSortedRadius Q 0 = r₀ := rfl
+  have hQ₁ : fifteenPackingSortedRadius Q 1 = fifteenCandidateOuterRadius :=
+    houter 1 (by norm_num)
+  have hQ₂ : fifteenPackingSortedRadius Q 2 = fifteenCandidateOuterRadius :=
+    houter 2 (by norm_num)
+  have hQ₃ : fifteenPackingSortedRadius Q 3 = r₁ := rfl
+  have hQ₄ : fifteenPackingSortedRadius Q 4 = fifteenCandidateOuterRadius :=
+    houter 4 (by norm_num)
+  have hQ₅ : fifteenPackingSortedRadius Q 5 = fifteenCandidateOuterRadius :=
+    houter 5 (by norm_num)
+  have hQ₆ : fifteenPackingSortedRadius Q 6 = r₂ := rfl
+  have hQ₇ : fifteenPackingSortedRadius Q 7 = fifteenCandidateOuterRadius :=
+    houter 7 (by norm_num)
+  have hQ₈ : fifteenPackingSortedRadius Q 8 = fifteenCandidateOuterRadius :=
+    houter 8 (by norm_num)
+  have hQ₉ : fifteenPackingSortedRadius Q 9 = r₃ := rfl
+  have hQ₁₀ : fifteenPackingSortedRadius Q 10 = fifteenCandidateOuterRadius :=
+    houter 10 (by norm_num)
+  have hQ₁₁ : fifteenPackingSortedRadius Q 11 = fifteenCandidateOuterRadius :=
+    houter 11 (by norm_num)
+  have hQ₁₂ : fifteenPackingSortedRadius Q 12 = r₄ := rfl
+  have hQ₁₃ : fifteenPackingSortedRadius Q 13 = fifteenCandidateOuterRadius :=
+    houter 13 (by norm_num)
+  have hQ₁₄ : fifteenPackingSortedRadius Q 14 = fifteenCandidateOuterRadius :=
+    houter 14 (by norm_num)
+  have hr₀' : r₀ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25) := by simpa [r₀, Q] using hr₀
+  have hr₁' : r₁ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25) := by simpa [r₁, Q] using hr₁
+  have hr₂' : r₂ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25) := by simpa [r₂, Q] using hr₂
+  have hr₃' : r₃ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25) := by simpa [r₃, Q] using hr₃
+  have hr₄' : r₄ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25) := by simpa [r₄, Q] using hr₄
+  exact fifteen_unit_packing_last_survivor_impossible P hunit hR
+    r₀ r₁ r₂ r₃ r₄
+    (by simpa [Q] using hQ₀) (by simpa [Q] using hQ₁)
+    (by simpa [Q] using hQ₂) (by simpa [Q] using hQ₃)
+    (by simpa [Q] using hQ₄) (by simpa [Q] using hQ₅)
+    (by simpa [Q] using hQ₆) (by simpa [Q] using hQ₇)
+    (by simpa [Q] using hQ₈) (by simpa [Q] using hQ₉)
+    (by simpa [Q] using hQ₁₀) (by simpa [Q] using hQ₁₁)
+    (by simpa [Q] using hQ₁₂) (by simpa [Q] using hQ₁₃)
+    (by simpa [Q] using hQ₁₄)
+    hr₀' hr₁' hr₂' hr₃' hr₄'
+
 end CirclePacking
