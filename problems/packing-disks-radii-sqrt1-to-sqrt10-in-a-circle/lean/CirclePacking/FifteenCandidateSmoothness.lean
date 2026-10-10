@@ -148,19 +148,41 @@ private theorem fifteenCandidateOuterRadius_lt_73_20 :
     nlinarith [mul_nonneg hfactor₁ hfactor₂]
   nlinarith [hqSq]
 
+theorem fifteenCandidateDirectCosineArgument_mem_Ioo
+    (dx dy : ℝ)
+    (hdx : |dx| ≤ (11 / 500 : ℝ))
+    (hdy : |dy| ≤ (11 / 500 : ℝ))
+    {t : ℝ} (ht : t ∈ Set.uIcc 0 1) :
+    fifteenAngleCosineArgument
+        (fifteenCandidateInnerRadius + t * dx)
+        (fifteenCandidateInnerRadius + t * dy) ∈ Set.Ioo (-1) 1 := by
+  have hx := fifteenCandidateSegmentRadius_mem dx hdx ht
+  have hy := fifteenCandidateSegmentRadius_mem dy hdy ht
+  apply fifteenAngleCosineArgument_mem_Ioo
+  · linarith [hx.1]
+  · linarith [hy.1]
+  · linarith [hx.1, hy.1]
+  · rw [abs_lt]
+    constructor <;> linarith [hx.1, hx.2, hy.1, hy.2]
+
+theorem fifteenCandidateMixedCosineArgument_mem_Ioo
+    {x : ℝ} (hx : 839 / 500 < x) (hx' : x < 862 / 500) :
+    fifteenAngleCosineArgument x fifteenCandidateOuterRadius ∈ Set.Ioo (-1) 1 := by
+  have hblo := fifteenCandidateOuterRadius_gt_three
+  have hbhi := fifteenCandidateOuterRadius_lt_73_20
+  apply fifteenAngleCosineArgument_mem_Ioo
+  · exact lt_trans (by norm_num) hx
+  · exact fifteenCandidateOuterRadius_pos
+  · linarith
+  · rw [abs_lt]
+    constructor <;> linarith
+
 private theorem fifteenCandidateMixedCosineArgument_ne_endpoints
     {x : ℝ} (hx : 839 / 500 < x) (hx' : x < 862 / 500) :
     fifteenAngleCosineArgument x fifteenCandidateOuterRadius ≠ -1 ∧
       fifteenAngleCosineArgument x fifteenCandidateOuterRadius ≠ 1 := by
-  have hblo := fifteenCandidateOuterRadius_gt_three
-  have hbhi := fifteenCandidateOuterRadius_lt_73_20
-  have hxpos : 0 < x := by norm_num at hx ⊢; linarith
-  have hbsum : 2 < x + fifteenCandidateOuterRadius := by linarith
-  have hdiff : |x - fifteenCandidateOuterRadius| < 2 := by
-    rw [abs_lt]
-    constructor <;> linarith
-  exact fifteenAngleCosineArgument_ne_endpoints_of_geometry hxpos
-    fifteenCandidateOuterRadius_pos hbsum hdiff
+  have hcap := fifteenCandidateMixedCosineArgument_mem_Ioo hx hx'
+  exact ⟨ne_of_gt hcap.1, ne_of_lt hcap.2⟩
 
 theorem fifteenCandidateDirectAngle_contDiffOn
     (dx dy : ℝ)
