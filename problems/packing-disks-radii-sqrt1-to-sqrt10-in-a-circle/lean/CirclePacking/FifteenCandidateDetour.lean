@@ -25,6 +25,12 @@ theorem fifteenCandidateOuterRadius_sq :
   rw [Real.sq_sqrt]
   positivity
 
+/-- The candidate center radius in the conventional cotangent notation. -/
+theorem fifteenCandidateOuterRadius_eq_cot_formula :
+    fifteenCandidateOuterRadius =
+      Real.sqrt (1 + (2 + Real.cot (Real.pi / 5)) ^ 2) := by
+  rw [fifteenCandidateOuterRadius, fifteenLocalPhi, Real.cot_eq_cos_div_sin]
+
 theorem fifteenCandidateOuterRadius_gt_one :
     1 < fifteenCandidateOuterRadius := by
   have ht : 0 < 2 + Real.cos fifteenLocalPhi / Real.sin fifteenLocalPhi := by

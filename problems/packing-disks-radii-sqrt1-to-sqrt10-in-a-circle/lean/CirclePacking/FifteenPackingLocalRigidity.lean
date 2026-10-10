@@ -117,7 +117,7 @@ theorem fifteen_unit_packing_local_rigidity_of_survivor_pattern
       r₂ = fifteenCandidateInnerRadius ∧
       r₃ = fifteenCandidateInnerRadius ∧
       r₄ = fifteenCandidateInnerRadius) ∧
-      1 + fifteenCandidateOuterRadius ≤ R := by
+      1 + Real.sqrt (1 + (2 + Real.cot (Real.pi / 5)) ^ 2) ≤ R := by
   have hbudget := fifteen_unit_packing_ordered_pattern_angle_budget
     P hunit r₀ r₁ r₂ r₃ r₄ fifteenCandidateOuterRadius
     hR₀ hR₁ hR₂ hR₃ hR₄ hR₅ hR₆ hR₇ hR₈ hR₉ hR₁₀ hR₁₁ hR₁₂ hR₁₃ hR₁₄
@@ -147,6 +147,10 @@ theorem fifteen_unit_packing_local_rigidity_of_survivor_pattern
     hDirectCont hDetourCont hbudget
   have hradius := fifteen_unit_packing_radius_lower_bound_of_candidate_outer_center
     P hunit hR₁
-  exact ⟨hrigid, hradius⟩
+  have hradiusExact :
+      1 + Real.sqrt (1 + (2 + Real.cot (Real.pi / 5)) ^ 2) ≤ R := by
+    rw [← fifteenCandidateOuterRadius_eq_cot_formula]
+    exact hradius
+  exact ⟨hrigid, hradiusExact⟩
 
 end CirclePacking
