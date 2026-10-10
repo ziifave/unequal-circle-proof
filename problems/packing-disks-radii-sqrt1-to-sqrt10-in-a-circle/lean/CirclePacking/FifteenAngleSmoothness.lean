@@ -1,4 +1,6 @@
 import CirclePacking.FifteenTouchAngleDerivatives
+import Mathlib.Analysis.Calculus.IteratedDeriv.FaaDiBruno
+import Mathlib.Analysis.SpecialFunctions.Sqrt
 
 /-! Smoothness of the cosine-rule angles along radius segments.  This module
 isolates the only domain obligations: radii stay nonzero and the cosine-rule
@@ -85,5 +87,61 @@ theorem fifteenDetourAngle_segment_contDiffOn
       (fifteenTouchAngle (x + t * dx) b + fifteenTouchAngle b b) +
         fifteenTouchAngle (y + t * dy) b) s
   simpa [add_assoc] using hsum
+
+/-- The exact second derivative of `arccos` on its smooth interval. -/
+theorem fifteen_iteratedDeriv_two_arccos
+    {x : ℝ} (hxlo : -1 < x) (hxhi : x < 1) :
+    iteratedDeriv 2 Real.arccos x =
+      -(x / Real.sqrt (1 - x ^ 2) ^ 3) := by
+  have hleft : 0 < 1 - x := by linarith
+  have hright : 0 < 1 + x := by linarith
+  have hu : 0 < 1 - x ^ 2 := by
+    nlinarith [mul_pos hleft hright]
+  have hsqrt : Real.sqrt (1 - x ^ 2) ≠ 0 :=
+    ne_of_gt (Real.sqrt_pos.2 hu)
+  have hpolyRaw := (hasDerivAt_id x).pow 2
+  have hpoly : HasDerivAt (fun y : ℝ => y ^ 2) (2 * x) x := by
+    have hpolyRaw' := hpolyRaw.congr_deriv (by norm_num [id] :
+      (2 : ℝ) * id x ^ (2 - 1) * 1 = 2 * x)
+    exact hpolyRaw'.congr_of_eventuallyEq
+      (Filter.Eventually.of_forall fun y => by simp [id])
+  have hrad : HasDerivAt (fun y : ℝ => 1 - y ^ 2) (-2 * x) x := by
+    convert (hasDerivAt_const x 1).sub hpoly using 1 <;> ring
+  have hsqrt' := (Real.hasDerivAt_sqrt (ne_of_gt hu)).comp x hrad
+  have hinv := hsqrt'.inv hsqrt
+  have hsecond : HasDerivAt
+      (fun y : ℝ => -(1 / Real.sqrt (1 - y ^ 2)))
+      (-(x / Real.sqrt (1 - x ^ 2) ^ 3)) x := by
+    convert hinv.neg using 1
+    · ext y
+      simp [Function.comp_apply, one_div]
+    · simp only [Function.comp_apply]
+      field_simp [hsqrt]
+  calc
+    iteratedDeriv 2 Real.arccos x = deriv (deriv Real.arccos) x := by
+      rw [show (2 : ℕ) = 1 + 1 by norm_num, iteratedDeriv_succ]
+      simp
+    _ = deriv (fun y : ℝ => -(1 / Real.sqrt (1 - y ^ 2))) x := by
+      rw [Real.deriv_arccos]
+    _ = -(x / Real.sqrt (1 - x ^ 2) ^ 3) := hsecond.deriv
+
+/-- Chain-rule form of the second derivative of a cosine-rule arccosine.
+This is the exact expression whose rational interval enclosure supplies the
+remaining Taylor-curvature estimate. -/
+theorem fifteen_iteratedDeriv_two_arccos_comp
+    (f : ℝ → ℝ) (x : ℝ)
+    (hf : ContDiffAt ℝ 2 f x)
+    (hflo : -1 < f x) (hfhi : f x < 1) :
+    iteratedDeriv 2 (Real.arccos ∘ f) x =
+      (deriv f x) ^ 2 *
+          (-(f x / Real.sqrt (1 - (f x) ^ 2) ^ 3)) +
+        iteratedDeriv 2 f x *
+          (-(1 / Real.sqrt (1 - (f x) ^ 2))) := by
+  have hg : ContDiffAt ℝ 2 Real.arccos (f x) :=
+    Real.contDiffAt_arccos (ne_of_gt (by linarith [hflo]))
+      (ne_of_lt (by linarith [hfhi]))
+  rw [iteratedDeriv_scomp_two hg hf]
+  rw [fifteen_iteratedDeriv_two_arccos hflo hfhi, Real.deriv_arccos]
+  simp only [smul_eq_mul]
 
 end CirclePacking
