@@ -433,6 +433,278 @@ theorem mainAlpha5_tlow_rmid_rational_angle_bounds :
       mainAlpha5TlowRmidQHi]
   exact ⟨le_trans hnumLo hTaylor.1, le_trans hTaylor.2 hnumHi⟩
 
+def mainBeta57RmidQLo : ℝ :=
+  2173786597031733212415 / 10000000000000000000000
+
+def mainBeta57RmidQHi : ℝ :=
+  2173786597031733212416 / 10000000000000000000000
+
+/-- The contact angle between disks 5 and 7 at the radius-box midpoint has
+an exact quarter-angle parameter in this rational interval. The half-angle
+ratio simplifies to `sqrt 5 * sqrt 7 / (R * (R - sqrt 5 - sqrt 7))`. -/
+theorem mainBeta57_rmid_quarter_parameter_bounds :
+    touchCosine
+        ((8.3034681221114890 + 8.3034681221114900) / 2 - Real.sqrt 5)
+        ((8.3034681221114890 + 8.3034681221114900) / 2 - Real.sqrt 7)
+        (Real.sqrt 5 + Real.sqrt 7) ∈ Set.Ioo (-1) 1 ∧
+      mainBeta57RmidQLo ≤ mainQuarterBeta57
+        ((8.3034681221114890 + 8.3034681221114900) / 2) ∧
+      mainQuarterBeta57
+        ((8.3034681221114890 + 8.3034681221114900) / 2) ≤
+        mainBeta57RmidQHi := by
+  let R : ℝ := (8.3034681221114890 + 8.3034681221114900) / 2
+  let u : ℝ := Real.sqrt 5
+  let v : ℝ := Real.sqrt 7
+  let a : ℝ := R - u
+  let b : ℝ := R - v
+  let d : ℝ := u + v
+  let den : ℝ := R * (R - u - v)
+  let z : ℝ := u * v / den
+  have huSq : u ^ 2 = 5 := by dsimp [u]; exact Real.sq_sqrt (by norm_num)
+  have hvSq : v ^ 2 = 7 := by dsimp [v]; exact Real.sq_sqrt (by norm_num)
+  have hu :
+      2.236067977499789696409173 ≤ u ∧
+        u ≤ 2.236067977499789696409174 := by
+    constructor
+    · apply (sq_le_sq₀ (by norm_num) (Real.sqrt_nonneg _)).mp
+      nlinarith [huSq]
+    · apply (sq_le_sq₀ (Real.sqrt_nonneg _) (by norm_num)).mp
+      nlinarith [huSq]
+  have hv :
+      2.645751311064590590501615 ≤ v ∧
+        v ≤ 2.645751311064590590501616 := by
+    constructor
+    · apply (sq_le_sq₀ (by norm_num) (Real.sqrt_nonneg _)).mp
+      nlinarith [hvSq]
+    · apply (sq_le_sq₀ (Real.sqrt_nonneg _) (by norm_num)).mp
+      nlinarith [hvSq]
+  have hRlo : (8.3034681221114895 : ℝ) ≤ R := by norm_num [R]
+  have hRhi : R ≤ (8.3034681221114895 : ℝ) := by norm_num [R]
+  have huPos : 0 < u := lt_of_lt_of_le (by norm_num) hu.1
+  have hvPos : 0 < v := lt_of_lt_of_le (by norm_num) hv.1
+  have haPos : 0 < a := by dsimp [a, R]; nlinarith [hu.2]
+  have hbPos : 0 < b := by dsimp [b, R]; nlinarith [hv.2]
+  have hdiff : |a - b| < d := by
+    apply abs_lt.mpr
+    constructor <;> dsimp [a, b, d] <;> nlinarith [hu.1, hu.2, hv.1, hv.2]
+  have hsum : d < a + b := by
+    dsimp [a, b, d, R]
+    nlinarith [hu.2, hv.2]
+  have hcos : touchCosine a b d ∈ Set.Ioo (-1) 1 :=
+    touchCosine_mem_Ioo_of_triangle_bounds haPos hbPos hdiff hsum
+  have hdenPos : 0 < den := by
+    dsimp [den, R]
+    nlinarith [hu.2, hv.2]
+  have hpolyPos : 0 < (a + b) ^ 2 - d ^ 2 := by
+    have hleft : 0 < a + b - d := by linarith [hsum]
+    have hright : 0 < a + b + d := by positivity
+    have hfactor : (a + b) ^ 2 - d ^ 2 =
+        (a + b - d) * (a + b + d) := by ring
+    rw [hfactor]
+    exact mul_pos hleft hright
+  have hratio :
+      (1 - touchCosine a b d) / (1 + touchCosine a b d) = z := by
+    have hside := touchCosine_halfAngleRatio
+      (a := a) (b := b) (d := d) (ne_of_gt haPos) (ne_of_gt hbPos)
+      (ne_of_gt hpolyPos)
+    have hnum : d ^ 2 - (a - b) ^ 2 = 4 * u * v := by
+      dsimp [a, b, d]
+      ring_nf
+    have hden : (a + b) ^ 2 - d ^ 2 = 4 * den := by
+      dsimp [a, b, d, den]
+      ring
+    rw [hside, hnum, hden]
+    dsimp [z]
+    field_simp [ne_of_gt hdenPos]
+  have huvLo :
+      (2.236067977499789696409173 : ℝ) *
+          2.645751311064590590501615 ≤ u * v :=
+    mul_le_mul hu.1 hv.1 (by norm_num) (le_of_lt huPos)
+  have huvHi : u * v ≤
+      (2.236067977499789696409174 : ℝ) *
+        2.645751311064590590501616 :=
+    mul_le_mul hu.2 hv.2 (le_of_lt hvPos) (by norm_num)
+  have hdenLo :
+      (8.3034681221114895 : ℝ) *
+          (8.3034681221114895 -
+            2.236067977499789696409174 -
+            2.645751311064590590501616) ≤ den := by
+    dsimp [den, R]
+    nlinarith [hu.1, hu.2, hv.1, hv.2]
+  have hdenHi : den ≤
+      (8.3034681221114895 : ℝ) *
+        (8.3034681221114895 -
+          2.236067977499789696409173 -
+          2.645751311064590590501615) := by
+    dsimp [den, R]
+    nlinarith [hu.1, hu.2, hv.1, hv.2]
+  have hqLo0 : 0 ≤ mainBeta57RmidQLo := by norm_num [mainBeta57RmidQLo]
+  have hqLo1 : mainBeta57RmidQLo < 1 := by norm_num [mainBeta57RmidQLo]
+  have hqHi0 : 0 ≤ mainBeta57RmidQHi := by norm_num [mainBeta57RmidQHi]
+  have hqHi1 : mainBeta57RmidQHi < 1 := by norm_num [mainBeta57RmidQHi]
+  have hthresholdLo :
+      ((1 + mainBeta57RmidQLo ^ 2) /
+        (1 - mainBeta57RmidQLo ^ 2)) ^ 2 ≤ 1 + z := by
+    have hcleared :
+        4 * mainBeta57RmidQLo ^ 2 * den ≤
+          u * v * (1 - mainBeta57RmidQLo ^ 2) ^ 2 := by
+      dsimp [mainBeta57RmidQLo]
+      nlinarith [huvLo, huvHi, hdenLo, hdenHi]
+    have hratio' : 4 * mainBeta57RmidQLo ^ 2 ≤
+        z * (1 - mainBeta57RmidQLo ^ 2) ^ 2 := by
+      calc
+        4 * mainBeta57RmidQLo ^ 2 ≤
+            u * v * (1 - mainBeta57RmidQLo ^ 2) ^ 2 / den :=
+          (le_div_iff₀ hdenPos).2 hcleared
+        _ = z * (1 - mainBeta57RmidQLo ^ 2) ^ 2 := by
+          dsimp [z]
+          ring
+    have hform :
+        ((1 + mainBeta57RmidQLo ^ 2) /
+          (1 - mainBeta57RmidQLo ^ 2)) ^ 2 - 1 ≤ z := by
+      have hqden : 0 < 1 - mainBeta57RmidQLo ^ 2 := by
+        norm_num [mainBeta57RmidQLo]
+      have hpos : 0 < (1 - mainBeta57RmidQLo ^ 2) ^ 2 := pow_pos hqden 2
+      have hquot : 4 * mainBeta57RmidQLo ^ 2 /
+          (1 - mainBeta57RmidQLo ^ 2) ^ 2 ≤ z :=
+        (div_le_iff₀ hpos).2 hratio'
+      have hiden :
+          ((1 + mainBeta57RmidQLo ^ 2) /
+            (1 - mainBeta57RmidQLo ^ 2)) ^ 2 - 1 =
+            4 * mainBeta57RmidQLo ^ 2 /
+              (1 - mainBeta57RmidQLo ^ 2) ^ 2 := by
+        have hdenNe : 1 - mainBeta57RmidQLo ^ 2 ≠ 0 := by
+          exact ne_of_gt hqden
+        field_simp [hdenNe]
+        ring
+      rw [hiden]
+      exact hquot
+    linarith
+  have hthresholdHi :
+      1 + z ≤ ((1 + mainBeta57RmidQHi ^ 2) /
+        (1 - mainBeta57RmidQHi ^ 2)) ^ 2 := by
+    have hcleared :
+        u * v * (1 - mainBeta57RmidQHi ^ 2) ^ 2 ≤
+          4 * mainBeta57RmidQHi ^ 2 * den := by
+      dsimp [mainBeta57RmidQHi]
+      nlinarith [huvLo, huvHi, hdenLo, hdenHi]
+    have hratio' : z * (1 - mainBeta57RmidQHi ^ 2) ^ 2 ≤
+        4 * mainBeta57RmidQHi ^ 2 := by
+      calc
+        z * (1 - mainBeta57RmidQHi ^ 2) ^ 2 =
+            u * v * (1 - mainBeta57RmidQHi ^ 2) ^ 2 / den := by
+          dsimp [z]
+          ring
+        _ ≤ 4 * mainBeta57RmidQHi ^ 2 :=
+          (div_le_iff₀ hdenPos).2 hcleared
+    have hform : z ≤
+        ((1 + mainBeta57RmidQHi ^ 2) /
+          (1 - mainBeta57RmidQHi ^ 2)) ^ 2 - 1 := by
+      have hqden : 0 < 1 - mainBeta57RmidQHi ^ 2 := by
+        norm_num [mainBeta57RmidQHi]
+      have hpos : 0 < (1 - mainBeta57RmidQHi ^ 2) ^ 2 := pow_pos hqden 2
+      have hquot : z ≤ 4 * mainBeta57RmidQHi ^ 2 /
+          (1 - mainBeta57RmidQHi ^ 2) ^ 2 := by
+        apply (le_div_iff₀ hpos).2
+        exact hratio'
+      have hiden :
+          ((1 + mainBeta57RmidQHi ^ 2) /
+            (1 - mainBeta57RmidQHi ^ 2)) ^ 2 - 1 =
+            4 * mainBeta57RmidQHi ^ 2 /
+              (1 - mainBeta57RmidQHi ^ 2) ^ 2 := by
+        have hdenNe : 1 - mainBeta57RmidQHi ^ 2 ≠ 0 := by
+          exact ne_of_gt hqden
+        field_simp [hdenNe]
+        ring
+      rw [hiden]
+      exact hquot
+    linarith
+  have hlo := le_arccosQuarterParameter_of_ratio_bound
+    hcos.1 hcos.2 hqLo0 hqLo1 (by rw [hratio]; exact hthresholdLo)
+  have hhi := arccosQuarterParameter_le_of_ratio_bound
+    hcos.1 hcos.2 hqHi0 hqHi1 (by rw [hratio]; exact hthresholdHi)
+  refine ⟨?_, ?_, ?_⟩
+  · simpa [a, b, d, R, u, v] using hcos
+  · simpa [mainQuarterBeta57, R, u, v] using hlo
+  · simpa [mainQuarterBeta57, R, u, v] using hhi
+
+/-- Convert a rational interval for the quarter-angle parameter into a
+rational Taylor enclosure for the corresponding contact angle. -/
+theorem arccos_quarterTaylor_enclosure {c qLo qHi : ℝ}
+    (hcLo : -1 < c) (hcHi : c < 1)
+    (hqLo0 : 0 ≤ qLo) (hqHiHalf : qHi ≤ 1 / 2)
+    (hqLo : qLo ≤ arccosQuarterParameter c)
+    (hqHi : arccosQuarterParameter c ≤ qHi) (n : ℕ) :
+    4 * (arctanTaylorPartial qLo n - arctanTaylorTerm qLo n) ≤
+        Real.arccos c ∧
+      Real.arccos c ≤
+        4 * (arctanTaylorPartial qHi n + arctanTaylorTerm qHi n) := by
+  have hangle := arccos_eq_four_arctan_quarterParameter hcLo hcHi
+  have hmonoLo := Real.arctan_mono hqLo
+  have hmonoHi := Real.arctan_mono hqHi
+  have hTaylorLo := arctanTaylor_error_bound hqLo0 (by linarith) n
+  have hTaylorHi := arctanTaylor_error_bound
+    (le_trans hqLo0 (le_trans hqLo hqHi)) hqHiHalf n
+  have hTaylorLo' :
+      arctanTaylorPartial qLo n - arctanTaylorTerm qLo n ≤
+        Real.arctan qLo := by
+    have h := (abs_le.mp hTaylorLo).1
+    linarith
+  have hTaylorHi' :
+      Real.arctan qHi ≤ arctanTaylorPartial qHi n +
+        arctanTaylorTerm qHi n := by
+    have h := (abs_le.mp hTaylorHi).2
+    linarith
+  rw [hangle]
+  constructor
+  · calc
+      4 * (arctanTaylorPartial qLo n - arctanTaylorTerm qLo n) ≤
+          4 * Real.arctan qLo :=
+            mul_le_mul_of_nonneg_left hTaylorLo' (by norm_num)
+      _ ≤ 4 * Real.arctan (arccosQuarterParameter c) :=
+        mul_le_mul_of_nonneg_left hmonoLo (by norm_num)
+  · calc
+      4 * Real.arctan (arccosQuarterParameter c) ≤ 4 * Real.arctan qHi :=
+        mul_le_mul_of_nonneg_left hmonoHi (by norm_num)
+      _ ≤ 4 * (arctanTaylorPartial qHi n +
+          arctanTaylorTerm qHi n) :=
+        mul_le_mul_of_nonneg_left hTaylorHi' (by norm_num)
+
+theorem mainBeta57_rmid_taylor_enclosure (n : ℕ) :
+    4 * (arctanTaylorPartial mainBeta57RmidQLo n -
+        arctanTaylorTerm mainBeta57RmidQLo n) ≤
+      mainBeta57 ((8.3034681221114890 + 8.3034681221114900) / 2) ∧
+    mainBeta57 ((8.3034681221114890 + 8.3034681221114900) / 2) ≤
+      4 * (arctanTaylorPartial mainBeta57RmidQHi n +
+        arctanTaylorTerm mainBeta57RmidQHi n) := by
+  have hq := mainBeta57_rmid_quarter_parameter_bounds
+  have hangle := arccos_quarterTaylor_enclosure
+    hq.1.1 hq.1.2 (by norm_num [mainBeta57RmidQLo])
+    (by norm_num [mainBeta57RmidQHi]) hq.2.1 hq.2.2 n
+  simpa [mainBeta57, mainQuarterBeta57, touchAngle] using hangle
+
+/-- Concrete rational endpoints for the disk-5/disk-7 contact angle at the
+certified radius midpoint, obtained by exact finite Taylor-sum arithmetic. -/
+theorem mainBeta57_rmid_rational_angle_bounds :
+    (8561944379767423103489 : ℝ) / 10000000000000000000000 ≤
+      mainBeta57 ((8.3034681221114890 + 8.3034681221114900) / 2) ∧
+    mainBeta57 ((8.3034681221114890 + 8.3034681221114900) / 2) ≤
+      (8561944379767423103494 : ℝ) / 10000000000000000000000 := by
+  have hTaylor := mainBeta57_rmid_taylor_enclosure 24
+  have hnumLo :
+      (8561944379767423103489 : ℝ) / 10000000000000000000000 ≤
+        4 * (arctanTaylorPartial mainBeta57RmidQLo 24 -
+          arctanTaylorTerm mainBeta57RmidQLo 24) := by
+    norm_num [arctanTaylorPartial, arctanTaylorTerm,
+      mainBeta57RmidQLo]
+  have hnumHi :
+      4 * (arctanTaylorPartial mainBeta57RmidQHi 24 +
+          arctanTaylorTerm mainBeta57RmidQHi 24) ≤
+        (8561944379767423103494 : ℝ) / 10000000000000000000000 := by
+    norm_num [arctanTaylorPartial, arctanTaylorTerm,
+      mainBeta57RmidQHi]
+  exact ⟨le_trans hnumLo hTaylor.1, le_trans hTaylor.2 hnumHi⟩
+
 end
 
 end CirclePacking
