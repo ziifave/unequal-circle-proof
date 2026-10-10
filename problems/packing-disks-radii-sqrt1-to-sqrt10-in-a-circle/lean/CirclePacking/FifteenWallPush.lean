@@ -181,6 +181,24 @@ theorem fifteen_wall_push_preserves_outer_pair
     <;> ring
   nlinarith [hscaled, hreduce]
 
+/-- Pushing an outer center radially outward also preserves separation from an
+inner center.  The inner radius is no larger than the old outer radius. -/
+theorem fifteen_wall_push_preserves_outer_inner_pair
+    {x y b α β : ℝ}
+    (hxb : x ≤ b) (hyx : y ≤ x) (hy0 : 0 ≤ y)
+    (hsep : 4 ≤ pointNorm
+      ((polarPoint x α).1 - (polarPoint y β).1,
+       (polarPoint x α).2 - (polarPoint y β).2) ^ 2) :
+    4 ≤ pointNorm
+      ((polarPoint b α).1 - (polarPoint y β).1,
+       (polarPoint b α).2 - (polarPoint y β).2) ^ 2 := by
+  rw [fifteenPolarPair_distance_sq] at hsep ⊢
+  have hfactor : 0 ≤ b + x - 2 * y * Real.cos (α - β) := by
+    nlinarith [Real.cos_le_one (α - β)]
+  have hgap : 0 ≤ (b - x) * (b + x - 2 * y * Real.cos (α - β)) :=
+    mul_nonneg (sub_nonneg.mpr hxb) hfactor
+  nlinarith [hsep, hgap]
+
 theorem fifteen_unit_packing_wall_push_outer_pair
     {R : ℝ} (P : Packing 15 R)
     (hunit : ∀ i, (P.circles i).radius = 1)
@@ -198,5 +216,122 @@ theorem fifteen_unit_packing_wall_push_outer_pair
     fifteenCandidateOuterRadius_pos (le_of_lt fifteenCandidateInnerThreshold_gt_two)
     rfl ⟨hri, hRi⟩ ⟨hrj, hRj⟩
   exact fifteen_unit_packing_polar_pair_separated P hunit i j hij
+
+noncomputable def fifteenWallPushedCenter {R : ℝ}
+    (P : Packing 15 R) (i : Fin 15) : Point :=
+  if fifteenCandidateInnerThreshold ≤ fifteenCenterRadius P i then
+    polarPoint fifteenCandidateOuterRadius (fifteenPackingPolarAngle P i)
+  else (P.circles i).center
+
+/-- A single formula covers outer--outer, outer--inner, inner--outer, and
+inner--inner pairs.  Thus the wall replacement preserves the complete
+pairwise-separation relation. -/
+theorem fifteen_unit_packing_wall_push_pair_separated
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (i j : Fin 15) (hij : i ≠ j)
+    (hRi : fifteenCenterRadius P i ≤ fifteenCandidateOuterRadius)
+    (hRj : fifteenCenterRadius P j ≤ fifteenCandidateOuterRadius) :
+    4 ≤ distSq (fifteenWallPushedCenter P i) (fifteenWallPushedCenter P j) := by
+  have hpolarI := (fifteenPackingPolarAngle_spec P i).2.2
+  have hpolarJ := (fifteenPackingPolarAngle_spec P j).2.2
+  have hsep := fifteen_unit_packing_polar_pair_separated P hunit i j hij
+  change 4 ≤ distSq (fifteenWallPushedCenter P i)
+      (fifteenWallPushedCenter P j)
+  by_cases hi : fifteenCandidateInnerThreshold ≤ fifteenCenterRadius P i
+  · by_cases hj : fifteenCandidateInnerThreshold ≤ fifteenCenterRadius P j
+    · have houter := fifteen_unit_packing_wall_push_outer_pair
+        P hunit i j hij hi hj hRi hRj
+      simpa [fifteenWallPushedCenter, hi, hj, distSq, pointNorm_sq] using houter
+    · have hjlt : fifteenCenterRadius P j < fifteenCandidateInnerThreshold := lt_of_not_ge hj
+      have hji : fifteenCenterRadius P j ≤ fifteenCenterRadius P i := le_of_lt (lt_of_lt_of_le hjlt hi)
+      have hmix := fifteen_wall_push_preserves_outer_inner_pair
+        hRi hji (pointNorm_nonneg (P.circles j).center) hsep
+      simpa [fifteenWallPushedCenter, hi, hj, distSq, pointNorm_sq, hpolarJ] using hmix
+  · by_cases hj : fifteenCandidateInnerThreshold ≤ fifteenCenterRadius P j
+    · have hilt : fifteenCenterRadius P i < fifteenCandidateInnerThreshold := lt_of_not_ge hi
+      have hijr : fifteenCenterRadius P i ≤ fifteenCenterRadius P j := le_of_lt (lt_of_lt_of_le hilt hj)
+      have hsepRev : 4 ≤ pointNorm
+          ((polarPoint (fifteenCenterRadius P j) (fifteenPackingPolarAngle P j)).1 -
+              (polarPoint (fifteenCenterRadius P i) (fifteenPackingPolarAngle P i)).1,
+           (polarPoint (fifteenCenterRadius P j) (fifteenPackingPolarAngle P j)).2 -
+              (polarPoint (fifteenCenterRadius P i) (fifteenPackingPolarAngle P i)).2) ^ 2 := by
+        rw [fifteenPolarPair_distance_sq] at hsep ⊢
+        have hcos : Real.cos (fifteenPackingPolarAngle P j - fifteenPackingPolarAngle P i) =
+            Real.cos (fifteenPackingPolarAngle P i - fifteenPackingPolarAngle P j) := by
+          rw [show fifteenPackingPolarAngle P j - fifteenPackingPolarAngle P i =
+            -(fifteenPackingPolarAngle P i - fifteenPackingPolarAngle P j) by ring,
+            Real.cos_neg]
+        rw [hcos]
+        nlinarith [hsep]
+      have hmix := fifteen_wall_push_preserves_outer_inner_pair
+        hRj hijr (pointNorm_nonneg (P.circles i).center) hsepRev
+      have hmixRev : 4 ≤ pointNorm
+          ((polarPoint (fifteenCenterRadius P i) (fifteenPackingPolarAngle P i)).1 -
+              (polarPoint fifteenCandidateOuterRadius (fifteenPackingPolarAngle P j)).1,
+           (polarPoint (fifteenCenterRadius P i) (fifteenPackingPolarAngle P i)).2 -
+              (polarPoint fifteenCandidateOuterRadius (fifteenPackingPolarAngle P j)).2) ^ 2 := by
+        rw [fifteenPolarPair_distance_sq] at hmix ⊢
+        have hcos : Real.cos (fifteenPackingPolarAngle P i - fifteenPackingPolarAngle P j) =
+            Real.cos (fifteenPackingPolarAngle P j - fifteenPackingPolarAngle P i) := by
+          rw [show fifteenPackingPolarAngle P i - fifteenPackingPolarAngle P j =
+            -(fifteenPackingPolarAngle P j - fifteenPackingPolarAngle P i) by ring,
+            Real.cos_neg]
+        rw [hcos]
+        nlinarith [hmix]
+      simpa [fifteenWallPushedCenter, hi, hj, distSq, pointNorm_sq, hpolarI] using hmixRev
+    · have hinnerI := (fifteenPackingPolarAngle_spec P i).2.2
+      have hinnerJ := (fifteenPackingPolarAngle_spec P j).2.2
+      rw [hinnerI, hinnerJ] at hsep
+      simpa [fifteenWallPushedCenter, hi, hj, distSq, pointNorm_sq] using hsep
+
+/-- Replacing every center of radius at least `L` by its same-angle wall
+center yields a feasible unit-disk packing in the candidate container. -/
+noncomputable def fifteen_unit_packing_wall_push
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    Packing 15 (fifteenCandidateOuterRadius + 1) where
+  circles i := {
+    center := fifteenWallPushedCenter P i
+    radius := (P.circles i).radius
+    radius_nonneg := (P.circles i).radius_nonneg
+  }
+  container_nonneg := add_nonneg
+    (le_of_lt fifteenCandidateOuterRadius_pos) (by norm_num)
+  contained i := by
+    change (P.circles i).radius ≤ fifteenCandidateOuterRadius + 1 ∧
+      distSq (fifteenWallPushedCenter P i) (0, 0) ≤
+        (fifteenCandidateOuterRadius + 1 - (P.circles i).radius) ^ 2
+    constructor
+    · have hcontained := (P.enlarge hR).contained i
+      exact hcontained.1
+    · by_cases hi : fifteenCandidateInnerThreshold ≤ fifteenCenterRadius P i
+      · simp [fifteenWallPushedCenter, hi]
+        rw [hunit i]
+        have hnorm : distSq
+            (polarPoint fifteenCandidateOuterRadius (fifteenPackingPolarAngle P i)) (0, 0) =
+            fifteenCandidateOuterRadius ^ 2 := by
+          have hp := pointNorm_polarPoint
+            (θ := fifteenPackingPolarAngle P i)
+            (le_of_lt fifteenCandidateOuterRadius_pos)
+          have hs := pointNorm_sq
+            (polarPoint fifteenCandidateOuterRadius (fifteenPackingPolarAngle P i))
+          rw [hp] at hs
+          simpa [distSq] using hs.symm
+        nlinarith [hnorm]
+      · have hcontained := (P.enlarge hR).contained i
+        simpa [fifteenWallPushedCenter, hi, Packing.enlarge] using hcontained.2
+  separated := by
+    intro i j hij
+    change ((P.circles i).radius + (P.circles j).radius) ^ 2 ≤
+      distSq (fifteenWallPushedCenter P i) (fifteenWallPushedCenter P j)
+    rw [hunit i, hunit j]
+    norm_num
+    have hRi := (fifteen_unit_packing_center_radius_le_container P hunit i).trans
+      (by linarith : R - 1 ≤ fifteenCandidateOuterRadius)
+    have hRj := (fifteen_unit_packing_center_radius_le_container P hunit j).trans
+      (by linarith : R - 1 ≤ fifteenCandidateOuterRadius)
+    exact fifteen_unit_packing_wall_push_pair_separated P hunit i j hij hRi hRj
 
 end CirclePacking
