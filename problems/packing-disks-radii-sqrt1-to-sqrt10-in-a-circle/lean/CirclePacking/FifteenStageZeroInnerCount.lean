@@ -286,4 +286,32 @@ theorem fifteen_unit_packing_wall_push_inner_count_le_eight
   have : inner.card ≤ 8 := by omega
   simpa [Q, inner] using this
 
+/-- The concrete bit string handed to the Stage 0 classifier has weight at
+most eight.  Its `1` positions are exactly the inner centers, so this bound is
+about the encoded pattern itself rather than a separately chosen subset. -/
+theorem fifteen_unit_packing_wall_push_pattern_one_count_le_eight
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    (Finset.univ.filter fun k : Fin 15 =>
+      (fifteen_unit_packing_wall_push_sorted_pattern P hunit hR).toList[k.1]? =
+        some '1').card ≤ 8 := by
+  rw [fifteen_unit_packing_wall_push_pattern_one_positions_eq_inner P hunit hR]
+  exact fifteen_unit_packing_wall_push_inner_count_le_eight P hunit hR
+
+/-- Both endpoints of the Stage 0 pattern-weight range follow from geometry
+for the actual wall-pushed packing. -/
+theorem fifteen_unit_packing_wall_push_pattern_one_count_range
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    5 ≤ (Finset.univ.filter fun k : Fin 15 =>
+      (fifteen_unit_packing_wall_push_sorted_pattern P hunit hR).toList[k.1]? =
+        some '1').card ∧
+    (Finset.univ.filter fun k : Fin 15 =>
+      (fifteen_unit_packing_wall_push_sorted_pattern P hunit hR).toList[k.1]? =
+        some '1').card ≤ 8 := by
+  exact ⟨fifteen_unit_packing_wall_push_pattern_one_count_ge_five P hunit hR,
+    fifteen_unit_packing_wall_push_pattern_one_count_le_eight P hunit hR⟩
+
 end CirclePacking
