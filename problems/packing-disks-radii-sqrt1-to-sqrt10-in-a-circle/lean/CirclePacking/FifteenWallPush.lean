@@ -1,6 +1,7 @@
 import CirclePacking.FifteenPackingPolarCoordinates
 import CirclePacking.FifteenPackingSortedGeometry
 import CirclePacking.FifteenCandidateDetourCurvature
+import CirclePacking.FifteenStageZeroGeometry
 
 /-! The wall-replacement step for outer centers.  The main inequality is
 proved after normalizing the two radii by the candidate wall radius; the
@@ -397,6 +398,91 @@ theorem fifteen_unit_packing_wall_push_sorted_pair_separated
     (fifteen_unit_packing_wall_push P hunit hR)
     (fifteen_unit_packing_wall_push_preserves_unit_radii P hunit hR)
     hij
+
+/-- Two wall centers in angular order must have at least the stage-zero
+outer/outer contact angle in either direction around the circle.  This turns
+the finite table entry into a geometric constraint on an arbitrary packing. -/
+theorem fifteen_unit_packing_wall_push_outer_pair_ordered_gap
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1)
+    {i j : Fin 15} (hij : i.1 < j.1)
+    (hi : fifteenPackingSortedRadius
+      (fifteen_unit_packing_wall_push P hunit hR) i =
+        fifteenCandidateOuterRadius)
+    (hj : fifteenPackingSortedRadius
+      (fifteen_unit_packing_wall_push P hunit hR) j =
+        fifteenCandidateOuterRadius) :
+    (1610 : ℝ) / 2800 ≤
+        fifteenPackingSortedAngle
+          (fifteen_unit_packing_wall_push P hunit hR) j -
+          fifteenPackingSortedAngle
+            (fifteen_unit_packing_wall_push P hunit hR) i ∧
+      fifteenPackingSortedAngle
+          (fifteen_unit_packing_wall_push P hunit hR) j -
+          fifteenPackingSortedAngle
+            (fifteen_unit_packing_wall_push P hunit hR) i ≤
+        2 * Real.pi - (1610 : ℝ) / 2800 := by
+  let Q := fifteen_unit_packing_wall_push P hunit hR
+  have hpositive : 0 < fifteenStage0CoarseAngleTick (0 : Fin 4) (0 : Fin 4) := by
+    norm_num [fifteenStage0CoarseAngleTick, fifteenStage0CoarseQ]
+  have hbox := fifteenStage0OuterTypeBox_bounds
+  have hbLower : (2385 : ℝ) / 1000 ≤ fifteenCandidateOuterRadius := by
+    have hb := fifteenCandidateOuterRadius_mem_Ioo_352_353
+    linarith
+  have hbUpper : fifteenCandidateOuterRadius ≤ (3522 : ℝ) / 1000 :=
+    le_of_lt fifteenCandidateOuterRadius_lt_3522_1000
+  have hell : (1610 : ℝ) / 2800 ≤
+      touchAngle fifteenCandidateOuterRadius fifteenCandidateOuterRadius 2 := by
+    exact fifteenStage0CoarsePair_lower_bounds_touch_angle
+      (0 : Fin 4) (0 : Fin 4) hpositive
+      fifteenCandidateOuterRadius fifteenCandidateOuterRadius
+      (by rw [hbox.1]; exact hbLower)
+      (by rw [hbox.2]; exact hbUpper)
+      (by rw [hbox.1]; exact hbLower)
+      (by rw [hbox.2]; exact hbUpper)
+  have hsep := fifteen_unit_packing_wall_push_sorted_pair_separated
+    P hunit hR (i := i) (j := j) (ne_of_lt hij)
+  have hsep' : 4 ≤ pointNorm
+      ((polarPoint fifteenCandidateOuterRadius
+          (fifteenPackingSortedAngle Q i)).1 -
+          (polarPoint fifteenCandidateOuterRadius
+          (fifteenPackingSortedAngle Q j)).1,
+       (polarPoint fifteenCandidateOuterRadius
+          (fifteenPackingSortedAngle Q i)).2 -
+          (polarPoint fifteenCandidateOuterRadius
+          (fifteenPackingSortedAngle Q j)).2) ^ 2 := by
+    simpa [Q, hi, hj] using hsep
+  have hsep2 : 2 ^ 2 ≤ pointNorm
+      ((polarPoint fifteenCandidateOuterRadius
+          (fifteenPackingSortedAngle Q i)).1 -
+          (polarPoint fifteenCandidateOuterRadius
+          (fifteenPackingSortedAngle Q j)).1,
+       (polarPoint fifteenCandidateOuterRadius
+          (fifteenPackingSortedAngle Q i)).2 -
+          (polarPoint fifteenCandidateOuterRadius
+          (fifteenPackingSortedAngle Q j)).2) ^ 2 := by
+    rw [show (2 : ℝ) ^ 2 = 4 by norm_num]
+    exact hsep'
+  have hdelta0 : 0 ≤ fifteenPackingSortedAngle Q j -
+      fifteenPackingSortedAngle Q i := by
+    exact sub_nonneg.mpr (fifteenPackingSortedAngle_monotone Q hij)
+  have hdelta2 : fifteenPackingSortedAngle Q j -
+      fifteenPackingSortedAngle Q i ≤ 2 * Real.pi := by
+    have hj' := (fifteenPackingSortedAngle_range Q j).2
+    have hi' := (fifteenPackingSortedAngle_range Q i).1
+    linarith
+  have hellpi : (1610 : ℝ) / 2800 ≤ Real.pi := by
+    have hp := Real.pi_gt_three
+    norm_num at hp ⊢
+    linarith
+  exact fifteen_polar_touch_angle_ordered_gap
+    (a := fifteenCandidateOuterRadius)
+    (b := fifteenCandidateOuterRadius) (d := 2) (ell := 1610 / 2800)
+    (alpha := fifteenPackingSortedAngle Q i)
+    (beta := fifteenPackingSortedAngle Q j)
+    fifteenCandidateOuterRadius_pos fifteenCandidateOuterRadius_pos
+    hellpi hdelta0 hdelta2 hsep2 hell
 
 /-- Encode the angularly sorted inner/outer classification in the same
 `0`/`1` convention consumed by the finite pattern checker (`1` means inner). -/

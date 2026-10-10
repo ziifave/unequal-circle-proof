@@ -13,6 +13,20 @@ interface.
 
 namespace CirclePacking
 
+theorem fifteenStage0OuterTypeBox_bounds :
+    ((fifteenStage0CoarseTypeBox (0 : Fin 4)).1 : ℝ) =
+        (2385 : ℝ) / 1000 ∧
+      ((fifteenStage0CoarseTypeBox (0 : Fin 4)).2 : ℝ) =
+        (3522 : ℝ) / 1000 := by
+  rcases fifteenStage0OuterTypeBox_rat_bounds with ⟨hlo, hhi⟩
+  constructor
+  · rw [hlo]
+    simp [fifteenRational, Rat.normalize_eq_mkRat,
+      Rat.cast_mkRat_of_ne_zero]
+  · rw [hhi]
+    simp [fifteenRational, Rat.normalize_eq_mkRat,
+      Rat.cast_mkRat_of_ne_zero]
+
 theorem fifteenStage0CoarsePair_numeric_spec
     (typeI typeJ : Fin 4)
     (hpositive : 0 < fifteenStage0CoarseAngleTick typeI typeJ) :

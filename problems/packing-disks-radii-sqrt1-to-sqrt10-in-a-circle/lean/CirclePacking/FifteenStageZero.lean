@@ -60,6 +60,13 @@ private def stage0CoarseTableReplay : Bool :=
 def fifteenStage0CoarseTypeBox (typeIndex : Fin 4) : FifteenInterval :=
   stage0Boxes[typeIndex.1]!
 
+theorem fifteenStage0OuterTypeBox_rat_bounds :
+    (fifteenStage0CoarseTypeBox (0 : Fin 4)).1 =
+        fifteenRational 2385 1000 ∧
+      (fifteenStage0CoarseTypeBox (0 : Fin 4)).2 =
+        fifteenRational 3522 1000 := by
+  native_decide
+
 def fifteenStage0CoarseAngleTick (typeI typeJ : Fin 4) : Nat :=
   fifteenStage0CoarseQ typeI.1 typeJ.1
 

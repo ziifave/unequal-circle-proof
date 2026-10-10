@@ -86,6 +86,36 @@ theorem fifteenCandidateOuterRadius_mem_Ioo_352_353 :
       nlinarith [hqSqHi]
     exact (sq_lt_sq₀ (le_of_lt hbPos) (by norm_num)).mp hbSqHi
 
+/-- A tighter rational upper bound places the candidate wall radius inside
+the outer radial interval used by the stage-zero angular table. -/
+theorem fifteenCandidateOuterRadius_lt_3522_1000 :
+    fifteenCandidateOuterRadius < (3522 : ℝ) / 1000 := by
+  have hcot2 := fifteenCandidateCot_sq_eq
+  have hcotPos : 0 < Real.cos fifteenLocalPhi / Real.sin fifteenLocalPhi :=
+    div_pos fifteenLocalCos_pos fifteenLocalSin_pos
+  have hcotSqHi :
+      (Real.cos fifteenLocalPhi / Real.sin fifteenLocalPhi) ^ 2 <
+        ((1377 : ℝ) / 1000) ^ 2 := by
+    rw [hcot2]
+    nlinarith [fifteenSqrtFive_lt_2237_1000]
+  have hcotHi : Real.cos fifteenLocalPhi / Real.sin fifteenLocalPhi <
+      (1377 : ℝ) / 1000 :=
+    (sq_lt_sq₀ (le_of_lt hcotPos) (by norm_num)).mp hcotSqHi
+  have hqPos : 0 < 2 + Real.cos fifteenLocalPhi / Real.sin fifteenLocalPhi := by
+    linarith
+  have hqHi : 2 + Real.cos fifteenLocalPhi / Real.sin fifteenLocalPhi <
+      (3377 : ℝ) / 1000 := by linarith
+  have hqSqHi :
+      (2 + Real.cos fifteenLocalPhi / Real.sin fifteenLocalPhi) ^ 2 <
+        ((3377 : ℝ) / 1000) ^ 2 :=
+    (sq_lt_sq₀ (le_of_lt hqPos) (by norm_num)).2 hqHi
+  have hbPos := fifteenCandidateOuterRadius_pos
+  have hbSq := fifteenCandidateOuterRadius_sq
+  have hbSqHi : fifteenCandidateOuterRadius ^ 2 < ((3522 : ℝ) / 1000) ^ 2 := by
+    rw [hbSq]
+    nlinarith [hqSqHi]
+  exact (sq_lt_sq₀ (le_of_lt hbPos) (by norm_num)).mp hbSqHi
+
 private theorem fifteenCandidateMixedCap_mem_Ioo
     {x : ℝ} (hxlo : (839 : ℝ) / 500 < x)
     (hxhi : x < (862 : ℝ) / 500) :
