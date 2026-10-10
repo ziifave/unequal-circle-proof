@@ -54,6 +54,64 @@ theorem fifteenDetourAngle_le_three_ordered_gaps
   unfold fifteenDetourAngle
   linarith
 
+/-- The detour angle when the two consecutive outer centers have different
+radii. -/
+noncomputable def fifteenVariableDetourAngle
+    (a b c d : ℝ) : ℝ :=
+  fifteenTouchAngle a b + fifteenTouchAngle b c + fifteenTouchAngle c d
+
+theorem fifteenVariableDetourAngle_le_three_ordered_gaps
+    (a b c d alpha beta gamma delta : ℝ)
+    (hleft : fifteenTouchAngle a b ≤ beta - alpha)
+    (hmiddle : fifteenTouchAngle b c ≤ gamma - beta)
+    (hright : fifteenTouchAngle c d ≤ delta - gamma) :
+    fifteenVariableDetourAngle a b c d ≤ delta - alpha := by
+  unfold fifteenVariableDetourAngle
+  linarith
+
+/-- A sector with two unequal outer radii has both a direct chord route and a
+three-contact detour route bounded by its three consecutive angular gaps. -/
+theorem fifteenLocalVariableSector_max_le_gap
+    {a b c d alpha beta gamma delta : ℝ}
+    (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) (hd : 0 < d)
+    (hgapAB0 : 0 ≤ beta - alpha)
+    (hgapAB2 : beta - alpha ≤ 2 * Real.pi)
+    (hgapBC0 : 0 ≤ gamma - beta)
+    (hgapBC2 : gamma - beta ≤ 2 * Real.pi)
+    (hgapCD0 : 0 ≤ delta - gamma)
+    (hgapCD2 : delta - gamma ≤ 2 * Real.pi)
+    (hgapAD2 : delta - alpha ≤ 2 * Real.pi)
+    (hsepAD : 4 ≤ pointNorm
+      ((polarPoint a alpha).1 - (polarPoint d delta).1,
+       (polarPoint a alpha).2 - (polarPoint d delta).2) ^ 2)
+    (hsepAB : 4 ≤ pointNorm
+      ((polarPoint a alpha).1 - (polarPoint b beta).1,
+       (polarPoint a alpha).2 - (polarPoint b beta).2) ^ 2)
+    (hsepBC : 4 ≤ pointNorm
+      ((polarPoint b beta).1 - (polarPoint c gamma).1,
+       (polarPoint b beta).2 - (polarPoint c gamma).2) ^ 2)
+    (hsepCD : 4 ≤ pointNorm
+      ((polarPoint c gamma).1 - (polarPoint d delta).1,
+       (polarPoint c gamma).2 - (polarPoint d delta).2) ^ 2) :
+    max (fifteenTouchAngle a d) (fifteenVariableDetourAngle a b c d) ≤
+      (beta - alpha) + (gamma - beta) + (delta - gamma) := by
+  have hgapAD0 : 0 ≤ delta - alpha := by linarith
+  have hdirect := fifteenTouchAngle_le_ordered_polar_gap
+    ha hd hgapAD0 hgapAD2 hsepAD
+  have hleft := fifteenTouchAngle_le_ordered_polar_gap
+    ha hb hgapAB0 hgapAB2 hsepAB
+  have hmiddle := fifteenTouchAngle_le_ordered_polar_gap
+    hb hc hgapBC0 hgapBC2 hsepBC
+  have hright' := fifteenTouchAngle_le_ordered_polar_gap
+    hc hd hgapCD0 hgapCD2 hsepCD
+  have hright : fifteenTouchAngle c d ≤ delta - gamma := hright'
+  have hdetour := fifteenVariableDetourAngle_le_three_ordered_gaps
+    a b c d alpha beta gamma delta hleft hmiddle hright
+  have hmax : max (fifteenTouchAngle a d)
+      (fifteenVariableDetourAngle a b c d) ≤ delta - alpha :=
+    max_le hdirect hdetour
+  linarith
+
 /-- For one sector, the direct inner chord and the route through two outer
 centers are both bounded by the same three consecutive polar gaps. -/
 theorem fifteenLocalSector_max_le_gap

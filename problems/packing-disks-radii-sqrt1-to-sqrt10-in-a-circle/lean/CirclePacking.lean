@@ -46,6 +46,7 @@ import CirclePacking.FifteenCandidateBounds
 import CirclePacking.FifteenCandidateBoxLocalBarrier
 import CirclePacking.FifteenWallPush
 import CirclePacking.FifteenLocalAngleGeometry
+import CirclePacking.FifteenStrictWallBarrier
 import CirclePacking.FifteenPackingLocalRigidity
 
 /-!
