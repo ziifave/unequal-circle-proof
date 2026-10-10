@@ -129,7 +129,7 @@ def fifteenStage0CanonicalMask (mask : Nat) : Nat :=
 private def stage0CanonicalMask (mask : Nat) : Nat :=
   fifteenStage0CanonicalMask mask
 
-private def stage0MaskWord (mask : Nat) : String :=
+def fifteenStage0MaskWord (mask : Nat) : String :=
   String.ofList ((List.range stage0N).map fun i =>
     if Nat.testBit mask (14 - i) then '1' else '0')
 
@@ -159,11 +159,11 @@ def fifteenStage0ProfileMask (profile : Fin 15 → Bool) : Nat :=
 
 /-- The uncanonicalized binary word of a geometric profile. -/
 def fifteenStage0ProfileWord (profile : Fin 15 → Bool) : String :=
-  stage0MaskWord (fifteenStage0ProfileMask profile)
+  fifteenStage0MaskWord (fifteenStage0ProfileMask profile)
 
 /-- The canonical binary word of an ordered inner/outer profile. -/
 def fifteenStage0CanonicalProfileWord (profile : Fin 15 → Bool) : String :=
-  stage0MaskWord (stage0CanonicalMask (fifteenStage0ProfileMask profile))
+  fifteenStage0MaskWord (stage0CanonicalMask (fifteenStage0ProfileMask profile))
 
 private theorem stage0ProfileMaskAux_testBit (profile : Fin 15 → Bool) :
     ∀ n k, k < n →
@@ -284,7 +284,7 @@ private def stage0CanonicalWords : List String :=
   ((List.range 32768).filter fun mask =>
     let weight := stage0MaskWeight mask
     5 ≤ weight && weight ≤ 8 && stage0CanonicalMask mask == mask).map
-      stage0MaskWord
+      fifteenStage0MaskWord
 
 /-! The search certificate below records the canonical representative of each
 dihedral orbit.  This finite check makes the coverage direction explicit too:
@@ -305,43 +305,43 @@ def fifteenStage0CanonicalCoverageReplay : Bool :=
 
 def fifteenStage0OrbitWords : List String := stage0CanonicalWords
 
-private def stage0InnerPositionsAux : Nat → List Char → List Nat
+def fifteenStage0InnerPositionsAux : Nat → List Char → List Nat
   | _, [] => []
   | index, bit :: rest =>
       (if bit == '1' then [index] else []) ++
-        stage0InnerPositionsAux (index + 1) rest
+        fifteenStage0InnerPositionsAux (index + 1) rest
 
-private def stage0InnerPositions (pattern : String) : List Nat :=
-  stage0InnerPositionsAux 0 pattern.toList
+def fifteenStage0InnerPositions (pattern : String) : List Nat :=
+  fifteenStage0InnerPositionsAux 0 pattern.toList
 
 private def stage0PatternValid (pattern : String) : Bool :=
   pattern.length == stage0N &&
     pattern.toList.all (fun bit => bit == '0' || bit == '1')
 
-private def stage0Digits? (assignment : String) : Option (List Nat) :=
+def fifteenStage0Digits? (assignment : String) : Option (List Nat) :=
   assignment.toList.mapM fun digit =>
     if '1' ≤ digit && digit ≤ '3' then some (digit.toNat - 48) else none
 
 private def stage0AssignmentAdmissible (k : Nat) (assignment : String) : Bool :=
-  match stage0Digits? assignment with
+  match fifteenStage0Digits? assignment with
   | none => false
   | some digits =>
       digits.length == k &&
       (digits.filter (· == 1)).length ≤ 1 &&
       (digits.filter (· == 3)).length ≥ k - 4
 
-private def stage0AssignmentsAux : Nat → List (List Nat)
+def fifteenStage0AssignmentsAux : Nat → List (List Nat)
   | 0 => [[]]
-  | n + 1 => (stage0AssignmentsAux n).flatMap fun rest =>
+  | n + 1 => (fifteenStage0AssignmentsAux n).flatMap fun rest =>
       [1, 2, 3].map (fun digit => digit :: rest)
 
-private def stage0DigitsString (digits : List Nat) : String :=
+def fifteenStage0DigitsString (digits : List Nat) : String :=
   String.ofList (digits.map fun digit => Char.ofNat (48 + digit))
 
 private def stage0ExpectedAssignments (k : Nat) : List String :=
-  ((stage0AssignmentsAux k).filter fun digits =>
+  ((fifteenStage0AssignmentsAux k).filter fun digits =>
     (digits.filter (· == 1)).length ≤ 1 &&
-      (digits.filter (· == 3)).length ≥ k - 4).map stage0DigitsString
+      (digits.filter (· == 3)).length ≥ k - 4).map fifteenStage0DigitsString
 
 private def stage0SameMembers (xs ys : List String) : Bool :=
   xs.length == ys.length &&
@@ -432,13 +432,15 @@ def fifteenStage0SurvivorPatterns : List String :=
   | some orbits => orbits.filterMap fun orbit =>
       if orbit.excluded then none else some orbit.pattern
 
-private def stage0Labels (pattern assignment : String) : Array Nat := Id.run do
-  let positions := stage0InnerPositions pattern
-  let digits := (stage0Digits? assignment).getD []
-  let mut labels := Array.replicate stage0N 0
-  for (position, digit) in List.zip positions digits do
-    labels := labels.set! position digit
-  return labels
+def fifteenStage0LabelList : List Char → List Nat → List Nat
+  | [], _ => []
+  | bit :: rest, digits =>
+      if bit == '1' then
+        digits.headD 0 :: fifteenStage0LabelList rest digits.tail
+      else 0 :: fifteenStage0LabelList rest digits
+
+def fifteenStage0Labels (pattern assignment : String) : Array Nat :=
+  (fifteenStage0LabelList pattern.toList ((fifteenStage0Digits? assignment).getD [])).toArray
 
 def fifteenStage0EdgeWeight
     (labels : Array Nat) (edge : FifteenStage0CycleStep) : Int :=
@@ -459,7 +461,7 @@ private def stage0EdgeShape (edge : Stage0Edge) : Bool :=
 private def stage0CycleValid (pattern assignment : String)
     (edges : List Stage0Edge) : Bool := Id.run do
   if !stage0PatternValid pattern || !(stage0AssignmentAdmissible
-      (stage0InnerPositions pattern).length assignment) then return false
+      (fifteenStage0InnerPositions pattern).length assignment) then return false
   if edges.isEmpty || edges.length > stage0N then return false
   if !edges.all stage0EdgeShape then return false
   if !(List.zip edges (edges.drop 1)).all
@@ -467,7 +469,7 @@ private def stage0CycleValid (pattern assignment : String)
   let some first := edges.head? | return false
   let some last := edges.getLast? | return false
   if last.target != first.source then return false
-  let labels := stage0Labels pattern assignment
+  let labels := fifteenStage0Labels pattern assignment
   let weight := edges.foldl
     (fun sum edge => sum + fifteenStage0EdgeWeight labels edge) 0
   return weight < 0
@@ -508,7 +510,7 @@ def fifteenStage0CycleWitnessStepEdge
     (witness : FifteenStage0CycleWitness)
     (step : Nat × Nat × Nat) : FifteenStage0GraphEdge :=
   fifteenStage0StepGraphEdge
-    (stage0Labels witness.pattern witness.assignment) step
+    (fifteenStage0Labels witness.pattern witness.assignment) step
 
 /-- Reconstruct the weighted graph walk encoded by a Stage 0 witness. -/
 def fifteenStage0CycleWitnessEdges
@@ -518,9 +520,9 @@ def fifteenStage0CycleWitnessEdges
 private def stage0CycleWitnesses? : Option (List FifteenStage0CycleWitness) := do
   let cycles ← stage0Cycles?
   let orbits ← stage0Orbits?
-  let groups ← orbits.mapM fun orbit =>
+  pure (orbits.flatMap fun orbit =>
     if orbit.excluded then
-      orbit.cases.mapM fun (assignment, cycleId) => do
+      orbit.cases.filterMap fun (assignment, cycleId) => do
         let edges ← cycles[cycleId]?
         pure {
           pattern := orbit.pattern
@@ -529,8 +531,7 @@ private def stage0CycleWitnesses? : Option (List FifteenStage0CycleWitness) := d
             (edge.source, edge.target, edge.kind)
         }
     else
-      pure []
-  pure groups.flatten
+      [])
 
 /-- The assignment-specific Stage 0 negative-cycle witnesses decoded from the
 checked source bundle.  They reference the 10,832 shared cycle encodings. -/
@@ -540,43 +541,45 @@ def fifteenStage0NegativeCycleWitnesses : List FifteenStage0CycleWitness :=
 private def stage0PotentialValid (pattern witness : String)
     (potential : List Nat) : Bool := Id.run do
   if !stage0PatternValid pattern || !(stage0AssignmentAdmissible
-      (stage0InnerPositions pattern).length witness) then return false
+      (fifteenStage0InnerPositions pattern).length witness) then return false
   if potential.length != stage0N then return false
-  let labels := stage0Labels pattern witness
+  let labels := fifteenStage0Labels pattern witness
   let values := potential.toArray
   return (stage0GraphEdges labels).all fun edge =>
     decide (Int.ofNat values[edge.target]! ≤
       Int.ofNat values[edge.source]! + edge.weight)
 
 private def stage0OrbitValid (cycles : Array (List Stage0Edge))
-    (orbit : Stage0Orbit) : Bool := Id.run do
-  if !stage0PatternValid orbit.pattern then return false
-  let k := (stage0InnerPositions orbit.pattern).length
+    (orbit : Stage0Orbit) : Bool :=
+  let k := (fifteenStage0InnerPositions orbit.pattern).length
   if orbit.excluded then
     let assignments := orbit.cases.map Prod.fst
-    if !stage0SameMembers (stage0ExpectedAssignments k) assignments then return false
-    return orbit.cases.all fun (assignment, cycleId) =>
+    stage0PatternValid orbit.pattern &&
+      stage0SameMembers (stage0ExpectedAssignments k) assignments &&
+      orbit.cases.all fun (assignment, cycleId) =>
       match cycles[cycleId]? with
       | none => false
       | some edges => stage0CycleValid orbit.pattern assignment edges
   else
-    if !orbit.cases.isEmpty then return false
-    return stage0PotentialValid orbit.pattern orbit.witness orbit.potential
+    stage0PatternValid orbit.pattern && orbit.cases.isEmpty &&
+      stage0PotentialValid orbit.pattern orbit.witness orbit.potential
 
-private def stage0OrbitCertificateReplay : Bool := Id.run do
-  let some cycles := stage0Cycles? | return false
-  let some orbits := stage0Orbits? | return false
-  if cycles.size != 10832 || orbits.length != 760 then return false
-  if (cycles.toList.eraseDups.length != cycles.size) then return false
-  if orbits.map Stage0Orbit.pattern != stage0CanonicalWords then return false
-  if !stage0CoarseTableReplay then return false
-  if !(orbits.all (stage0OrbitValid cycles)) then return false
+private def stage0OrbitTableValid (cycles : Array (List Stage0Edge))
+    (orbits : List Stage0Orbit) : Bool :=
   let excluded := (orbits.filter Stage0Orbit.excluded).length
   let survivors := (orbits.filter (fun orbit => !orbit.excluded)).length
-  if excluded != 382 || survivors != 378 then return false
   let counts := [5, 6, 7, 8].map fun k =>
-    (orbits.filter fun orbit => (stage0InnerPositions orbit.pattern).length == k).length
-  return counts == [111, 185, 232, 232]
+    (orbits.filter fun orbit => (fifteenStage0InnerPositions orbit.pattern).length == k).length
+  cycles.size == 10832 && orbits.length == 760 &&
+    cycles.toList.eraseDups.length == cycles.size &&
+    orbits.map Stage0Orbit.pattern == stage0CanonicalWords &&
+    stage0CoarseTableReplay && orbits.all (stage0OrbitValid cycles) &&
+    excluded == 382 && survivors == 378 && counts == [111, 185, 232, 232]
+
+private def stage0OrbitCertificateReplay : Bool :=
+  match stage0Cycles?, stage0Orbits? with
+  | some cycles, some orbits => stage0OrbitTableValid cycles orbits
+  | _, _ => false
 
 def FifteenStage0GraphChain (start : Nat) :
     List FifteenStage0GraphEdge → Nat → Prop
@@ -612,7 +615,7 @@ private def stage0CycleWitnessStepsCheck
 
 private def stage0CycleWitnessLabelsCheck
     (witness : FifteenStage0CycleWitness) : Bool :=
-  let labels := stage0Labels witness.pattern witness.assignment
+  let labels := fifteenStage0Labels witness.pattern witness.assignment
   decide (∀ i : Fin 15, labels[i.1]! < 4)
 
 /-- The finite radial-type label attached to a sorted center by a Stage 0
@@ -620,7 +623,7 @@ pattern/assignment.  The modulo makes this a total `Fin 4`-valued function;
 certificate soundness separately proves that the unwrapped label is below 4. -/
 def fifteenStage0CycleWitnessLabel
     (witness : FifteenStage0CycleWitness) (i : Fin 15) : Nat :=
-  (stage0Labels witness.pattern witness.assignment)[i.1]!
+  (fifteenStage0Labels witness.pattern witness.assignment)[i.1]!
 
 private def stage0CycleWitnessShapeCheck
     (witness : FifteenStage0CycleWitness) : Bool :=
@@ -707,7 +710,7 @@ def fifteenStage0CertificateReplay : Bool := stage0CertificateReplay
 def fifteenStage0OrbitCountByWeight : List Nat :=
   [5, 6, 7, 8].map fun k =>
     (fifteenStage0OrbitWords.filter fun word =>
-      (stage0InnerPositions word).length == k).length
+      (fifteenStage0InnerPositions word).length == k).length
 
 private def stage0PotentialDifference (potential : Nat → Int)
     (edge : FifteenStage0GraphEdge) : Int :=
@@ -902,7 +905,7 @@ theorem fifteenStage0CanonicalCoverage_replays :
 theorem fifteenStage0CanonicalWord_mem_orbitWords
     (mask : Nat) (hmask : mask < 32768)
     (hweight : 5 ≤ stage0MaskWeight mask ∧ stage0MaskWeight mask ≤ 8) :
-    stage0MaskWord (stage0CanonicalMask mask) ∈ fifteenStage0OrbitWords := by
+    fifteenStage0MaskWord (stage0CanonicalMask mask) ∈ fifteenStage0OrbitWords := by
   have hmem : mask ∈ List.range 32768 := by simp; omega
   have hcoverage := (List.all_eq_true.mp
     fifteenStage0CanonicalCoverage_replays) mask hmem
@@ -933,8 +936,8 @@ theorem fifteenStage0CanonicalWord_mem_orbitWords
     apply List.mem_filter.mpr
     refine ⟨hcanonicalMem, ?_⟩
     simp [hcanonicalWeight, hproperties.2.2]
-  change stage0MaskWord canonical ∈
-    List.map stage0MaskWord (List.filter (fun candidate =>
+  change fifteenStage0MaskWord canonical ∈
+    List.map fifteenStage0MaskWord (List.filter (fun candidate =>
       let weight := stage0MaskWeight candidate
       5 ≤ weight && weight ≤ 8 &&
         stage0CanonicalMask candidate == candidate) (List.range 32768))
@@ -983,7 +986,7 @@ theorem fifteenStage0ProfileCanonicalWord_mem_orbitWords
     (hcount : 5 ≤ ((List.range 15).filter (stage0ProfileBitAt profile)).length ∧
       ((List.range 15).filter (stage0ProfileBitAt profile)).length ≤ 8) :
     fifteenStage0CanonicalProfileWord profile ∈ fifteenStage0OrbitWords := by
-  change stage0MaskWord (stage0CanonicalMask (fifteenStage0ProfileMask profile)) ∈
+  change fifteenStage0MaskWord (stage0CanonicalMask (fifteenStage0ProfileMask profile)) ∈
     fifteenStage0OrbitWords
   apply fifteenStage0CanonicalWord_mem_orbitWords
     (fifteenStage0ProfileMask profile) (by
@@ -1003,5 +1006,137 @@ theorem fifteenStage0ProfileCanonicalWord_mem_orbitWords_of_card
   apply fifteenStage0ProfileCanonicalWord_mem_orbitWords
   rw [stage0Profile_list_count_eq_card]
   exact hcount
+
+/-! Assignment coverage is proved from the existing replay. No additional
+finite computation is assumed by these interfaces. The label decoder is a
+recursive zipper so its relation to a geometric label profile can be proved
+by induction. Missing cycle references are still rejected by `stage0OrbitValid`;
+the total witness collector therefore cannot hide a missing certified case. -/
+
+/-- The complete admissible three-bin assignment list used by Stage 0. -/
+def fifteenStage0ExpectedAssignments (k : Nat) : List String :=
+  stage0ExpectedAssignments k
+
+def fifteenStage0InnerPositionCount (pattern : String) : Nat :=
+  (fifteenStage0InnerPositions pattern).length
+
+private theorem stage0OrbitValid_excluded_cases
+    (cycles : Array (List Stage0Edge)) (orbit : Stage0Orbit)
+    (hvalid : stage0OrbitValid cycles orbit = true)
+    (hexcluded : orbit.excluded = true) :
+    (∀ assignment ∈ stage0ExpectedAssignments (fifteenStage0InnerPositions orbit.pattern).length,
+      assignment ∈ orbit.cases.map Prod.fst) ∧
+    (∀ entry ∈ orbit.cases, ∃ edges,
+      cycles[entry.2]? = some edges) := by
+  simp only [stage0OrbitValid, hexcluded, ite_true, Bool.and_eq_true] at hvalid
+  obtain ⟨⟨_, hmembers⟩, hcases⟩ := hvalid
+  simp only [stage0SameMembers, Bool.and_eq_true] at hmembers
+  have hall : (stage0ExpectedAssignments (fifteenStage0InnerPositions orbit.pattern).length).all
+      (orbit.cases.map Prod.fst).contains = true := by
+    exact hmembers.1.2
+  constructor
+  · intro assignment hassignment
+    simpa using (List.all_eq_true.mp hall) assignment hassignment
+  · intro entry hentry
+    have hcase := (List.all_eq_true.mp hcases) entry hentry
+    cases hlookup : cycles[entry.2]? with
+    | none => simp [hlookup] at hcase
+    | some edges => exact ⟨edges, rfl⟩
+
+private theorem stage0TableValid_coverage
+    (cycles : Array (List Stage0Edge)) (orbits : List Stage0Orbit)
+    (hvalid : stage0OrbitTableValid cycles orbits = true) :
+    orbits.map Stage0Orbit.pattern = fifteenStage0OrbitWords ∧
+    (∀ orbit ∈ orbits, stage0OrbitValid cycles orbit = true) := by
+  simp only [stage0OrbitTableValid, Bool.and_eq_true, beq_iff_eq] at hvalid
+  exact ⟨hvalid.1.1.1.1.1.2,
+    List.all_eq_true.mp hvalid.1.1.1.2⟩
+
+/-- Every enumerated assignment either belongs to a surviving pattern or
+has an actual recorded negative-cycle witness. This is the coverage direction
+of the Stage 0 checker, separately from the validity of individual cycles. -/
+theorem fifteenStage0Assignment_covered
+    (pattern assignment : String)
+    (hpattern : pattern ∈ fifteenStage0OrbitWords)
+    (hassignment : assignment ∈ fifteenStage0ExpectedAssignments
+      (fifteenStage0InnerPositionCount pattern)) :
+    pattern ∈ fifteenStage0SurvivorPatterns ∨
+      ∃ witness ∈ fifteenStage0NegativeCycleWitnesses,
+        witness.pattern = pattern ∧ witness.assignment = assignment := by
+  have hreplay : stage0OrbitCertificateReplay = true := by
+    have h := fifteenStage0Certificate_replays
+    change (stage0OrbitCertificateReplay && _) = true at h
+    simp only [Bool.and_eq_true] at h
+    exact h.1
+  cases hcycles : stage0Cycles? with
+  | none => simp [stage0OrbitCertificateReplay, hcycles] at hreplay
+  | some cycles =>
+    cases horbits : stage0Orbits? with
+    | none => simp [stage0OrbitCertificateReplay, hcycles, horbits] at hreplay
+    | some orbits =>
+      have htable : stage0OrbitTableValid cycles orbits = true := by
+        simpa only [stage0OrbitCertificateReplay, hcycles, horbits] using hreplay
+      obtain ⟨hpatterns, hvalid⟩ := stage0TableValid_coverage cycles orbits htable
+      have hmem : pattern ∈ orbits.map Stage0Orbit.pattern := hpatterns.symm ▸ hpattern
+      obtain ⟨orbit, horbit, hword⟩ := List.mem_map.mp hmem
+      cases hexcluded : orbit.excluded with
+      | false =>
+        left
+        simp only [fifteenStage0SurvivorPatterns, horbits]
+        apply List.mem_filterMap.mpr
+        exact ⟨orbit, horbit, by simp [hexcluded, hword]⟩
+      | true =>
+        right
+        have hcases := stage0OrbitValid_excluded_cases cycles orbit
+          (hvalid orbit horbit) hexcluded
+        have hassignment' : assignment ∈
+            stage0ExpectedAssignments (fifteenStage0InnerPositions orbit.pattern).length := by
+          simpa only [fifteenStage0ExpectedAssignments, fifteenStage0InnerPositionCount,
+            hword] using hassignment
+        obtain ⟨entry, hentry, hentryWord⟩ := List.mem_map.mp
+          (hcases.1 assignment hassignment')
+        obtain ⟨edges, hedges⟩ := hcases.2 entry hentry
+        let witness : FifteenStage0CycleWitness := {
+          pattern := orbit.pattern
+          assignment := entry.1
+          steps := edges.map fun edge => (edge.source, edge.target, edge.kind)
+        }
+        refine ⟨witness, ?_, hword, hentryWord⟩
+        simp only [fifteenStage0NegativeCycleWitnesses, stage0CycleWitnesses?,
+          hcycles, horbits]
+        apply List.mem_flatMap.mpr
+        refine ⟨orbit, horbit, ?_⟩
+        simp only [hexcluded, ite_true]
+        apply List.mem_filterMap.mpr
+        exact ⟨entry, hentry, by simp [hedges, witness]⟩
+
+private theorem stage0Survivors_length (orbits : List Stage0Orbit) :
+    (orbits.filterMap fun orbit => if orbit.excluded then none else some orbit.pattern).length =
+      (orbits.filter fun orbit => !orbit.excluded).length := by
+  induction orbits with
+  | nil => rfl
+  | cons orbit rest ih => cases h : orbit.excluded <;> simp [h, ih]
+
+/-- The surviving list has exactly 378 entries, as a consequence of the
+same replay used for assignment coverage. -/
+theorem fifteenStage0SurvivorPatterns_length :
+    fifteenStage0SurvivorPatterns.length = 378 := by
+  have hreplay : stage0OrbitCertificateReplay = true := by
+    have h := fifteenStage0Certificate_replays
+    change (stage0OrbitCertificateReplay && _) = true at h
+    simp only [Bool.and_eq_true] at h
+    exact h.1
+  cases hcycles : stage0Cycles? with
+  | none => simp [stage0OrbitCertificateReplay, hcycles] at hreplay
+  | some cycles =>
+    cases horbits : stage0Orbits? with
+    | none => simp [stage0OrbitCertificateReplay, hcycles, horbits] at hreplay
+    | some orbits =>
+      have htable : stage0OrbitTableValid cycles orbits = true := by
+        simpa only [stage0OrbitCertificateReplay, hcycles, horbits] using hreplay
+      simp only [stage0OrbitTableValid, Bool.and_eq_true, beq_iff_eq] at htable
+      have hcount : (orbits.filter fun orbit => !orbit.excluded).length = 378 :=
+        htable.1.2
+      simpa only [fifteenStage0SurvivorPatterns, horbits, stage0Survivors_length] using hcount
 
 end CirclePacking

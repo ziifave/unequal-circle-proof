@@ -192,14 +192,38 @@ count and all coarse boxes, and satisfies the integer-scaled angular
 difference constraints. The same module's
 `fifteenStage0PolarProfile_excludes_cycle_witness` proves that such a
 separated ordered profile cannot occupy the boxes of a checked negative-cycle
-witness. The remaining Stage 0 handoff is to match every normalized radial
-assignment to the recorded exclusion or survivor case.
+witness.
+`fifteenStage0Assignment_covered` now extracts complete assignment coverage
+from the existing Stage 0 replay: every enumerated admissible assignment
+either belongs to a survivor or has a recorded cycle witness with its exact
+pattern and assignment. `FifteenStageZeroLabelCoverage.lean` proves by
+induction that every positional label profile in `Fin 4` satisfying the
+population restrictions occurs in that assignment enumeration, and that the
+decoder reconstructs all fifteen labels exactly. The checker uses a recursive
+label zipper, and still rejects missing cycle references before coverage is
+derived; no additional native-evaluation premise is introduced.
+`FifteenStageZeroFiniteReduction.lean` transports the population restrictions
+through canonicalization and combines this coverage with cycle soundness.
+Its theorem `fifteen_unit_packing_wall_push_stage0_survivor_geometry` shows
+that an arbitrary candidate-radius feasible unit packing has a canonical
+ordered polar profile on one of the Stage 0 survivor patterns, retaining its
+radius boxes and separation. `fifteenStage0SurvivorPatterns_length` derives
+the survivor count of 378 from the same replay. This completes the geometric
+760-to-378 reduction. The packing-level soundness of Stage 3/4 and the final
+refined subdivision remains to be assembled.
 
 Axiom auditing of the canonical-mask origin and abstract profile-transport
 lemmas reports only standard logical axioms. The packing-level dihedral
 profile theorem also inherits the seven existing native-evaluation axioms of
 `fifteenStage0CoarsePair_numeric_spec`; no new `native_decide` check is added
 by the symmetry or transport modules.
+The Stage 0 assignment-coverage and survivor-count theorems inherit only the
+existing `fifteenStage0Certificate_replays` native axiom in addition to
+standard logical axioms. The positional-count and transported population
+lemmas have only standard logical axioms. The full packing-level
+760-to-378 theorem inherits nine existing native axioms: canonical coverage,
+the Stage 0 replay, and the seven coarse-table numerical checks. The
+reduction and label-coverage modules introduce no new native-evaluation axiom.
 
 The compact inputs
 `problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage0_cycles.txt` and
@@ -331,6 +355,13 @@ Build and audit the geometric normalization bridge separately with:
 ```sh
 lake build CirclePacking.FifteenStageZeroCanonicalGeometry
 lake env lean CirclePacking/FifteenStageZeroTransportAudit.lean
+```
+
+The geometric Stage 0 reduction and its coverage audit can be checked with:
+
+```sh
+lake build CirclePacking.FifteenStageZeroFiniteReduction
+lake env lean CirclePacking/FifteenStageZeroReductionAudit.lean
 ```
 
 This audit distinguishes the abstract mask/angle transport lemmas from the
