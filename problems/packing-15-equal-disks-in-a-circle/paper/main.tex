@@ -536,7 +536,7 @@ The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 class
 \section{Scope of the Lean formalization}\label{sec:lean-status}
 
 The partial formalization is available in the repository's
-\href{https://github.com/ziifave/unequal-circle-proof/tree/9a6433376b054d19df628e6f5c3734e105858234/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{9a64333}}.
+\href{https://github.com/ziifave/unequal-circle-proof/tree/b541c2642fb6f9fbda48fe62a9993b0b8766a91e/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{b541c26}}.
 The project is hosted under the unequal-disk problem directory, but its
 \texttt{Fifteen} modules concern the equal-disk problem in this manuscript.
 They use the same candidate radii $a_0,b_0$ and the same local cube
@@ -554,12 +554,11 @@ Radius and contact-angle identities are proved. An explicit feasible
 Radial reduction (\cref{sec:radial}) &
 Wall replacement, the 5--8 inner-center count, and coarse radial-box
 membership are proved, together with canonical dihedral radius/angle
-normalization. Matching every normalized radial assignment to a certificate
-record remains unfinished.\\[5pt]
+normalization and complete Stage 0 assignment coverage.\\[5pt]
 Finite reduction (\cref{prop:finite-reduction}) &
-All finite certificate replays are collected in one theorem. Their
-packing-level soundness and coverage have not yet been assembled into this
-proposition.\\[5pt]
+All finite certificate replays are collected in one theorem. The geometric
+$760\to378$ reduction is proved. Packing-level soundness and coverage of
+Stage 3/4 and the refined subdivision remain unfinished.\\[5pt]
 Local angular barrier (\cref{sec:local}) &
 Taylor error estimates, the odd five-cycle identity, and local rigidity are
 proved. The strict smaller-container exclusion is proved assuming the
@@ -587,11 +586,19 @@ $0,3,6,9,12$ and those five radii lie in the local interval. The theorem
 \nolinkurl{CirclePacking/FifteenStageZeroCanonicalGeometry.lean}, now produces
 an exact canonical word and an ordered real polar profile from an arbitrary
 candidate-radius packing, preserving separation and coarse radius boxes and
-deriving the coarse angular difference constraints. The missing connection
-is to classify every normalized radial assignment using the checked
-exclusion or survivor records, and complete the refined rank and leaf
-soundness and coverage of the residual roots and the six-inner special
-case. A successful Boolean replay alone does not supply that implication.
+deriving the coarse angular difference constraints. Complete Stage 0
+coverage and geometric exclusion are supplied by
+\nolinkurl{fifteen_unit_packing_wall_push_stage0_survivor_geometry}, in
+\nolinkurl{CirclePacking/FifteenStageZeroFiniteReduction.lean}. Every
+admissible positional label profile is proved to occur in the finite assignment
+enumeration, and its string encoding is proved to reconstruct the same fifteen
+labels. The replay then provides either a survivor record or a matching cycle
+witness; geometric cycle soundness rules out the latter. Thus an arbitrary
+feasible candidate-radius packing has a canonical profile among the 378
+Stage 0 survivors. The remaining connection concerns the refined rank and
+leaf soundness of Stage 3/4, and coverage and soundness of the residual roots
+and the six-inner special case. A successful Boolean replay alone does not
+supply these remaining implications.
 
 \paragraph{Alternative intermediate proofs.}
 The Lean development sometimes proves the same required bound by a different
@@ -601,10 +608,9 @@ $\arccos(2/3)>\pi/4$, together with the fact that at most one center has
 radius below $1$. It therefore does not need the nine-disk optimum invoked
 in \cref{sec:radial}. The 760 class counts are checked by exhaustive
 canonical-mask enumeration rather than by formalizing Burnside's formula.
-For local Taylor errors, the Lean proofs bound the second derivative along
-each perturbation segment by $5(\delta_i^2+\delta_{i+1}^2)$; this yields the
-same $\frac52(\delta_i^2+\delta_{i+1}^2)$ remainder without requiring the
-sharper individual Hessian bounds quoted in \cref{sec:local}.
+For local Taylor errors, Lean bounds the second derivative along a segment by
+$5(\delta_i^2+\delta_{i+1}^2)$, giving the remainder in \cref{sec:local} without
+individual Hessian bounds.
 
 \paragraph{Trust dependencies.}
 Several finite replays use \texttt{native\_decide} and carry native-evaluation
@@ -630,6 +636,17 @@ for canonical coverage and seven for the coarse angle table. The
 normalized-profile cycle exclusion inherits one existing Stage 0 replay
 native axiom and the same seven table axioms; the mask and angle transport
 proofs introduce no new native-evaluation axiom.
+The Stage 0 coverage and geometric reduction have their own targeted audit:
+\begin{verbatim}
+lake build CirclePacking.FifteenStageZeroFiniteReduction
+lake env lean CirclePacking/FifteenStageZeroReductionAudit.lean
+\end{verbatim}
+Assignment coverage and the survivor count are derived from the existing
+Stage 0 replay rather than from an additional native-evaluation check.
+The full packing-level $760\to378$ theorem inherits nine existing native
+axioms: canonical coverage, the Stage 0 replay, and the seven coarse-table
+checks. Positional and transported population-count lemmas use only the
+standard logical axioms.
 
 \begin{thebibliography}{9}
 \bibitem{Graham1968}

@@ -339,9 +339,9 @@ local theorem depends only on Lean's standard logical axioms.
 The full optimum theorem is not yet closed. An arbitrary packing now has a
 dihedrally normalized real profile with the exact canonical word, coarse
 radial boxes, preserved separation, and angular difference constraints.
-Every normalized radial assignment still needs to be matched to a checked
-negative-cycle witness or a certified survivor record. Stage 3/4 and the
-exact subdivision tree also need
+Every normalized radial assignment now has a matching checked exclusion
+witness or belongs to a survivor pattern; geometric cycle exclusion gives
+the 378 surviving patterns. Stage 3/4 and the exact subdivision tree still need
 their per-certificate geometric edge/leaf soundness connected to the full
 packing classification, including the residual roots and the special
 six-inner case. The finite Boolean replays alone do not establish that every
