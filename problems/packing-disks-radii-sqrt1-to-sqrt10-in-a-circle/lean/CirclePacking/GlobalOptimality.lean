@@ -18,6 +18,7 @@ import CirclePacking.LargeFourSemicircle
 import CirclePacking.MainOrderProjection
 import CirclePacking.MainAngleNecessary
 import CirclePacking.MainAngleRootExistence
+import CirclePacking.MainAngleRootCurve
 
 /-!
 # Lean entry point for the global optimality proof
@@ -107,7 +108,13 @@ theorems too. `CirclePacking/MainAngleRootExistence.lean` formalizes the
 intermediate-value step from a continuous curve satisfying `A = B` and
 opposite endpoint signs for `B - 2π` to existence of a simultaneous root;
 the monotonicity results also prove that such a root is unique in the
-certified rectangle. The exact root-boundary signs and continuous root curve,
+certified rectangle. `CirclePacking/MainAngleRootCurve.lean` now proves the
+continuous dependence of a unique monotone root on the radius, and composes it
+with the simultaneous-root theorem for these barriers. It derives strict
+increase of `A - B` from the already-proved monotonicity of `A` and `B`. The
+two-stage IVT is now parameterized by a small rational subrectangle, matching
+the exact interval proof's root box; its right-edge sign also yields a strict
+upper bound on the resulting radius. The four edge-sign bounds on that box,
 wall-push applicability for each radial box, deriving sector masks and
 monotone order from the exported radial-tree leaves, and the final global
 assembly remain outstanding.
