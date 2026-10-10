@@ -49,6 +49,42 @@ theorem fifteenStage0OuterTypeBox_bounds :
     simp [fifteenRational, Rat.normalize_eq_mkRat,
       Rat.cast_mkRat_of_ne_zero]
 
+theorem fifteenStage0InnerTypeBox_real_bounds :
+    (((fifteenStage0CoarseTypeBox (1 : Fin 4)).1 : ℝ) = 0 ∧
+      ((fifteenStage0CoarseTypeBox (1 : Fin 4)).2 : ℝ) = 1) ∧
+    (((fifteenStage0CoarseTypeBox (2 : Fin 4)).1 : ℝ) = 1 ∧
+      ((fifteenStage0CoarseTypeBox (2 : Fin 4)).2 : ℝ) = 5 / 3) ∧
+    (((fifteenStage0CoarseTypeBox (3 : Fin 4)).1 : ℝ) = 5 / 3 ∧
+      ((fifteenStage0CoarseTypeBox (3 : Fin 4)).2 : ℝ) =
+        (2385432 : ℝ) / 1000000) := by
+  rcases fifteenStage0InnerTypeBox_rat_bounds with ⟨h1, h2, h3⟩
+  rcases h1 with ⟨h10, h11⟩
+  rcases h2 with ⟨h20, h21⟩
+  rcases h3 with ⟨h30, h31⟩
+  constructor
+  · constructor
+    · rw [h10]
+      simp [fifteenRational, Rat.normalize_eq_mkRat,
+        Rat.cast_mkRat_of_ne_zero]
+    · rw [h11]
+      simp [fifteenRational, Rat.normalize_eq_mkRat,
+        Rat.cast_mkRat_of_ne_zero]
+  constructor
+  · constructor
+    · rw [h20]
+      simp [fifteenRational, Rat.normalize_eq_mkRat,
+        Rat.cast_mkRat_of_ne_zero]
+    · rw [h21]
+      simp [fifteenRational, Rat.normalize_eq_mkRat,
+        Rat.cast_mkRat_of_ne_zero]
+  · constructor
+    · rw [h30]
+      simp [fifteenRational, Rat.normalize_eq_mkRat,
+        Rat.cast_mkRat_of_ne_zero]
+    · rw [h31]
+      simp [fifteenRational, Rat.normalize_eq_mkRat,
+        Rat.cast_mkRat_of_ne_zero]
+
 theorem fifteenStage0CoarsePair_numeric_spec
     (typeI typeJ : Fin 4)
     (hpositive : 0 < fifteenStage0CoarseAngleTick typeI typeJ) :

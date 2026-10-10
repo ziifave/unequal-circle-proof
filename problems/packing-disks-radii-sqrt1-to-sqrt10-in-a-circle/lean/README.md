@@ -156,7 +156,13 @@ cosine by `2/3` for radii in `[1, 12/5]`, so eight such centers would require
 eight cyclic gaps of at least `arccos (2/3) > π/4`; the existing subunit-center
 lemma allows at most one additional center. Together with the wall-push lower
 bound, `FifteenStageZeroHandoff.lean` now supplies the actual 5--8 weight and
-radial assignment conditions to the finite Stage 0 layer.
+radial assignment conditions to the finite Stage 0 layer. It also proves the
+candidate wall threshold is below `2385432/1000000`, the upper endpoint of the
+third inner type box, and assigns every angle-sorted wall-pushed center to one
+of the four Stage 0 boxes. The bundled
+`fifteen_unit_packing_wall_push_stage0_profile` theorem now provides all these
+population and per-position box hypotheses from an arbitrary packing below
+the candidate radius.
 
 The compact inputs
 `problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage0_cycles.txt` and
@@ -269,17 +275,16 @@ in `[42/25, 43/25]` is impossible below the candidate radius. It derives each
 outer radius from the wall-push radial classification, and the resulting
 local theorem depends only on Lean's standard logical axioms.
 
-The full optimum theorem is not yet closed. The remaining bridge is to derive,
-for every geometric packing, the radial pattern and type assignment covered
-by the Stage 0/3/4 certificates and the exact subdivision tree, including the
-residual roots and the special six-inner case. Stage 0 now has a geometric
-soundness theorem for each decoded negative-cycle witness; the unresolved
-part is proving that every arbitrary wall-pushed packing either has one of
-those excluded assignments or lies in a certified survivor class. Stage 3/4
-and the exact subdivision tree still need their per-certificate geometric
-edge/leaf soundness connected to the full packing classification. The finite
-Boolean replays alone do not establish that every packing reaches the local
-obstruction's hypotheses.
+The full optimum theorem is not yet closed. From the profile theorem, the
+remaining Stage 0 bridge is to encode the resulting binary pattern and inner
+type word, then relate them to the table's canonical dihedral representative
+while preserving the cyclic angle constraints. The resulting profile must
+either match one of the checked negative-cycle witnesses or lie in the
+certified survivor class. Stage 3/4 and the exact subdivision tree also need
+their per-certificate geometric edge/leaf soundness connected to the full
+packing classification, including the residual roots and the special
+six-inner case. The finite Boolean replays alone do not establish that every
+packing reaches the local obstruction's hypotheses.
 
 The finite replays are collected in the dedicated target
 `CirclePacking.FifteenAllFiniteCertificates`. It combines Stage 0's orbit and

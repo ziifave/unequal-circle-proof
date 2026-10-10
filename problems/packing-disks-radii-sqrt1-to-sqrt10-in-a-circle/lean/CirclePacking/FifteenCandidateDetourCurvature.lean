@@ -116,6 +116,63 @@ theorem fifteenCandidateOuterRadius_lt_3522_1000 :
     nlinarith [hqSqHi]
   exact (sq_lt_sq₀ (le_of_lt hbPos) (by norm_num)).mp hbSqHi
 
+private theorem fifteenSqrtFive_lt_2236067978_1e9 :
+    Real.sqrt 5 < (2236067978 : ℝ) / 1000000000 := by
+  have hs := Real.sqrt_lt_sqrt (show (0 : ℝ) ≤ 5 by norm_num)
+    (show (5 : ℝ) < ((2236067978 : ℝ) / 1000000000) ^ 2 by norm_num)
+  rw [Real.sqrt_sq_eq_abs, abs_of_nonneg (by norm_num)] at hs
+  exact hs
+
+/-- A tighter rational enclosure of the candidate wall radius.  The Stage 0
+inner radial box ends at `2385432/1000000`, so the coarse `3.522` bound is not
+strong enough for the packing-to-box classification. -/
+theorem fifteenCandidateOuterRadius_lt_3521357_1e6 :
+    fifteenCandidateOuterRadius < (3521357 : ℝ) / 1000000 := by
+  let c := Real.cos fifteenLocalPhi / Real.sin fifteenLocalPhi
+  have hcpos : 0 < c := by
+    dsimp [c]
+    exact div_pos fifteenLocalCos_pos fifteenLocalSin_pos
+  have hcSq := fifteenCandidateCot_sq_eq
+  have hcUpperSq : c ^ 2 < ((1376381921 : ℝ) / 1000000000) ^ 2 := by
+    dsimp [c]
+    rw [fifteenCandidateCot_sq_eq]
+    nlinarith [fifteenSqrtFive_lt_2236067978_1e9]
+  have hcUpper : c < (1376381921 : ℝ) / 1000000000 :=
+    (sq_lt_sq₀ (le_of_lt hcpos) (by norm_num)).mp hcUpperSq
+  have hsum : 0 < 2 + c := by linarith
+  have hsumUpper : 2 + c < 2 + (1376381921 : ℝ) / 1000000000 := by
+    linarith
+  have hsumSq := (sq_lt_sq₀ (le_of_lt hsum) (by norm_num)).2 hsumUpper
+  have hBpos := fifteenCandidateOuterRadius_pos
+  have hBsq : fifteenCandidateOuterRadius ^ 2 <
+      ((3521357 : ℝ) / 1000000) ^ 2 := by
+    rw [fifteenCandidateOuterRadius_sq]
+    have htarget :
+        1 + (2 + (1376381921 : ℝ) / 1000000000) ^ 2 <
+          ((3521357 : ℝ) / 1000000) ^ 2 := by norm_num
+    nlinarith [hsumSq, htarget]
+  exact (sq_lt_sq₀ (le_of_lt hBpos) (by norm_num)).mp hBsq
+
+/-- The wall-push threshold lies inside the certified Stage 0 outer edge of
+the type-3 radial box. -/
+theorem fifteenCandidateInnerThreshold_lt_2385432_1e6 :
+    fifteenCandidateOuterRadius - 4 / fifteenCandidateOuterRadius <
+      (2385432 : ℝ) / 1000000 := by
+  have hbpos := fifteenCandidateOuterRadius_pos
+  have hupper := fifteenCandidateOuterRadius_lt_3521357_1e6
+  have huPos : 0 < (3521357 : ℝ) / 1000000 := by norm_num
+  have hrecip : 4 / ((3521357 : ℝ) / 1000000) <
+      4 / fifteenCandidateOuterRadius := by
+    apply (div_lt_div_iff₀ huPos hbpos).2
+    nlinarith
+  calc
+    fifteenCandidateOuterRadius - 4 / fifteenCandidateOuterRadius <
+        (3521357 : ℝ) / 1000000 - 4 / fifteenCandidateOuterRadius :=
+      sub_lt_sub_right hupper _
+    _ < (3521357 : ℝ) / 1000000 -
+        4 / ((3521357 : ℝ) / 1000000) := by linarith
+    _ < (2385432 : ℝ) / 1000000 := by norm_num
+
 private theorem fifteenCandidateMixedCap_mem_Ioo
     {x : ℝ} (hxlo : (839 : ℝ) / 500 < x)
     (hxhi : x < (862 : ℝ) / 500) :

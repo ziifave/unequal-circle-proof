@@ -68,7 +68,17 @@ theorem fifteenStage0OuterTypeBox_rat_bounds :
         fifteenRational 2385 1000 ∧
       (fifteenStage0CoarseTypeBox (0 : Fin 4)).2 =
         fifteenRational 3522 1000 := by
-  native_decide
+  decide
+
+theorem fifteenStage0InnerTypeBox_rat_bounds :
+    ((fifteenStage0CoarseTypeBox (1 : Fin 4)).1 = fifteenRational 0 1 ∧
+      (fifteenStage0CoarseTypeBox (1 : Fin 4)).2 = fifteenRational 1 1) ∧
+    ((fifteenStage0CoarseTypeBox (2 : Fin 4)).1 = fifteenRational 1 1 ∧
+      (fifteenStage0CoarseTypeBox (2 : Fin 4)).2 = fifteenRational 5 3) ∧
+    ((fifteenStage0CoarseTypeBox (3 : Fin 4)).1 = fifteenRational 5 3 ∧
+      (fifteenStage0CoarseTypeBox (3 : Fin 4)).2 =
+        fifteenRational 2385432 1000000) := by
+  decide
 
 def fifteenStage0CoarseAngleTick (typeI typeJ : Fin 4) : Nat :=
   fifteenStage0CoarseQ typeI.1 typeJ.1
