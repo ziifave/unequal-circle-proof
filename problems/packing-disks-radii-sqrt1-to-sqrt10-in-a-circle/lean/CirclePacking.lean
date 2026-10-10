@@ -46,6 +46,7 @@ import CirclePacking.FifteenCandidateLocalBarrier
 import CirclePacking.FifteenCandidateBounds
 import CirclePacking.FifteenCandidateBoxLocalBarrier
 import CirclePacking.FifteenWallPush
+import CirclePacking.FifteenStageZeroInnerCount
 import CirclePacking.FifteenStageZeroHandoff
 import CirclePacking.FifteenLocalAngleGeometry
 import CirclePacking.FifteenStrictWallBarrier

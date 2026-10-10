@@ -142,6 +142,14 @@ subdivision layer.
 `CirclePacking/FifteenStageZeroGeometry.lean` turns each positive coarse-table
 entry into a touch-angle lower bound for every radius pair in the corresponding
 radial rectangles, using the general corner and Taylor soundness theorems.
+`CirclePacking/FifteenStageZeroInnerCount.lean` now proves the missing upper
+endpoint for the geometric handoff: after wall replacement, there are at most
+eight centers below the inner threshold. The proof bounds the pairwise contact
+cosine by `2/3` for radii in `[1, 12/5]`, so eight such centers would require
+eight cyclic gaps of at least `arccos (2/3) > π/4`; the existing subunit-center
+lemma allows at most one additional center. Together with the wall-push lower
+bound, `FifteenStageZeroHandoff.lean` now supplies the actual 5--8 weight and
+radial assignment conditions to the finite Stage 0 layer.
 
 The compact inputs
 `problems/packing-15-equal-disks-in-a-circle/candidate_bundle/stage0_cycles.txt` and
