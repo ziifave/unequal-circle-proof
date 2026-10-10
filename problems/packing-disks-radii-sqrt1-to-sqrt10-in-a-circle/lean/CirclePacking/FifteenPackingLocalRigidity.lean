@@ -1,6 +1,7 @@
 import CirclePacking.FifteenLocalAngleGeometry
 import CirclePacking.FifteenPackingSortedGeometry
 import CirclePacking.FifteenCandidateBoxLocalBarrier
+import CirclePacking.FifteenCandidateSmoothness
 
 /-! Packing-level interface for the local five-cycle argument.  The geometric
 angle budget is now obtained from a genuine unit-disk `Packing`; the remaining
@@ -110,28 +111,14 @@ theorem fifteen_unit_packing_local_rigidity_of_survivor_pattern
     (hr₂ : r₂ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
     (hr₃ : r₃ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
     (hr₄ : r₄ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
-    (hDirectCont : ∀ dx dy : ℝ,
-      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
-      ContDiffOn ℝ 2
-        (fun t : ℝ => fifteenTouchAngle
-          (fifteenCandidateInnerRadius + t * dx)
-          (fifteenCandidateInnerRadius + t * dy))
-        (Set.uIcc 0 1))
     (hDirectSecond : ∀ dx dy : ℝ,
       |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
       ∀ t ∈ Set.uIcc 0 1,
         |iteratedDeriv 2
           (fun s : ℝ => fifteenTouchAngle
             (fifteenCandidateInnerRadius + s * dx)
-            (fifteenCandidateInnerRadius + s * dy)) t| ≤
+          (fifteenCandidateInnerRadius + s * dy)) t| ≤
           5 * (dx ^ 2 + dy ^ 2))
-    (hDetourCont : ∀ dx dy : ℝ,
-      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
-      ContDiffOn ℝ 2
-        (fun t : ℝ => fifteenDetourAngleAlongSegment
-          fifteenCandidateOuterRadius fifteenCandidateInnerRadius
-          fifteenCandidateInnerRadius dx dy t)
-        (Set.uIcc 0 1))
     (hDetourSecond : ∀ dx dy : ℝ,
       |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
       ∀ t ∈ Set.uIcc 0 1,
@@ -152,6 +139,24 @@ theorem fifteen_unit_packing_local_rigidity_of_survivor_pattern
     (by linarith [hr₀.1]) (by linarith [hr₁.1]) (by linarith [hr₂.1])
     (by linarith [hr₃.1]) (by linarith [hr₄.1])
     fifteenCandidateOuterRadius_pos
+  have hDirectCont : ∀ dx dy : ℝ,
+      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
+      ContDiffOn ℝ 2
+        (fun t : ℝ => fifteenTouchAngle
+          (fifteenCandidateInnerRadius + t * dx)
+          (fifteenCandidateInnerRadius + t * dy))
+        (Set.uIcc 0 1) := by
+    intro dx dy hdx hdy
+    exact fifteenCandidateDirectAngle_contDiffOn dx dy hdx hdy
+  have hDetourCont : ∀ dx dy : ℝ,
+      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
+      ContDiffOn ℝ 2
+        (fun t : ℝ => fifteenDetourAngleAlongSegment
+          fifteenCandidateOuterRadius fifteenCandidateInnerRadius
+          fifteenCandidateInnerRadius dx dy t)
+        (Set.uIcc 0 1) := by
+    intro dx dy hdx hdy
+    exact fifteenCandidateDetourAngle_contDiffOn dx dy hdx hdy
   have hrigid := fifteenCandidateLocalBarrier_rigidity_of_box
     r₀ r₁ r₂ r₃ r₄ hr₀ hr₁ hr₂ hr₃ hr₄
     hDirectCont hDirectSecond hDetourCont hDetourSecond hbudget
