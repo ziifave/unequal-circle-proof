@@ -42,6 +42,42 @@ theorem fifteenSqrtFive_lt_nine_fourths :
   rw [Real.sqrt_sq_eq_abs, abs_of_nonneg (by positivity)] at h
   exact h
 
+theorem fifteenSqrtFive_gt_223_100 :
+    (223 : ℝ) / 100 < Real.sqrt 5 := by
+  apply Real.lt_sqrt_of_sq_lt
+  norm_num
+
+theorem fifteenSqrtFive_lt_56_25 :
+    Real.sqrt 5 < (56 : ℝ) / 25 := by
+  have h := Real.sqrt_lt_sqrt (show 0 ≤ (5 : ℝ) by norm_num)
+    (show (5 : ℝ) < ((56 : ℝ) / 25) ^ 2 by norm_num)
+  rw [Real.sqrt_sq_eq_abs, abs_of_nonneg (by positivity)] at h
+  exact h
+
+theorem fifteenCandidateInnerRadius_gt_17_10 :
+    (17 : ℝ) / 10 < fifteenCandidateInnerRadius := by
+  rw [← sq_lt_sq₀ (by positivity)
+    (le_of_lt fifteenCandidateInnerRadius_pos)]
+  rw [fifteenCandidateInnerRadius_sq_eq_radical]
+  nlinarith [fifteenSqrtFive_gt_223_100]
+
+theorem fifteenCandidateInnerRadius_lt_851_500 :
+    fifteenCandidateInnerRadius < (851 : ℝ) / 500 := by
+  rw [← sq_lt_sq₀ (le_of_lt fifteenCandidateInnerRadius_pos)
+    (by positivity)]
+  rw [fifteenCandidateInnerRadius_sq_eq_radical]
+  nlinarith [fifteenSqrtFive_lt_56_25]
+
+theorem fifteenCandidateDeviation_abs_le_of_mem_local_interval
+    (r : ℝ) (hr : r ∈ Set.Icc (42 / 25 : ℝ) (43 / 25)) :
+    |r - fifteenCandidateInnerRadius| ≤ (11 / 500 : ℝ) := by
+  rw [abs_le]
+  constructor
+  · have ha := fifteenCandidateInnerRadius_lt_851_500
+    linarith [hr.1]
+  · have ha := fifteenCandidateInnerRadius_gt_17_10
+    linarith [hr.2]
+
 theorem fifteenCandidateInnerRadius_sq_gt_42_25_sq :
     ((42 : ℝ) / 25) ^ 2 < fifteenCandidateInnerRadius ^ 2 := by
   rw [fifteenCandidateInnerRadius_sq_eq_radical]
