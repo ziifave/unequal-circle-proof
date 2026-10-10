@@ -1,5 +1,6 @@
 import CirclePacking.FifteenStageZero
 import CirclePacking.FifteenTickSoundness
+import CirclePacking.FifteenSmallRadiusCount
 
 /-!
 # Geometric meaning of the coarse 15-disk angle table
@@ -12,6 +13,17 @@ interface.
 -/
 
 namespace CirclePacking
+
+/-- The Stage 0 assignment rule requires at least `k - 4` of the `k` inner
+centers to lie in the outer inner-shell `[5/3, L)`.  This is the geometric
+population bound behind that rule: at most four centers in any unit-disk
+packing can have radius at most `5/3`. -/
+theorem fifteenStage0_smallRadialShell_population_bound
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1) :
+    (Finset.univ.filter fun i : Fin 15 =>
+      fifteenPackingSortedRadius P i ≤ 5 / 3).card ≤ 4 :=
+  fifteen_unit_packing_small_radius_count_le_four P hunit
 
 theorem fifteenStage0OuterTypeBox_bounds :
     ((fifteenStage0CoarseTypeBox (0 : Fin 4)).1 : ℝ) =
