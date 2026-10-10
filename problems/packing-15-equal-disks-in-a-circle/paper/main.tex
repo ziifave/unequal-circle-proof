@@ -40,7 +40,7 @@
 
 \title{Optimal Packing of Fifteen Equal Disks in a Circle:\\An Exact Computer-Assisted Certificate}
 \author{}
-\date{October 9, 2026}
+\date{October 11, 2026}
 
 \begin{document}
 \maketitle
@@ -55,7 +55,7 @@ and a candidate computer-assisted certificate for the matching lower bound. A ra
 \end{abstract}
 
 \paragraph{Verification status.}
-The finite computations and the separate certificate checker were successfully replayed with the accompanying source bundle. This is a candidate computer-assisted proof, not an independently formalized result. The geometric reductions and the implementation have not yet received independent mathematical or peer review.
+The finite computations and the separate certificate checker were successfully replayed with the accompanying source bundle. A subsequent Lean development checks the finite certificate replays and formalizes the local angular obstruction, together with parts of the geometric reduction. It does not yet prove that every feasible packing reaches the final local box, or construct the feasible candidate packing as a Lean object. This manuscript presents a candidate computer-assisted proof; a complete Lean proof of its main theorem is still outstanding. The scope and trust dependencies of the partial formalization are recorded in \cref{sec:lean-status}.
 
 \section{Introduction}\label{sec:intro}
 
@@ -79,6 +79,8 @@ The minimum enclosing radius for fifteen pairwise interior-disjoint unit disks i
  R_{15}^*=R_0=1+\sqrt{1+\bigl(2+\cot(\pi/5)\bigr)^2}.
 \]
 \end{theorem}
+
+This is the conclusion claimed by the candidate argument below. It is not yet the conclusion of an unconditional Lean theorem; in particular, the packing-level implication in \cref{prop:finite-reduction} remains to be connected to the checked finite certificates.
 
 The upper bound comes from the familiar $D_5$-symmetric arrangement, invariant under rotations by $2\pi/5$ and reflections, with five inner disks and ten outer disks; it is listed among the best-known configurations \cite{GrahamEtAl1998,Packomania}. The lower-bound strategy is independent of the tight-partition reduction used for fourteen disks \cite{EF2024}.
 
@@ -530,6 +532,87 @@ The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 class
 \caption{Each exact bisection covers its parent by two closed rational children, including the midpoint. A branch ends only at an exact contradiction or, for the canonical type, at a box passed to the separate local proof.}
 \label{fig:branch-tree}
 \end{figure}
+
+\section{Scope of the Lean formalization}\label{sec:lean-status}
+
+The partial formalization is available in the repository's
+\href{https://github.com/ziifave/unequal-circle-proof/tree/4a96098df3a468859f4147705ceb0835c2445bdd/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{4a96098}}.
+The project is hosted under the unequal-disk problem directory, but its
+\texttt{Fifteen} modules concern the equal-disk problem in this manuscript.
+They use the same candidate radii $a_0,b_0$ and the same local cube
+$[42/25,43/25]^5$. The following distinctions are essential when interpreting
+the formalization status.
+
+\begin{center}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{.30\textwidth}>{\raggedright\arraybackslash}p{.66\textwidth}@{}}
+\toprule
+Manuscript component & Lean status at the pinned snapshot\\
+\midrule
+Candidate construction (\cref{sec:construction}) &
+Radius and contact-angle identities are proved. An explicit feasible
+\texttt{Packing 15} at radius $R_0$ remains to be constructed.\\[5pt]
+Radial reduction (\cref{sec:radial}) &
+Wall replacement, the 5--8 inner-center count, and coarse radial-box
+membership are proved. The complete passage to a canonical cyclic angle
+profile remains unfinished.\\[5pt]
+Finite reduction (\cref{prop:finite-reduction}) &
+All finite certificate replays are collected in one theorem. Their
+packing-level soundness and coverage have not yet been assembled into this
+proposition.\\[5pt]
+Local angular barrier (\cref{sec:local}) &
+Taylor error estimates, the odd five-cycle identity, and local rigidity are
+proved. The strict smaller-container exclusion is proved assuming the
+canonical cyclic pattern and the local-box hypotheses.\\[5pt]
+Optimality (\cref{thm:main}) &
+No unconditional Lean theorem of global optimality is present. It requires
+the packing-level finite reduction and the feasible candidate construction.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Replay and geometric soundness.}
+The theorem
+\nolinkurl{fifteenAllFiniteCertificates_replay}, in
+\nolinkurl{CirclePacking/FifteenAllFiniteCertificates.lean}, combines the
+760-class enumeration, coarse table and certificate checks, Stage 3 and
+Stage 4, the final rational subdivision, and the residual-pattern handoff.
+Its conclusion is a conjunction of finite check results and class counts.
+The separate theorem
+\nolinkurl{fifteen_unit_packing_canonical_pattern_local_box_impossible}, in
+\nolinkurl{CirclePacking/FifteenLocalFinalAssembly.lean}, excludes a packing
+with $R<R_0$ once its wall-replaced, angle-sorted profile has inner positions
+$0,3,6,9,12$ and those five radii lie in the local interval. The missing
+connection is to derive these hypotheses from an arbitrary feasible packing,
+including dihedral angle transport, refined rank and leaf soundness, and
+coverage of the residual roots and the six-inner special case. A successful
+Boolean replay alone does not supply that implication.
+
+\paragraph{Alternative intermediate proofs.}
+The Lean development sometimes proves the same required bound by a different
+route. For the eight-inner-center upper bound, it uses a contact-cosine bound
+$c(x,y)\le2/3$ on $[1,12/5]^2$ and
+$\arccos(2/3)>\pi/4$, together with the fact that at most one center has
+radius below $1$. It therefore does not need the nine-disk optimum invoked
+in \cref{sec:radial}. The 760 class counts are checked by exhaustive
+canonical-mask enumeration rather than by formalizing Burnside's formula.
+For local Taylor errors, the Lean proofs bound the second derivative along
+each perturbation segment by $5(\delta_i^2+\delta_{i+1}^2)$; this yields the
+same $\frac52(\delta_i^2+\delta_{i+1}^2)$ remainder without requiring the
+sharper individual Hessian bounds quoted in \cref{sec:local}.
+
+\paragraph{Trust dependencies.}
+Several finite replays use \texttt{native\_decide} and carry native-evaluation
+axioms. Their trust dependencies must be distinguished from proofs using
+only ordinary kernel reduction. The local packing-exclusion theorem has
+been audited and depends only on Lean's standard logical axioms. The
+combined finite theorem can be built and audited from the Lean directory
+with:
+\begin{verbatim}
+lake build CirclePacking.FifteenAllFiniteCertificates
+lake env lean CirclePacking/FifteenTrustAudit.lean
+\end{verbatim}
+The audit prints the actual axiom dependencies; it is not a proof of the
+remaining geometric connection.
 
 \begin{thebibliography}{9}
 \bibitem{Graham1968}
