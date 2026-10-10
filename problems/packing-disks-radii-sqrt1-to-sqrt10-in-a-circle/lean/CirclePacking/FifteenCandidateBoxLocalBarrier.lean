@@ -1,4 +1,6 @@
 import CirclePacking.FifteenCandidateBounds
+import CirclePacking.FifteenCandidateCurvature
+import CirclePacking.FifteenCandidateDetourCurvature
 import CirclePacking.FifteenCandidateLocalBarrier
 
 /-! Converts radii in the certified survivor box into the deviation hypotheses
@@ -20,14 +22,6 @@ theorem fifteenCandidateLocalBarrier_rigidity_of_box
           (fifteenCandidateInnerRadius + t * dx)
           (fifteenCandidateInnerRadius + t * dy))
         (Set.uIcc 0 1))
-    (hDirectSecond : ∀ dx dy : ℝ,
-      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
-      ∀ t ∈ Set.uIcc 0 1,
-        |iteratedDeriv 2
-          (fun s : ℝ => fifteenTouchAngle
-            (fifteenCandidateInnerRadius + s * dx)
-            (fifteenCandidateInnerRadius + s * dy)) t| ≤
-          5 * (dx ^ 2 + dy ^ 2))
     (hDetourCont : ∀ dx dy : ℝ,
       |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
       ContDiffOn ℝ 2
@@ -35,14 +29,6 @@ theorem fifteenCandidateLocalBarrier_rigidity_of_box
           fifteenCandidateOuterRadius fifteenCandidateInnerRadius
           fifteenCandidateInnerRadius dx dy t)
         (Set.uIcc 0 1))
-    (hDetourSecond : ∀ dx dy : ℝ,
-      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
-      ∀ t ∈ Set.uIcc 0 1,
-        |iteratedDeriv 2
-          (fun s : ℝ => fifteenDetourAngleAlongSegment
-            fifteenCandidateOuterRadius fifteenCandidateInnerRadius
-            fifteenCandidateInnerRadius dx dy s) t| ≤
-          5 * (dx ^ 2 + dy ^ 2))
     (hbudget :
       max (fifteenTouchAngle r₀ r₁)
           (fifteenDetourAngle fifteenCandidateOuterRadius r₀ r₁) +
@@ -113,6 +99,26 @@ theorem fifteenCandidateLocalBarrier_rigidity_of_box
             (fifteenCandidateInnerRadius + δ₀)) ≤
           5 * (2 * fifteenLocalPhi) := by
     simpa [δ₀, δ₁, δ₂, δ₃, δ₄] using hbudget
+  have hDirectSecond : ∀ dx dy : ℝ,
+      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
+      ∀ t ∈ Set.uIcc 0 1,
+        |iteratedDeriv 2
+          (fun s : ℝ => fifteenTouchAngle
+            (fifteenCandidateInnerRadius + s * dx)
+            (fifteenCandidateInnerRadius + s * dy)) t| ≤
+          5 * (dx ^ 2 + dy ^ 2) := by
+    intro dx dy hdx hdy t ht
+    exact fifteenCandidateDirectAngle_second_deriv_bound dx dy hdx hdy ht
+  have hDetourSecond : ∀ dx dy : ℝ,
+      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
+      ∀ t ∈ Set.uIcc 0 1,
+        |iteratedDeriv 2
+          (fun s : ℝ => fifteenDetourAngleAlongSegment
+            fifteenCandidateOuterRadius fifteenCandidateInnerRadius
+            fifteenCandidateInnerRadius dx dy s) t| ≤
+          5 * (dx ^ 2 + dy ^ 2) := by
+    intro dx dy hdx hdy t ht
+    exact fifteenCandidateDetourAngle_second_deriv_bound dx dy hdx hdy ht
   have hrigid := fifteenCandidateLocalBarrier_rigidity
     δ₀ δ₁ δ₂ δ₃ δ₄ hδ₀ hδ₁ hδ₂ hδ₃ hδ₄
     hDirectCont hDirectSecond hDetourCont hDetourSecond hbudget'

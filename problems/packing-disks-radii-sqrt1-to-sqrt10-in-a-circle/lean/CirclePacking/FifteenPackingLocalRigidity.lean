@@ -85,8 +85,9 @@ theorem fifteen_unit_packing_ordered_pattern_angle_budget
 
 /-- Local rigidity for an actual packing in the certified five-inner radial
 box.  The angular budget follows from packing separation and sorted polar
-order.  Smoothness and the quantitative second-derivative estimates remain
-explicit inputs, as does the `(I,O,O)^5` radial pattern. -/
+order.  Smoothness and the `(I,O,O)^5` radial pattern remain explicit inputs;
+both second-derivative estimates are proved internally from the candidate
+angle bounds. -/
 theorem fifteen_unit_packing_local_rigidity_of_survivor_pattern
     {R : ℝ} (P : Packing 15 R)
     (hunit : ∀ i, (P.circles i).radius = 1)
@@ -111,23 +112,7 @@ theorem fifteen_unit_packing_local_rigidity_of_survivor_pattern
     (hr₂ : r₂ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
     (hr₃ : r₃ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
     (hr₄ : r₄ ∈ Set.Icc (42 / 25 : ℝ) (43 / 25))
-    (hDirectSecond : ∀ dx dy : ℝ,
-      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
-      ∀ t ∈ Set.uIcc 0 1,
-        |iteratedDeriv 2
-          (fun s : ℝ => fifteenTouchAngle
-            (fifteenCandidateInnerRadius + s * dx)
-          (fifteenCandidateInnerRadius + s * dy)) t| ≤
-          5 * (dx ^ 2 + dy ^ 2))
-    (hDetourSecond : ∀ dx dy : ℝ,
-      |dx| ≤ (11 / 500 : ℝ) → |dy| ≤ (11 / 500 : ℝ) →
-      ∀ t ∈ Set.uIcc 0 1,
-        |iteratedDeriv 2
-          (fun s : ℝ => fifteenDetourAngleAlongSegment
-            fifteenCandidateOuterRadius fifteenCandidateInnerRadius
-            fifteenCandidateInnerRadius dx dy s) t| ≤
-          5 * (dx ^ 2 + dy ^ 2)) :
-    (r₀ = fifteenCandidateInnerRadius ∧
+    : (r₀ = fifteenCandidateInnerRadius ∧
       r₁ = fifteenCandidateInnerRadius ∧
       r₂ = fifteenCandidateInnerRadius ∧
       r₃ = fifteenCandidateInnerRadius ∧
@@ -159,7 +144,7 @@ theorem fifteen_unit_packing_local_rigidity_of_survivor_pattern
     exact fifteenCandidateDetourAngle_contDiffOn dx dy hdx hdy
   have hrigid := fifteenCandidateLocalBarrier_rigidity_of_box
     r₀ r₁ r₂ r₃ r₄ hr₀ hr₁ hr₂ hr₃ hr₄
-    hDirectCont hDirectSecond hDetourCont hDetourSecond hbudget
+    hDirectCont hDetourCont hbudget
   have hradius := fifteen_unit_packing_radius_lower_bound_of_candidate_outer_center
     P hunit hR₁
   exact ⟨hrigid, hradius⟩
