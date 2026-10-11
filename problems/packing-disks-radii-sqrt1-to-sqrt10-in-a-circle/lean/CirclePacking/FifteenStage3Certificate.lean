@@ -17,8 +17,8 @@ model remains a separate soundness obligation.
 
 namespace CirclePacking
 
-private def s3N : Nat := 15
-private def s3TwoPi : Nat := 17600
+def s3N : Nat := 15
+def s3TwoPi : Nat := 17600
 
 def s3InnerPositions (pattern : String) : Array Nat :=
   ((List.range s3N).filter fun i => pattern.toList[i]? == some '1').toArray
@@ -43,12 +43,12 @@ structure S3State where
   high2 : Nat
   deriving Inhabited
 
-private structure S3CertEdge where
+structure S3CertEdge where
   source : Nat
   target : Nat
   kind : Char
 
-private structure S3WeightedEdge where
+structure S3WeightedEdge where
   source : Nat
   target : Nat
   kind : Char
@@ -81,7 +81,7 @@ private def s3StructurallyPruned (inner : Array Nat) (s : S3State) : Bool :=
   s3SmallReason s || s3OriginReason inner s || s3RankReason inner s ||
     s3MixedReason s
 
-private def s3PairTick (labels : Array Nat) (i j : Nat) : Nat := Id.run do
+def s3PairTick (labels : Array Nat) (i j : Nat) : Nat := Id.run do
   let a := labels[i]!
   let b := labels[j]!
   if a >= 8 || b >= 8 then return 0
@@ -130,16 +130,16 @@ private def s3ParseCycleDictionary? (text : String) : Option (Array (List S3Cert
   let cycles ← (text.splitOn ";").mapM s3ParseCycle?
   some cycles.toArray
 
-private def s3EdgeTick (labels : Array Nat) (e : S3CertEdge) : Nat := Id.run do
+def s3EdgeTick (labels : Array Nat) (e : S3CertEdge) : Nat := Id.run do
   if e.kind == 'O' then return 0
   if e.kind == 'L' then return s3PairTick labels e.target e.source
   if e.kind == 'U' then return s3PairTick labels e.source e.target
   return 0
 
-private def s3MaterializeEdge (labels : Array Nat) (e : S3CertEdge) : S3WeightedEdge :=
+def s3MaterializeEdge (labels : Array Nat) (e : S3CertEdge) : S3WeightedEdge :=
   ⟨e.source, e.target, e.kind, s3EdgeTick labels e⟩
 
-private def s3EdgeShape (e : S3WeightedEdge) : Bool :=
+def s3EdgeShape (e : S3WeightedEdge) : Bool :=
   decide (e.source < s3N) && decide (e.target < s3N) && decide (e.ticks ≤ 8790) &&
     (if e.kind == 'O' then
       decide (e.source == e.target + 1) && decide (e.target < 14) && decide (e.ticks == 0)
@@ -147,26 +147,26 @@ private def s3EdgeShape (e : S3WeightedEdge) : Bool :=
     else if e.kind == 'U' then decide (e.source < e.target)
     else false)
 
-private def s3EdgeWeight (e : S3WeightedEdge) : Int :=
+def s3EdgeWeight (e : S3WeightedEdge) : Int :=
   if e.kind == 'O' then 0
   else if e.kind == 'L' then -(Int.ofNat e.ticks)
   else Int.ofNat (s3TwoPi - e.ticks)
 
-private def s3LinkValid : List S3WeightedEdge → Bool
+def s3LinkValid : List S3WeightedEdge → Bool
   | [] => true
   | [_] => true
   | first :: second :: rest =>
-      decide (first.target == second.source) && s3LinkValid (second :: rest)
+      (first.target == second.source) && s3LinkValid (second :: rest)
 
-private def s3EndsClosed (edges : List S3WeightedEdge) : Bool :=
+def s3EndsClosed (edges : List S3WeightedEdge) : Bool :=
   match edges.head?, edges.getLast? with
-  | some first, some last => decide (last.target == first.source)
+  | some first, some last => decide (last.target = first.source)
   | _, _ => false
 
-private def s3Weight (edges : List S3WeightedEdge) : Int :=
+def s3Weight (edges : List S3WeightedEdge) : Int :=
   edges.foldl (fun total edge => total + s3EdgeWeight edge) 0
 
-private def s3CycleValid (labels : Array Nat) (edges : List S3CertEdge) : Bool := Id.run do
+def s3CycleValid (labels : Array Nat) (edges : List S3CertEdge) : Bool := Id.run do
   let materialized := edges.map (s3MaterializeEdge labels)
   return decide (2 ≤ edges.length) && decide (edges.length ≤ 15) &&
     materialized.all s3EdgeShape &&

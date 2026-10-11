@@ -12,6 +12,25 @@ def fifteenStage3OwnerPairTick
   if labels i ≥ 8 || labels j ≥ 8 then 0
   else (fifteenStage3Q[labels i]!)[labels j]!
 
+/-- The checked Stage 3 table is symmetric, so reversing an owner pair
+preserves its tick. The certificate uses the reversed lookup on lower edges. -/
+theorem fifteenStage3Q_entry_symmetric (i j : Nat) (hi : i < 8) (hj : j < 8) :
+    (fifteenStage3Q[i]!)[j]! = (fifteenStage3Q[j]!)[i]! := by
+  interval_cases i <;> interval_cases j <;> decide
+
+theorem fifteenStage3OwnerPairTick_comm
+    (labels : Fin 15 → Nat) (i j : Fin 15) :
+    fifteenStage3OwnerPairTick labels i j =
+      fifteenStage3OwnerPairTick labels j i := by
+  by_cases hi : 8 ≤ labels i
+  · simp [fifteenStage3OwnerPairTick, hi]
+  · by_cases hj : 8 ≤ labels j
+    · simp [fifteenStage3OwnerPairTick, hj]
+    · have hi' : labels i < 8 := by omega
+      have hj' : labels j < 8 := by omega
+      simp [fifteenStage3OwnerPairTick, hi, hj,
+        fifteenStage3Q_entry_symmetric (labels i) (labels j) hi' hj']
+
 private theorem fifteenStage3OwnerSpec_radius_positive
     (label : Nat) (r : ℝ) (hlabel : label < 8)
     (howner : fifteenStage3OwnerSpec label r) : 0 < r := by
@@ -24,7 +43,8 @@ upper bound associated with a directed edge. This is the local analytic
 bridge needed to interpret a verified cycle's edge weights. -/
 theorem fifteenStage3OwnerPair_angular_bound
     (radii : Fin 15 → ℝ) (labels : Fin 15 → Nat)
-    (howners : ∀ i, fifteenStage3OwnerSpec (labels i) (radii i))
+    (howners : ∀ i, labels i < 8 →
+      fifteenStage3OwnerSpec (labels i) (radii i))
     (hsum : ∀ i j, i ≠ j → 2 ≤ radii i + radii j)
     (theta : Fin 15 → ℝ) (tauUpper : ℝ)
     (hsorted : ∀ i j : Fin 15, i.1 < j.1 → theta i ≤ theta j)
@@ -45,11 +65,11 @@ theorem fifteenStage3OwnerPair_angular_bound
         simp [fifteenStage3OwnerPairTick, hi, hj, ticks]
       have hcontact := fifteenStage3PairTick_lower_bounds_touchAngle
         (labels i) (labels j) hi hj (radii i) (radii j)
-        (howners i) (howners j) (hsum i j hij)
+        (howners i hi) (howners j hj) (hsum i j hij)
       have hcontact' : (ticks : ℝ) / 2800 ≤ touchAngle (radii i) (radii j) 2 := by
         simpa [ticks] using hcontact
-      have hiPos := fifteenStage3OwnerSpec_radius_positive (labels i) (radii i) hi (howners i)
-      have hjPos := fifteenStage3OwnerSpec_radius_positive (labels j) (radii j) hj (howners j)
+      have hiPos := fifteenStage3OwnerSpec_radius_positive (labels i) (radii i) hi (howners i hi)
+      have hjPos := fifteenStage3OwnerSpec_radius_positive (labels j) (radii j) hj (howners j hj)
       let edge : FifteenAngularEdge :=
         ⟨i, j, ((fifteenStage3OwnerPairTick labels i j : Nat) : ℝ) / 2800⟩
       have hlower : edge.lower ≤ touchAngle (radii i) (radii j) 2 := by
