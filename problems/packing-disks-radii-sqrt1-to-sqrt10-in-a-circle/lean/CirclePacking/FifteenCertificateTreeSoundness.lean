@@ -193,4 +193,94 @@ theorem fifteenCheckTasks_split_profile_children
   exact ⟨axis, cut, left, right, hparts,
     fifteenRealBox_split_covers box radii axis cut hsize haxis hparent⟩
 
+/-- A successful split replay continues with exactly the two recorded child
+tasks, in front of the original queue. -/
+theorem fifteenCheckTasks_split_recursion
+    (fuel : Nat) (box : FifteenBox) (inner : List Nat) (node : Json)
+    (rest : List FifteenTask) (counts result : FifteenTreeCounts)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SPLIT")
+    (haccepted : fifteenCheckTasks (fuel + 1)
+      ((box, inner, node) :: rest) counts = some result) :
+    ∃ axis cut left right lo hi,
+      fifteenSplitParts? node = some (axis, cut, left, right) ∧
+      box[axis]? = some (lo, hi) ∧
+      axis < 15 ∧ axis ∈ inner ∧ lo < cut ∧ cut < hi ∧
+      cut = (lo + hi) / 2 ∧
+      fifteenCheckTasks fuel
+        ((box.set! axis (lo, cut), inner, left) ::
+          (box.set! axis (cut, hi), inner, right) :: rest)
+        { counts with nodes := counts.nodes + 1 } = some result := by
+  cases hparts : fifteenSplitParts? node with
+  | none => simp [fifteenCheckTasks, Id.run, htag, hparts] at haccepted
+  | some parts =>
+    rcases parts with ⟨axis, cut, left, right⟩
+    cases hbox : box[axis]? with
+    | none => simp [fifteenCheckTasks, Id.run, htag, hparts, hbox] at haccepted
+    | some endpoints =>
+      rcases endpoints with ⟨lo, hi⟩
+      have hvalid :
+          ¬ ((((15 ≤ axis ∨ axis ∉ inner) ∨ cut ≤ lo) ∨ hi ≤ cut) ∨
+            cut ≠ (lo + hi) / 2) := by
+        intro hbad
+        simp [fifteenCheckTasks, Id.run, htag, hparts, hbox, hbad] at haccepted
+      have hguard := hvalid
+      simp only [not_or] at hvalid
+      rcases hvalid with ⟨⟨⟨⟨haxis, hmem⟩, hlo⟩, hhi⟩, hmid⟩
+      have haxis' : axis < 15 := by omega
+      have hmem' : axis ∈ inner := by
+        by_contra h
+        exact hmem h
+      have hlo' : lo < cut := lt_of_not_ge hlo
+      have hhi' : cut < hi := lt_of_not_ge hhi
+      have hmid' : cut = (lo + hi) / 2 := by
+        by_contra h
+        exact hmid h
+      have hrec0 := haccepted
+      simp [fifteenCheckTasks, Id.run, htag, hparts, hbox, hguard] at hrec0
+      have hrec : fifteenCheckTasks fuel
+          ((box.set! axis (lo, cut), inner, left) ::
+            (box.set! axis (cut, hi), inner, right) :: rest)
+          { counts with nodes := counts.nodes + 1 } = some result := by
+        have hrec1 := hrec0
+        change fifteenCheckTasks fuel
+          ((Array.setIfInBounds box axis (lo, cut), inner, left) ::
+            (Array.setIfInBounds box axis (cut, hi), inner, right) :: rest)
+          { counts with nodes := counts.nodes + 1 } = some result at hrec1
+        simpa [Array.set!_eq_setIfInBounds] using hrec1
+      exact ⟨axis, cut, left, right, lo, hi, rfl, hbox, haxis', hmem',
+        hlo', hhi', hmid', hrec⟩
+
+/-- The accepted work-list step simultaneously certifies the recursive queue
+and preserves a profile in one of the recorded child boxes. -/
+theorem fifteenCheckTasks_split_step_sound
+    (fuel : Nat) (box : FifteenBox) (inner : List Nat) (node : Json)
+    (rest : List FifteenTask) (counts result : FifteenTreeCounts)
+    (radii : Fin 15 → ℝ) (hsize : box.size = 15)
+    (hparent : fifteenRealBoxContains box radii)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SPLIT")
+    (haccepted : fifteenCheckTasks (fuel + 1)
+      ((box, inner, node) :: rest) counts = some result) :
+    ∃ axis cut left right lo hi,
+      fifteenSplitParts? node = some (axis, cut, left, right) ∧
+      box[axis]? = some (lo, hi) ∧ axis < 15 ∧ axis ∈ inner ∧
+      (fifteenRealBoxContains
+          (box.set! axis (lo, cut)) radii ∨
+        fifteenRealBoxContains
+          (box.set! axis (cut, hi)) radii) ∧
+      fifteenCheckTasks fuel
+        ((box.set! axis (lo, cut), inner, left) ::
+          (box.set! axis (cut, hi), inner, right) :: rest)
+        { counts with nodes := counts.nodes + 1 } = some result := by
+  obtain ⟨axis, cut, left, right, lo, hi, hparts, hbox, haxis,
+      hinner, hlo, hhi, hmid, hrec⟩ :=
+    fifteenCheckTasks_split_recursion fuel box inner node rest counts result
+      htag haccepted
+  have hchildren := fifteenRealBox_split_covers box radii axis cut
+    hsize haxis hparent
+  have hboxValue : box[axis]! = (lo, hi) := by
+    simp [Array.getElem!_eq_getD, hbox]
+  rw [hboxValue] at hchildren
+  exact ⟨axis, cut, left, right, lo, hi, hparts, hbox, haxis, hinner,
+    hchildren, hrec⟩
+
 end CirclePacking
