@@ -212,6 +212,36 @@ the survivor count of 378 from the same replay. This completes the geometric
 760-to-378 reduction. The packing-level soundness of Stage 3/4 and the final
 refined subdivision remains to be assembled.
 
+The geometric Stage 3 input now has its own proved interface.
+`FifteenSixRadiusCount.lean` proves that at most five centers have radius
+strictly below two: any two such separated centers force a contact angle
+strictly greater than `π/3`, ruling out six cyclic gaps. The equality case at
+radius two is retained. `FifteenCertificateRadiusBounds.lean` proves that the
+exact candidate wall radius lies between `35213569647/10000000000` and
+`35213569648/10000000000`, the endpoints stored by the refined certificates.
+`FifteenStage3RadialOwners.lean` assigns every wall-pushed radius to a
+half-open owner, treats zero separately, proves membership in its closed
+rational hull, and checks that every inner owner belongs to the eight
+choices used by a Stage 3 branch. Rational cutpoints belong to their right
+owner, so the structural tests use strict inequalities where needed.
+`FifteenStage3StructuralSoundness.lean` derives the small-count and both rank
+restrictions from geometry and proves the small-count, rank, origin, and
+mixed-bin exclusion lemmas. The rank lemma also covers partial assignments:
+the assigned high count plus the number of remaining positions is still an
+upper bound for any completion. `FifteenStage3GeometricHandoff.lean` attaches
+these owner, pair-sum, and population facts to the same ordered real profile
+which survived Stage 0. It is imported by the default `CirclePacking` target.
+This is not yet a geometric 378-to-23 theorem: the checker state's labels and
+counters must still be matched to the assigned-prefix sets, cycle leaves
+must be connected to the refined angle table, and stream soundness must be
+proved by induction.
+
+The radius-two bound, refined wall enclosure, owner coverage, structural
+exclusion lemmas, and actual-packing structural conditions have only
+`propext`, `Classical.choice`, and `Quot.sound` as dependencies. The combined
+Stage 3 handoff inherits the same nine existing Stage 0 native axioms as the
+760-to-378 reduction; these new modules introduce no native-evaluation axiom.
+
 Axiom auditing of the canonical-mask origin and abstract profile-transport
 lemmas reports only standard logical axioms. The packing-level dihedral
 profile theorem also inherits the seven existing native-evaluation axioms of
@@ -341,8 +371,10 @@ dihedrally normalized real profile with the exact canonical word, coarse
 radial boxes, preserved separation, and angular difference constraints.
 Every normalized radial assignment now has a matching checked exclusion
 witness or belongs to a survivor pattern; geometric cycle exclusion gives
-the 378 surviving patterns. Stage 3/4 and the exact subdivision tree still need
-their per-certificate geometric edge/leaf soundness connected to the full
+the 378 surviving patterns. The Stage 3 radial owners and structural leaf
+lemmas now have geometric proofs, including partial-assignment rank bounds.
+Stage 3/4 and the exact subdivision tree still need their per-certificate
+state, cycle, and stream soundness connected to the full
 packing classification, including the residual roots and the special
 six-inner case. The finite Boolean replays alone do not establish that every
 packing reaches the local obstruction's hypotheses. A complete optimality
@@ -362,6 +394,13 @@ The geometric Stage 0 reduction and its coverage audit can be checked with:
 ```sh
 lake build CirclePacking.FifteenStageZeroFiniteReduction
 lake env lean CirclePacking/FifteenStageZeroReductionAudit.lean
+```
+
+The Stage 3 geometric input and structural leaf lemmas can be checked with:
+
+```sh
+lake build CirclePacking.FifteenStage3GeometricHandoff
+lake env lean CirclePacking/FifteenStage3GeometryAudit.lean
 ```
 
 This audit distinguishes the abstract mask/angle transport lemmas from the

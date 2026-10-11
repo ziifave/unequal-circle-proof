@@ -1,0 +1,20 @@
+import CirclePacking.FifteenStage3GeometricHandoff
+
+/-! Audit the newly proved geometry separately from the existing finite
+replays.  Only the final survivor handoff is expected to inherit Stage 0's
+existing native-evaluation dependencies. -/
+
+#print axioms CirclePacking.fifteen_unit_packing_radius_two_count_le_five
+#print axioms CirclePacking.fifteenCandidateOuterRadius_mem_certificate_interval
+#print axioms CirclePacking.fifteenStage3RadialOwner_spec
+#print axioms CirclePacking.fifteenStage3OwnerSpec_inner_choices
+#print axioms CirclePacking.fifteenStage3RadialOwner_cutpoints
+#print axioms CirclePacking.fifteenStage3OwnerSpec_closed_hull
+#print axioms CirclePacking.fifteenStage3RadialAssignment_population
+#print axioms CirclePacking.fifteenStage3_partial_rank_bound
+#print axioms CirclePacking.fifteenStage3Owners_exclude_small_leaf
+#print axioms CirclePacking.fifteenStage3Owners_exclude_rank_leaf
+#print axioms CirclePacking.fifteenStage3Owners_exclude_origin_leaf
+#print axioms CirclePacking.fifteenStage3Owners_exclude_mixed_leaf
+#print axioms CirclePacking.fifteen_unit_packing_wall_push_stage3_geometric_conditions
+#print axioms CirclePacking.fifteen_unit_packing_wall_push_stage3_geometric_handoff
