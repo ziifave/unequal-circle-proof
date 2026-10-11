@@ -1,4 +1,5 @@
 import Mathlib.Basic.Real.Basic
+import Mathlib.Data.Rat.Cast.Order
 import CirclePacking.FifteenCertificate
 
 /-! Semantic facts about the exact certificate's closed rational boxes.
@@ -14,6 +15,105 @@ def fifteenRealIntervalContains (interval : FifteenInterval) (x : ℝ) : Prop :=
 
 def fifteenRealBoxContains (box : FifteenBox) (radii : Fin 15 → ℝ) : Prop :=
   ∀ i : Fin 15, fifteenRealIntervalContains box[i.1]! (radii i)
+
+def fifteenRealBoxStrictlyPositive (box : FifteenBox) : Prop :=
+  ∀ i, i < 15 → 0 < (box[i]!.1 : ℝ)
+
+theorem fifteenRealBox_set_size (box : FifteenBox) (axis : Nat)
+    (interval : FifteenInterval) :
+    (box.set! axis interval).size = box.size := by
+  simp
+
+theorem fifteenRealBox_leftChild_strictlyPositive
+    (box : FifteenBox) (axis : Nat) (cut : Rat)
+    (haxisLtSize : axis < box.size) (haxis : axis < 15)
+    (hpositive : fifteenRealBoxStrictlyPositive box) :
+    fifteenRealBoxStrictlyPositive
+      (box.set! axis ((box[axis]!).1, cut)) := by
+  intro i hi
+  by_cases hia : i = axis
+  · subst i
+    simpa only [fifteenRealBoxStrictlyPositive, Array.set!_eq_setIfInBounds,
+      Array.getElem!_eq_getD, Array.getD_eq_getD_getElem?,
+      Array.getElem?_setIfInBounds_self_of_lt haxisLtSize,
+      Option.getD_some] using hpositive axis haxis
+  · rw [Array.getElem!_set!_ne box axis i ((box[axis]!).1, cut) (Ne.symm hia)]
+    exact hpositive i hi
+
+theorem fifteenRealBox_rightChild_strictlyPositive
+    (box : FifteenBox) (axis : Nat) (cut : Rat)
+    (haxisLtSize : axis < box.size) (haxis : axis < 15)
+    (hcut : (box[axis]!).1 < cut)
+    (hpositive : fifteenRealBoxStrictlyPositive box) :
+    fifteenRealBoxStrictlyPositive
+      (box.set! axis (cut, (box[axis]!).2)) := by
+  intro i hi
+  by_cases hia : i = axis
+  · subst i
+    have hcut' : (box[axis]!.1 : ℝ) < (cut : ℝ) := Rat.cast_lt.mpr hcut
+    have hlower := hpositive axis haxis
+    have hnew : 0 < (cut : ℝ) := lt_trans hlower hcut'
+    simpa only [Array.set!_eq_setIfInBounds, Array.getElem!_eq_getD,
+      Array.getD_eq_getD_getElem?,
+      Array.getElem?_setIfInBounds_self_of_lt haxisLtSize,
+      Option.getD_some] using hnew
+  · rw [Array.getElem!_set!_ne box axis i (cut, (box[axis]!).2) (Ne.symm hia)]
+    exact hpositive i hi
+
+def fifteenBoxGood (box : FifteenBox) : Prop :=
+  box.size = 15 ∧ fifteenRealBoxStrictlyPositive box
+
+def fifteenTaskBoxGood (task : FifteenTask) : Prop :=
+  fifteenBoxGood task.1
+
+def fifteenTaskListBoxesGood (tasks : List FifteenTask) : Prop :=
+  ∀ task, task ∈ tasks → fifteenTaskBoxGood task
+
+theorem fifteenRealBox_split_children_good
+    (box : FifteenBox) (axis : Nat) (cut : Rat) (lo hi : Rat)
+    (hbox : box[axis]? = some (lo, hi)) (haxis : axis < 15)
+    (hcut : lo < cut)
+    (hparent : fifteenBoxGood box) :
+    fifteenBoxGood (box.set! axis (lo, cut)) ∧
+      fifteenBoxGood (box.set! axis (cut, hi)) := by
+  have haxisLtSize : axis < box.size :=
+    (Array.getElem?_eq_some_iff.mp hbox).1
+  have hboxValue : box[axis]! = (lo, hi) := by
+    simp [Array.getElem!_eq_getD, hbox]
+  have hleftPositive := fifteenRealBox_leftChild_strictlyPositive
+    box axis cut haxisLtSize haxis hparent.2
+  have hrightCut : (box[axis]!).1 < cut := by
+    rw [hboxValue]
+    exact hcut
+  have hrightPositive := fifteenRealBox_rightChild_strictlyPositive
+    box axis cut haxisLtSize haxis hrightCut hparent.2
+  have hleftSize : (box.set! axis (lo, cut)).size = 15 :=
+    (fifteenRealBox_set_size box axis (lo, cut)).trans hparent.1
+  have hrightSize : (box.set! axis (cut, hi)).size = 15 :=
+    (fifteenRealBox_set_size box axis (cut, hi)).trans hparent.1
+  constructor
+  · exact ⟨hleftSize, by simpa [hboxValue] using hleftPositive⟩
+  · exact ⟨hrightSize, by simpa [hboxValue] using hrightPositive⟩
+
+theorem fifteenTaskListBoxesGood_split
+    (box : FifteenBox) (inner : List Nat) (left right : Json)
+    (rest : List FifteenTask) (axis : Nat) (cut lo hi : Rat)
+    (hchildren : fifteenTaskBoxGood
+        (box.set! axis (lo, cut), inner, left) ∧
+      fifteenTaskBoxGood (box.set! axis (cut, hi), inner, right))
+    (hrest : fifteenTaskListBoxesGood rest) :
+    fifteenTaskListBoxesGood
+      ((box.set! axis (lo, cut), inner, left) ::
+        (box.set! axis (cut, hi), inner, right) :: rest) := by
+  intro task htask
+  simp only [List.mem_cons] at htask
+  rcases htask with hleft | htail
+  · cases hleft
+    exact hchildren.1
+  · rcases htail with hright | hrest'
+    · cases hright
+      exact hchildren.2
+    · exact hrest task hrest'
 
 /-- The split convention is closed on both sides, so a radius on the cut is
 covered by either child (in fact, by both). -/
@@ -264,6 +364,7 @@ theorem fifteenCheckTasks_split_step_sound
     ∃ axis cut left right lo hi,
       fifteenSplitParts? node = some (axis, cut, left, right) ∧
       box[axis]? = some (lo, hi) ∧ axis < 15 ∧ axis ∈ inner ∧
+      lo < cut ∧ cut < hi ∧ cut = (lo + hi) / 2 ∧
       (fifteenRealBoxContains
           (box.set! axis (lo, cut)) radii ∨
         fifteenRealBoxContains
@@ -284,7 +385,7 @@ theorem fifteenCheckTasks_split_step_sound
     simp [Array.getElem!_eq_getD, hbox]
   rw [hboxValue] at hchildren
   exact ⟨axis, cut, left, right, lo, hi, hparts, hbox, haxis, hinner,
-    hchildren, hrec⟩
+    hlo, hhi, hmid, hchildren, hrec⟩
 
 /-- An accepted `CYCLE` terminal is valid and the queue replay continues with
 the remaining tasks. -/
@@ -366,8 +467,9 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
     ∀ (fuel : Nat) (tasks : List FifteenTask) (counts result : FifteenTreeCounts)
       (radii : Fin 15 → ℝ),
       fifteenCheckTasks fuel tasks counts = some result →
+      fifteenTaskListBoxesGood tasks →
       (∃ task, task ∈ tasks ∧ fifteenTaskHasProfile task radii) →
-      ∃ box inner node, fifteenRealBoxContains box radii ∧
+      ∃ box inner node, fifteenBoxGood box ∧ fifteenRealBoxContains box radii ∧
         ((fifteenJsonAt? node 0 >>= fifteenJsonString? = some "CYCLE" ∧
             fifteenTerminalValid box inner node false = true) ∨
           (fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SUM" ∧
@@ -377,16 +479,21 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
   intro fuel
   induction fuel with
   | zero =>
-      intro tasks counts result radii hcheck hcontains
+      intro tasks counts result radii hcheck _hboxesGood hcontains
       cases tasks with
       | nil => simp at hcontains
       | cons task rest => simp [fifteenCheckTasks] at hcheck
   | succ fuel ih =>
-      intro tasks counts result radii hcheck hcontains
+      intro tasks counts result radii hcheck hboxesGood hcontains
       cases tasks with
       | nil => simp at hcontains
       | cons task rest =>
           rcases task with ⟨box, inner, node⟩
+          have hheadGood : fifteenBoxGood box := by
+            exact hboxesGood (box, inner, node) (by simp)
+          have hrestGood : fifteenTaskListBoxesGood rest := by
+            intro next hnext
+            exact hboxesGood next (by simp [hnext])
           cases htag : (fifteenJsonAt? node 0 >>= fifteenJsonString?) with
           | none => simp [fifteenCheckTasks, Id.run, htag] at hcheck
           | some tag =>
@@ -395,10 +502,14 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                     fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SPLIT" := by
                   simpa [htag, hsplit]
                 by_cases hhead : fifteenRealBoxContains box radii
-                · obtain ⟨axis, cut, left, right, lo, hi, _hparts, _hbox,
-                    _haxis, _hinner, hchildren, hrec⟩ :=
-                    fifteenCheckTasks_split_step_sound fuel box inner node rest
-                      counts result radii hhead htagSplit hcheck
+                · have hstep := fifteenCheckTasks_split_step_sound fuel box inner node rest
+                    counts result radii hhead htagSplit hcheck
+                  rcases hstep with ⟨axis, cut, left, right, lo, hi, _hparts, hbox,
+                    haxis, _hinner, hlo, _hhi, _hmid, hchildren, hrec⟩
+                  have hchildrenGood := fifteenRealBox_split_children_good
+                    box axis cut lo hi hbox haxis hlo hheadGood
+                  have hnewGood := fifteenTaskListBoxesGood_split box inner left right
+                    rest axis cut lo hi hchildrenGood hrestGood
                   rcases hchildren with hleft | hright
                   · have hnew :
                         ∃ next, next ∈
@@ -410,7 +521,8 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                     exact ih
                       ((box.set! axis (lo, cut), inner, left) ::
                         (box.set! axis (cut, hi), inner, right) :: rest)
-                      { counts with nodes := counts.nodes + 1 } result radii hrec hnew
+                      { counts with nodes := counts.nodes + 1 } result radii hrec
+                      hnewGood hnew
                   · have hnew :
                         ∃ next, next ∈
                           ((box.set! axis (lo, cut), inner, left) ::
@@ -421,7 +533,8 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                     exact ih
                       ((box.set! axis (lo, cut), inner, left) ::
                         (box.set! axis (cut, hi), inner, right) :: rest)
-                      { counts with nodes := counts.nodes + 1 } result radii hrec hnew
+                      { counts with nodes := counts.nodes + 1 } result radii hrec
+                      hnewGood hnew
                 · have hrest :
                       ∃ next, next ∈ rest ∧ fifteenTaskHasProfile next radii := by
                     rcases hcontains with ⟨next, hmem, hprofile⟩
@@ -429,10 +542,14 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                     · subst next
                       exact (hhead hprofile).elim
                     · exact ⟨next, htail, hprofile⟩
-                  obtain ⟨axis, cut, left, right, lo, hi, _hparts, _hbox,
-                    _haxis, _hinner, _hlo, _hhi, _hmid, hrec⟩ :=
+                  obtain ⟨axis, cut, left, right, lo, hi, _hparts, hbox,
+                    haxis, _hinner, hlo, _hhi, _hmid, hrec⟩ :=
                     fifteenCheckTasks_split_recursion fuel box inner node rest
                       counts result htagSplit hcheck
+                  have hchildrenGood := fifteenRealBox_split_children_good
+                    box axis cut lo hi hbox haxis hlo hheadGood
+                  have hnewGood := fifteenTaskListBoxesGood_split box inner left right
+                    rest axis cut lo hi hchildrenGood hrestGood
                   have hnew :
                       ∃ next, next ∈
                         ((box.set! axis (lo, cut), inner, left) ::
@@ -443,7 +560,8 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                   exact ih
                     ((box.set! axis (lo, cut), inner, left) ::
                       (box.set! axis (cut, hi), inner, right) :: rest)
-                    { counts with nodes := counts.nodes + 1 } result radii hrec hnew
+                    { counts with nodes := counts.nodes + 1 } result radii hrec
+                    hnewGood hnew
               · by_cases hcycle : tag = "CYCLE"
                 · have htagCycle :
                       fifteenJsonAt? node 0 >>= fifteenJsonString? = some "CYCLE" := by
@@ -452,7 +570,8 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                     fifteenCheckTasks_cycle_recursion fuel box inner node rest
                       counts result htagCycle hcheck
                   by_cases hhead : fifteenRealBoxContains box radii
-                  · exact ⟨box, inner, node, hhead, Or.inl ⟨htagCycle, hterminal⟩⟩
+                  · exact ⟨box, inner, node, hheadGood, hhead,
+                      Or.inl ⟨htagCycle, hterminal⟩⟩
                   · have hrest :
                         ∃ next, next ∈ rest ∧ fifteenTaskHasProfile next radii := by
                       rcases hcontains with ⟨next, hmem, hprofile⟩
@@ -462,7 +581,7 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                       · exact ⟨next, htail, hprofile⟩
                     exact ih rest
                       { counts with nodes := counts.nodes + 1, cycles := counts.cycles + 1 }
-                      result radii hrec hrest
+                      result radii hrec hrestGood hrest
                 · by_cases hsum : tag = "SUM"
                   · have htagSum :
                         fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SUM" := by
@@ -471,7 +590,7 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                       fifteenCheckTasks_sum_recursion fuel box inner node rest
                         counts result htagSum hcheck
                     by_cases hhead : fifteenRealBoxContains box radii
-                    · exact ⟨box, inner, node, hhead,
+                    · exact ⟨box, inner, node, hheadGood, hhead,
                         Or.inr (Or.inl ⟨htagSum, hterminal⟩)⟩
                     · have hrest :
                           ∃ next, next ∈ rest ∧ fifteenTaskHasProfile next radii := by
@@ -482,7 +601,7 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                         · exact ⟨next, htail, hprofile⟩
                       exact ih rest
                         { counts with nodes := counts.nodes + 1, sums := counts.sums + 1 }
-                        result radii hrec hrest
+                        result radii hrec hrestGood hrest
                   · by_cases hlocal : tag = "LOCAL"
                     · have htagLocal :
                           fifteenJsonAt? node 0 >>= fifteenJsonString? = some "LOCAL" := by
@@ -491,7 +610,7 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                         fifteenCheckTasks_local_recursion fuel box inner node rest
                           counts result htagLocal hcheck
                       by_cases hhead : fifteenRealBoxContains box radii
-                      · exact ⟨box, inner, node, hhead,
+                      · exact ⟨box, inner, node, hheadGood, hhead,
                           Or.inr (Or.inr ⟨htagLocal, hterminal⟩)⟩
                       · have hrest :
                             ∃ next, next ∈ rest ∧ fifteenTaskHasProfile next radii := by
@@ -502,7 +621,7 @@ theorem fifteenCheckTasks_profile_reaches_terminal :
                           · exact ⟨next, htail, hprofile⟩
                         exact ih rest
                           { counts with nodes := counts.nodes + 1, localLeaves := counts.localLeaves + 1 }
-                          result radii hrec hrest
+                          result radii hrec hrestGood hrest
                     · have hbad := hcheck
                       simp [fifteenCheckTasks, Id.run, htag, hsplit, hcycle,
                         hsum, hlocal] at hbad
@@ -514,6 +633,7 @@ theorem fifteenCheckTasks_profile_reaches_local
     (fuel : Nat) (tasks : List FifteenTask) (counts result : FifteenTreeCounts)
     (radii : Fin 15 → ℝ)
     (hcycleImpossible : ∀ box inner node,
+      fifteenBoxGood box →
       fifteenJsonAt? node 0 >>= fifteenJsonString? = some "CYCLE" →
       fifteenTerminalValid box inner node false = true →
       fifteenRealBoxContains box radii → False)
@@ -522,15 +642,16 @@ theorem fifteenCheckTasks_profile_reaches_local
       fifteenTerminalValid box inner node false = true →
       fifteenRealBoxContains box radii → False)
     (hcheck : fifteenCheckTasks fuel tasks counts = some result)
+    (hboxesGood : fifteenTaskListBoxesGood tasks)
     (hcontains : ∃ task, task ∈ tasks ∧ fifteenTaskHasProfile task radii) :
     ∃ box inner node, fifteenRealBoxContains box radii ∧
       fifteenJsonAt? node 0 >>= fifteenJsonString? = some "LOCAL" ∧
       fifteenTerminalValid box inner node true = true := by
-  obtain ⟨box, inner, node, hprofile, hterminal⟩ :=
+  obtain ⟨box, inner, node, _hboxGood, hprofile, hterminal⟩ :=
     fifteenCheckTasks_profile_reaches_terminal fuel tasks counts result radii
-      hcheck hcontains
+      hcheck hboxesGood hcontains
   rcases hterminal with hcycle | hsum | hlocal
-  · exact False.elim (hcycleImpossible box inner node hcycle.1 hcycle.2 hprofile)
+  · exact False.elim (hcycleImpossible box inner node _hboxGood hcycle.1 hcycle.2 hprofile)
   · exact False.elim (hsumImpossible box inner node hsum.1 hsum.2 hprofile)
   · exact ⟨box, inner, node, hprofile, hlocal.1, hlocal.2⟩
 
