@@ -178,4 +178,54 @@ theorem fifteen_unit_packing_regular_cycle_certificate_excludes
   · exact fifteenCycleEdge_regular_bound_of_box P hunit box edge hshape
       (Or.inr hupper) (hspec.edgeTicks edge hedge) _hboxSize hboxPositive hradial
 
+theorem fifteenTerminalValid_cycle_edges_spec
+    (box : FifteenBox) (inner : List Nat) (node : Lean.Json)
+    (allowLocal : Bool) (positiveZero exactZero : List Nat)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "CYCLE")
+    (hvalid : fifteenTerminalValid box inner node allowLocal
+      positiveZero exactZero = true) :
+    ∃ edges, fifteenCycleEdgesValid edges box positiveZero exactZero = true := by
+  cases harray : fifteenJsonArray? node with
+  | none => simp [fifteenJsonAt?, harray] at htag
+  | some values =>
+      have htag' : values[0]? >>= fifteenJsonString? = some "CYCLE" := by
+        simpa [fifteenJsonAt?, harray] using htag
+      have hsize : values.size = 2 := by
+        by_contra hne
+        simp [fifteenTerminalValid, Id.run, harray, hne, htag'] at hvalid
+      have htagValue : fifteenJsonString? values[0] = some "CYCLE" := by
+        simpa [hsize] using htag'
+      have hcycle : fifteenCycleValid values[1]! box positiveZero exactZero = true := by
+        have hvalid' := hvalid
+        simp [fifteenTerminalValid, Id.run, harray, hsize, htagValue] at hvalid'
+        have hvalid'' : (pure (fifteenCycleValid values[1] box
+            positiveZero exactZero) : Id Bool) = (pure true : Id Bool) := hvalid'
+        have hrun := congrArg (fun x : Id Bool => x.run) hvalid''
+        have hcycle' : fifteenCycleValid values[1] box positiveZero exactZero = true := by
+          simpa using hrun
+        simpa [hsize] using hcycle'
+      obtain ⟨edges, _hparse, hedges⟩ :=
+        fifteenCycleValid_produces_edges values[1]! box positiveZero exactZero hcycle
+      exact ⟨edges, hedges⟩
+
+/-- The JSON `CYCLE` terminal accepted by the exact leaf checker excludes an
+actual packing whenever its radii lie in a strictly positive terminal box. -/
+theorem fifteen_unit_packing_terminal_cycle_excludes
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (box : FifteenBox) (inner : List Nat) (node : Lean.Json)
+    (allowLocal : Bool)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "CYCLE")
+    (hvalid : fifteenTerminalValid box inner node allowLocal [] [] = true)
+    (hboxSize : box.size = 15)
+    (hboxPositive : ∀ i, i < 15 → 0 < (box[i]!.1 : ℝ))
+    (hradial : ∀ i : Fin 15,
+      (box[i.1]!.1 : ℝ) ≤ fifteenPackingSortedRadius P i ∧
+        fifteenPackingSortedRadius P i ≤ (box[i.1]!.2 : ℝ)) :
+    False := by
+  obtain ⟨edges, hedges⟩ := fifteenTerminalValid_cycle_edges_spec
+    box inner node allowLocal [] [] htag hvalid
+  exact fifteen_unit_packing_regular_cycle_certificate_excludes P hunit box
+    edges hedges hboxSize hboxPositive hradial
+
 end CirclePacking
