@@ -53,16 +53,22 @@ theorem s4CoverageNormalSource_replays (pattern : String)
       change fifteenStage4Coverage002Valid = true
       exact fifteenStage4Coverage002_replays⟩
 
-/-- A geometrically feasible normal Stage 4 profile follows the checked
+/- A geometrically feasible normal Stage 4 profile follows the checked
 coverage path to an accepted radial assignment, and that assignment is one
 of the exact certificate's validated roots. -/
+set_option maxRecDepth 1000000 in
+set_option maxHeartbeats 0 in
 theorem s4CoverageGeometricNormalTarget_root
     (pattern : String) (G : FifteenStage4CoverageGeometry)
     (hword : pattern = fifteenStage0ProfileWord G.profile)
     (hpattern : pattern ∈ s4CoverageNormalPatterns) :
     ∃ roots, s4CoverageRootBoxes? = some roots ∧
       ∃ box, (pattern, s4CoverageTargetAssignment (s4InnerPositions pattern)
-        (s4CoverageGeometryTarget G), box) ∈ roots := by
+        (s4CoverageGeometryTarget G), box) ∈ roots ∧
+        ∀ k, k < (s4InnerPositions pattern).size →
+          box[(s4InnerPositions pattern)[k]!]! =
+            fifteenBins[(s4CoverageTargetAssignment
+              (s4InnerPositions pattern) (s4CoverageGeometryTarget G))[k]!]! := by
   obtain ⟨source, hsource⟩ := s4CoverageNormalSource_replays pattern hpattern
   obtain ⟨record, _hparse, hrecordPattern, hrecordValid⟩ :=
     s4CoverageSourceValid_record hsource
@@ -89,8 +95,147 @@ theorem s4CoverageGeometricNormalTarget_root
   have hmem : s4CoverageTargetAssignment (s4InnerPositions pattern)
       (s4CoverageGeometryTarget G) ∈ allowed := by
     simpa [hword, s4CoverageGeometryTarget] using hmemWord
-  exact s4CoverageResidualAssignment_has_root_box hpattern
-    ⟨allowed, hallowed', hmem⟩
+  obtain ⟨roots, hroots, box, hroot⟩ :=
+    s4CoverageResidualAssignment_has_root_box hpattern
+      ⟨allowed, hallowed', hmem⟩
+  exact ⟨roots, hroots, box, hroot,
+    s4CoverageRootBoxDataCorrect_of_mem hroots hroot⟩
+
+private theorem s4CoverageStage4Owner_eq_exact (r : ℝ) :
+    fifteenStage4RadialOwner r = fifteenExactRadialOwner r := by
+  rfl
+
+/-- The coverage-tree digit selected by a real inner radius indexes a closed
+certificate interval containing that radius.  The exact origin is sent to
+bin zero by the coverage format and is handled separately. -/
+private theorem s4CoverageRadialDigit_closedBin {r : ℝ}
+    (hnonneg : 0 ≤ r) (hinner : r < fifteenCandidateInnerThreshold) :
+    ((fifteenBins[s4CoverageDigit (fifteenStage4RadialOwner r)]!.1 : ℝ) ≤ r) ∧
+      r ≤ (fifteenBins[s4CoverageDigit (fifteenStage4RadialOwner r)]!.2 : ℝ) := by
+  by_cases hz : r = 0
+  · subst r
+    norm_num [s4CoverageDigit, fifteenStage4RadialOwner, fifteenBins,
+      fifteenRational, Rat.normalize_eq_mkRat, Rat.cast_mkRat_of_ne_zero]
+  · have hupper : r < (2385432 : ℝ) / 1000000 :=
+      lt_trans hinner fifteenCandidateInnerThreshold_lt_2385432_1e6
+    have howner := fifteenExactRadialOwner_spec hnonneg hupper
+    have hownerNotOrigin : fifteenExactRadialOwner r ≠ 13 := by
+      intro h
+      have hzero := howner
+      rw [h] at hzero
+      simp [fifteenExactRadialOwnerSpec] at hzero
+      exact hz hzero
+    have hdigit :
+        s4CoverageDigit (fifteenStage4RadialOwner r) =
+          fifteenExactRadialOwner r := by
+      rw [s4CoverageStage4Owner_eq_exact]
+      simp [s4CoverageDigit, hownerNotOrigin]
+    have hclosed := fifteenExactRadialOwnerSpec_certificate_interval howner
+    rw [if_neg hownerNotOrigin] at hclosed
+    simpa only [hdigit] using hclosed
+
+/- Along a geometrically feasible normal Stage 4 owner word, every entry of
+the matched exact-certificate root box contains the corresponding real
+radius. -/
+set_option maxRecDepth 1000000 in
+set_option maxHeartbeats 0 in
+theorem s4CoverageGeometricNormalTarget_root_contains
+    (pattern : String) (G : FifteenStage4CoverageGeometry)
+    (hword : pattern = fifteenStage0ProfileWord G.profile)
+    (hpattern : pattern ∈ s4CoverageNormalPatterns) :
+    ∃ roots, s4CoverageRootBoxes? = some roots ∧
+      ∃ box, (pattern, s4CoverageTargetAssignment (s4InnerPositions pattern)
+        (s4CoverageGeometryTarget G), box) ∈ roots ∧
+        (∀ k, (hk : k < (s4InnerPositions pattern).size) →
+          box[(s4InnerPositions pattern)[k]!]! =
+            fifteenBins[(s4CoverageTargetAssignment
+              (s4InnerPositions pattern) (s4CoverageGeometryTarget G))[k]!]!) ∧
+        (∀ i : Fin 15,
+          ((box[i.1]!.1 : ℝ) ≤ G.radii i) ∧
+            G.radii i ≤ (box[i.1]!.2 : ℝ)) := by
+  obtain ⟨roots, hroots, box, hroot, hboxBin⟩ :=
+    s4CoverageGeometricNormalTarget_root pattern G hword hpattern
+  refine ⟨roots, hroots, box, hroot, hboxBin, ?_⟩
+  intro i
+  let inner := s4InnerPositions pattern
+  by_cases hmem : i.1 ∈ inner.toList
+  · obtain ⟨k, hk, hget⟩ := List.mem_iff_getElem.mp hmem
+    have hposition : inner[k]! = i.1 := by
+      calc
+        inner[k]! = inner.toList[k]! := by rw [Array.getElem!_toList]
+        _ = inner.toList[k] := getElem!_pos inner.toList k hk
+        _ = i.1 := hget
+    have hindexBound : inner[k]! < 15 := by
+      rw [hposition]
+      exact i.isLt
+    have hboxBin' := hboxBin k (by simpa [inner] using hk)
+    have hboxPair := hboxBin'
+    have hboxLower : box[inner[k]!]!.1 = fifteenBins[
+        (s4CoverageTargetAssignment (s4InnerPositions pattern)
+          (s4CoverageGeometryTarget G))[k]!]!.1 := by
+      exact congrArg Prod.fst hboxPair
+    have hboxUpper : box[inner[k]!]!.2 = fifteenBins[
+        (s4CoverageTargetAssignment (s4InnerPositions pattern)
+          (s4CoverageGeometryTarget G))[k]!]!.2 := by
+      exact congrArg Prod.snd hboxPair
+    let p := inner[k]!
+    let j : Fin 15 := ⟨p, hindexBound⟩
+    have hmemOrdinary : inner[k] ∈ inner.toList := Array.getElem_mem_toList hk
+    have hmemPosition : p ∈ inner.toList := by
+      dsimp [p]
+      rw [getElem!_pos inner k hk]
+      exact hmemOrdinary
+    have hprofileMem : p ∈
+        (s3InnerPositions (fifteenStage0ProfileWord G.profile)).toList := by
+      simpa [inner, s4InnerPositions_eq_s3, hword] using hmemPosition
+    have hprofileTrue : G.profile j = true :=
+      (fifteenStage3ProfileWord_inner_iff G.profile j).mp hprofileMem
+    have hradiusInner : G.radii j < fifteenCandidateInnerThreshold :=
+      (G.hprofile j).mp hprofileTrue
+    have htargetLabel : (s4CoverageGeometryTarget G)[p]! =
+        fifteenStage4RadialLabel (G.radii j) := by
+      change (fifteenStage4OwnerLabelArray
+          (fun l => fifteenStage4RadialLabel (G.radii l)))[p]! = _
+      exact fifteenStage4OwnerLabelArray_get _ p hindexBound
+    have hassignment :
+        (s4CoverageTargetAssignment (s4InnerPositions pattern)
+          (s4CoverageGeometryTarget G))[k]! =
+          s4CoverageDigit (fifteenStage4RadialOwner (G.radii j)) := by
+      unfold s4CoverageTargetAssignment
+      have hkMap : k < ((s4InnerPositions pattern).map (fun q =>
+          s4CoverageDigit (s4CoverageGeometryTarget G)[q]!)).size := by
+        simpa [inner] using hk
+      rw [getElem!_pos _ k hkMap]
+      rw [Array.getElem_map _ hkMap]
+      rw [← getElem!_pos inner k hk]
+      change s4CoverageDigit (s4CoverageGeometryTarget G)[p]! = _
+      rw [htargetLabel]
+      simp [fifteenStage4RadialLabel, hradiusInner]
+    have hbin := s4CoverageRadialDigit_closedBin (G.hnonneg j) hradiusInner
+    rw [hassignment] at hboxLower hboxUpper
+    have hbound :
+        ((box[p]!.1 : ℝ) ≤ G.radii j) ∧
+          G.radii j ≤ (box[p]!.2 : ℝ) := by
+      constructor
+      · rw [hboxLower]
+        exact hbin.1
+      · rw [hboxUpper]
+        exact hbin.2
+    simpa [p, j, hposition] using hbound
+  · have hboxWall :=
+      s4CoverageRootOutsideBoxDataCorrect_of_mem hroots hroot i.1 i.isLt
+        (by simpa [inner] using hmem)
+    have hnotWord : i.1 ∉
+        (s3InnerPositions (fifteenStage0ProfileWord G.profile)).toList := by
+      simpa [inner, s4InnerPositions_eq_s3, hword] using hmem
+    have hradiusWall : G.radii i = fifteenCandidateOuterRadius := by
+      rcases G.hclassification i with hwall | hinner
+      · exact hwall
+      · have hprofileTrue := (G.hprofile i).2 hinner
+        exact (hnotWord
+          ((fifteenStage3ProfileWord_inner_iff G.profile i).mpr hprofileTrue)).elim
+    rw [hboxWall, hradiusWall]
+    exact fifteenCandidateOuterRadius_certificate_interval
 
 theorem fifteenStage4ResidualPatterns_exact :
     fifteenStage4ResidualPatterns =
@@ -138,7 +283,16 @@ theorem fifteen_unit_packing_stage4_coverage_root_or_special
           ∃ box, (pattern, s4CoverageTargetAssignment
             (s4InnerPositions pattern)
             (fifteenStage4OwnerLabelArray (fun i =>
-              fifteenStage4RadialLabel (radii i))), box) ∈ roots := by
+              fifteenStage4RadialLabel (radii i))), box) ∈ roots ∧
+            (∀ k, (hk : k < (s4InnerPositions pattern).size) →
+              box[(s4InnerPositions pattern)[k]!]! =
+                fifteenBins[(s4CoverageTargetAssignment
+                  (s4InnerPositions pattern)
+                  (fifteenStage4OwnerLabelArray (fun i =>
+                    fifteenStage4RadialLabel (radii i))))[k]!]!) ∧
+            (∀ i : Fin 15,
+              ((box[i.1]!.1 : ℝ) ≤ radii i) ∧
+                radii i ≤ (box[i.1]!.2 : ℝ)) := by
   obtain ⟨reflected, shift, hresidual, hgeometry, hsorted, hrange, hsep⟩ :=
     fifteen_unit_packing_wall_push_stage4_residual_profile P hunit hR
   refine ⟨reflected, shift, ?_⟩
@@ -192,15 +346,15 @@ theorem fifteen_unit_packing_stage4_coverage_root_or_special
   · right
     have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h0]
-    exact s4CoverageGeometricNormalTarget_root pattern G rfl hnormal
+    exact s4CoverageGeometricNormalTarget_root_contains pattern G rfl hnormal
   · right
     have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h1]
-    exact s4CoverageGeometricNormalTarget_root pattern G rfl hnormal
+    exact s4CoverageGeometricNormalTarget_root_contains pattern G rfl hnormal
   · right
     have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h2]
-    exact s4CoverageGeometricNormalTarget_root pattern G rfl hnormal
+    exact s4CoverageGeometricNormalTarget_root_contains pattern G rfl hnormal
   · left
     rcases hspecial with hspecial | hnil
     · exact hspecial
