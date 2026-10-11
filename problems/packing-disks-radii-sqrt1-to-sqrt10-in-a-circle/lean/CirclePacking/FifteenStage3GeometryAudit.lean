@@ -25,7 +25,9 @@ existing native-evaluation dependencies. -/
 #print axioms CirclePacking.fifteenStage3ReachableState_semantics
 #print axioms CirclePacking.fifteenStage3TargetPath_prefix_agrees
 #print axioms CirclePacking.fifteenStage3TargetPath_slot_semantics
+#print axioms CirclePacking.fifteenStage3TargetPath_outerSlot_seven
 #print axioms CirclePacking.fifteenStage3TargetPath_originReason_excluded
+#print axioms CirclePacking.fifteenStage3TargetPath_mixedReason_excluded
 #print axioms CirclePacking.fifteenStage3TargetPath_full
 #print axioms CirclePacking.fifteenStage3ProfileWord_inner_iff
 #print axioms CirclePacking.fifteenStage3GeometricInnerOwner_is_branch

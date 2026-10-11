@@ -270,14 +270,14 @@ theorem fifteenStage3InnerPositions_nodup (pattern : String) :
   exact List.Pairwise.filter _ (List.nodup_iff_pairwise_ne.mp List.nodup_range)
 
 theorem fifteenStage3InnerPosition_mem_bound (pattern : String) {p : Nat}
-    (hp : p ∈ (s3InnerPositions pattern).toList) : p < s3N := by
+    (hp : p ∈ (s3InnerPositions pattern).toList) : p < 15 := by
   unfold s3InnerPositions at hp
   simp only [List.mem_filter, List.mem_range] at hp
-  exact hp.1
+  simpa [s3N] using hp.1
 
 theorem fifteenStage3InnerPosition_get_bound (pattern : String) {i : Nat}
     (hi : i < (s3InnerPositions pattern).size) :
-    (s3InnerPositions pattern)[i]! < s3N := by
+    (s3InnerPositions pattern)[i]! < 15 := by
   have hmemOrdinary : (s3InnerPositions pattern)[i] ∈
       (s3InnerPositions pattern).toList := Array.getElem_mem_toList hi
   have hmem : (s3InnerPositions pattern)[i]! ∈ (s3InnerPositions pattern).toList := by
@@ -286,7 +286,7 @@ theorem fifteenStage3InnerPosition_get_bound (pattern : String) {i : Nat}
   exact fifteenStage3InnerPosition_mem_bound pattern hmem
 
 theorem fifteenStage3Initial_labels_size (pattern : String) :
-    (s3Initial pattern).labels.size = s3N := by
+    (s3Initial pattern).labels.size = 15 := by
   simp [s3Initial, s3N]
 
 theorem fifteenStage3Next_labels_size (inner : Array Nat) (s : S3State) (label : Nat) :
@@ -314,7 +314,7 @@ counters, keeps the fifteen-label array intact, and stays within the profile. -/
 theorem fifteenStage3ReachableState_semantics (pattern : String) {s : S3State}
     (hs : FifteenStage3StateReachable pattern s) :
     fifteenStage3CountersConsistent (s3InnerPositions pattern) s ∧
-      s.labels.size = s3N ∧ s.depth ≤ (s3InnerPositions pattern).size := by
+      s.labels.size = 15 ∧ s.depth ≤ (s3InnerPositions pattern).size := by
   induction hs with
   | initial =>
       exact ⟨fifteenStage3Initial_countersConsistent pattern,
@@ -491,6 +491,41 @@ theorem fifteenStage3TargetPath_slot_semantics (pattern : String) (target : Arra
         simp [s3Next, Nat.not_lt_of_ge (Nat.le_of_lt hnext)]
         intro hbad
         omega
+
+/-- Positions outside the Stage 3 inner profile are never written by a
+target-path transition and retain their initial wall label `7`. -/
+theorem fifteenStage3TargetPath_outerSlot_seven (pattern : String) (target : Array Nat)
+    {s : S3State} (hpath : FifteenStage3TargetPath pattern target s)
+    (p : Nat) (hp : p < s3N)
+    (houter : p ∉ (s3InnerPositions pattern).toList) : s.labels[p]! = 7 := by
+  induction hpath with
+  | initial =>
+      have hchar : pattern.toList[p]? ≠ some '1' := by
+        intro h
+        apply houter
+        exact (s3InnerPositions_mem_iff_char pattern p).mpr ⟨hp, h⟩
+      simp [s3Initial, hp, hchar]
+  | @step s hpath hdepth ih =>
+      have hreachable := fifteenStage3TargetPath_reachable pattern target hpath
+      have hsem := fifteenStage3ReachableState_semantics pattern hreachable
+      have hposition : (s3InnerPositions pattern)[s.depth]! < s.labels.size := by
+        rw [hsem.2.1]
+        exact fifteenStage3InnerPosition_get_bound pattern hdepth
+      have hmemOrdinary : (s3InnerPositions pattern)[s.depth] ∈
+          (s3InnerPositions pattern).toList := Array.getElem_mem_toList hdepth
+      have hmem : (s3InnerPositions pattern)[s.depth]! ∈
+          (s3InnerPositions pattern).toList := by
+        rw [getElem!_pos (s3InnerPositions pattern) s.depth hdepth]
+        exact hmemOrdinary
+      have hdifferent : p ≠ (s3InnerPositions pattern)[s.depth]! := by
+        intro heq
+        apply houter
+        rw [heq]
+        exact hmem
+      change getElem! (s.labels.set! (s3InnerPositions pattern)[s.depth]!
+        target[(s3InnerPositions pattern)[s.depth]!]!) p = 7
+      rw [Array.getElem!_set!_ne _ _ _ _ (Ne.symm hdifferent)]
+      exact ih
 
 theorem fifteenStage3TargetPath_depth_le_size (pattern : String) (target : Array Nat)
     {s : S3State} (hpath : FifteenStage3TargetPath pattern target s) :

@@ -204,6 +204,118 @@ theorem fifteenStage3TargetPath_originReason_excluded
     ⟨inner[i]!, fifteenStage3InnerPosition_get_bound _ hi⟩
     ⟨inner[j]!, fifteenStage3InnerPosition_get_bound _ hj⟩ hi9' hjLow'
 
+/-- The mixed-bin structural prune also contradicts an actual packing. Its
+two witness labels are below the fixed wall sentinel, so the outer-slot
+invariant first identifies them as inner centers, after which pairwise
+separation rules out the radii combination. -/
+theorem fifteenStage3TargetPath_mixedReason_excluded
+    (radii : Fin 15 → ℝ) (labels : Fin 15 → Nat)
+    (howners : ∀ i, fifteenStage3OwnerSpec (labels i) (radii i))
+    (hsum : ∀ i j, i ≠ j → 2 ≤ radii i + radii j)
+    (profile : Fin 15 → Bool) {s : S3State}
+    (hpath : FifteenStage3TargetPath (fifteenStage0ProfileWord profile)
+      (fifteenStage3OwnerLabelArray labels) s)
+    (hreason : s3MixedReason s = true) : False := by
+  have hsize := (fifteenStage3ReachableState_semantics
+    (fifteenStage0ProfileWord profile)
+    (fifteenStage3TargetPath_reachable _ _ hpath)).2.1
+  have hsize15 : s.labels.size = 15 := by simpa using hsize
+  have hsmall : s.small = 1 := by
+    by_contra hne
+    simp [s3MixedReason, hne] at hreason
+  have hflags :
+      ((s.labels.toList.any fun t => t == 0 || t == 9) &&
+        (s.labels.toList.any fun t => t == 2)) = true := by
+    simpa [s3MixedReason, hsmall] using hreason
+  have hflagPair := Bool.and_eq_true_iff.mp hflags
+  have hlist :
+      (∃ p ∈ s.labels.toList, p = 0 ∨ p = 9) ∧
+      (∃ q ∈ s.labels.toList, q = 2) := by
+    constructor
+    · have hp := (List.any_eq_true.mp hflagPair.1)
+      rcases hp with ⟨p, hp, hpLabel⟩
+      have hpLabel' : (p == 0) = true ∨ (p == 9) = true := by
+        simpa only [Bool.or_eq_true] using hpLabel
+      rcases hpLabel' with hp0 | hp9
+      · exact ⟨p, hp, Or.inl (by simpa using hp0)⟩
+      · exact ⟨p, hp, Or.inr (by simpa using hp9)⟩
+    · have hq := (List.any_eq_true.mp hflagPair.2)
+      rcases hq with ⟨q, hq, hqLabel⟩
+      exact ⟨q, hq, by simpa using hqLabel⟩
+  obtain ⟨⟨pv, hpv, hpVal⟩, ⟨qv, hqv, hqVal⟩⟩ := hlist
+  obtain ⟨p, hp, hpEq⟩ := List.mem_iff_getElem.mp hpv
+  obtain ⟨q, hq, hqEq⟩ := List.mem_iff_getElem.mp hqv
+  have hpLabel : s.labels[p]! = 0 ∨ s.labels[p]! = 9 := by
+    have hget : s.labels[p]! = pv := by
+      calc
+        s.labels[p]! = s.labels.toList[p]! := by rw [Array.getElem!_toList]
+        _ = s.labels.toList[p] := getElem!_pos s.labels.toList p hp
+        _ = pv := hpEq
+    rw [hget]
+    exact hpVal
+  have hqLabel : s.labels[q]! = 2 := by
+    have hget : s.labels[q]! = qv := by
+      calc
+        s.labels[q]! = s.labels.toList[q]! := by rw [Array.getElem!_toList]
+        _ = s.labels.toList[q] := getElem!_pos s.labels.toList q hq
+        _ = qv := hqEq
+    rw [hget]
+    exact hqVal
+  let pattern := fifteenStage0ProfileWord profile
+  let inner := s3InnerPositions pattern
+  have hpBound : p < 15 := by simpa [hsize15] using hp
+  have hqBound : q < 15 := by simpa [hsize15] using hq
+  have hpInner : p ∈ inner.toList := by
+    by_contra houter
+    have hwall := fifteenStage3TargetPath_outerSlot_seven pattern
+      (fifteenStage3OwnerLabelArray labels) hpath p hpBound houter
+    rw [hwall] at hpLabel
+    omega
+  have hqInner : q ∈ inner.toList := by
+    by_contra houter
+    have hwall := fifteenStage3TargetPath_outerSlot_seven pattern
+      (fifteenStage3OwnerLabelArray labels) hpath q hqBound houter
+    rw [hwall] at hqLabel
+    omega
+  obtain ⟨i, hi, hip⟩ := List.mem_iff_getElem.mp hpInner
+  obtain ⟨j, hj, hjq⟩ := List.mem_iff_getElem.mp hqInner
+  have hposI : inner[i]! = p := by
+    calc
+      inner[i]! = inner.toList[i]! := by rw [Array.getElem!_toList]
+      _ = inner.toList[i] := getElem!_pos inner.toList i hi
+      _ = p := hip
+  have hposJ : inner[j]! = q := by
+    calc
+      inner[j]! = inner.toList[j]! := by rw [Array.getElem!_toList]
+      _ = inner.toList[j] := getElem!_pos inner.toList j hj
+      _ = q := hjq
+  have hpState : s.labels[inner[i]!]! = 0 ∨ s.labels[inner[i]!]! = 9 := by
+    rw [hposI]
+    exact hpLabel
+  have hqState : s.labels[inner[j]!]! = 2 := by
+    rw [hposJ]
+    exact hqLabel
+  have hpSentinel : s.labels[inner[i]!]! ≠ 8 := by
+    rcases hpState with h | h <;> rw [h] <;> decide
+  have hqSentinel : s.labels[inner[j]!]! ≠ 8 := by
+    rw [hqState]
+    decide
+  have hpActual := fifteenStage3TargetPath_label_agrees_at_inner labels profile
+    hpath i (by simpa [inner] using hi) hpSentinel
+  have hqActual := fifteenStage3TargetPath_label_agrees_at_inner labels profile
+    hpath j (by simpa [inner] using hj) hqSentinel
+  have hpLabels : labels ⟨inner[i]!, fifteenStage3InnerPosition_get_bound _ hi⟩ =
+      0 ∨ labels ⟨inner[i]!, fifteenStage3InnerPosition_get_bound _ hi⟩ = 9 := by
+    rw [← hpActual]
+    exact hpState
+  have hqLabelActual : labels ⟨inner[j]!, fifteenStage3InnerPosition_get_bound _ hj⟩ =
+      2 := by
+    rw [← hqActual]
+    exact hqState
+  exact fifteenStage3Owners_exclude_mixed_leaf radii labels howners hsum
+    ⟨inner[i]!, fifteenStage3InnerPosition_get_bound _ hi⟩
+    ⟨inner[j]!, fifteenStage3InnerPosition_get_bound _ hj⟩ hpLabels hqLabelActual
+
 /-- An arbitrary packing below the candidate radius reaches the same
 owner-selected Stage 3 branch after wall replacement and Stage 0 dihedral
 normalization.  This is the concrete geometry-to-search-tree handoff; the
