@@ -1,5 +1,5 @@
 import Lean
-import CirclePacking.FifteenTickBounds
+import CirclePacking.FifteenCertificateBins
 
 /-!
 # Lean replay of the 15-disk rational subdivision certificate
@@ -48,22 +48,6 @@ theorem fifteenIntervalRightChildSubset (lo cut hi x : Rat)
     fifteenIntervalContains (lo, hi) x := by
   rcases hx with ⟨hcutx, hhi⟩
   exact ⟨Rat.le_trans hcut hcutx, hhi⟩
-
-def fifteenBins : Array FifteenInterval := #[
-  (fifteenRational 0 1, fifteenRational 1 2),
-  (fifteenRational 1 2, fifteenRational 1 1),
-  (fifteenRational 1 1, fifteenRational 3 2),
-  (fifteenRational 3 2, fifteenRational 8 5),
-  (fifteenRational 8 5, fifteenRational 5 3),
-  (fifteenRational 5 3, fifteenRational 17 10),
-  (fifteenRational 17 10, fifteenRational 37 20),
-  (fifteenRational 37 20, fifteenRational 2 1),
-  (fifteenRational 2 1, fifteenRational 43 20),
-  (fifteenRational 43 20, fifteenRational 23 10),
-  (fifteenRational 23 10, fifteenRational 2385432 1000000),
-  (fifteenRational 35213569647 10000000000,
-    fifteenRational 35213569648 10000000000)
-]
 
 def fifteenCertificateSource : String :=
   include_str "../../../../problems/packing-15-equal-disks-in-a-circle/candidate_bundle/exact_subdivision_certificate.json"
@@ -137,15 +121,19 @@ def fifteenDigit? (c : Char) : Option Nat :=
 def fifteenIsBinaryPattern (pattern : String) : Bool :=
   pattern.length == 15 && pattern.toList.all (fun c => c == '0' || c == '1')
 
+def fifteenSetBin? (box : FifteenBox) (entry : Nat × Nat) : Option FifteenBox := do
+  let (position, digit) := entry
+  guard (digit != 0 && digit ≤ 10)
+  let interval ← fifteenBins[digit]?
+  pure (box.set! position interval)
+
 def fifteenInitialBox? (pattern assignment : String) : Option FifteenBox := do
   guard (fifteenIsBinaryPattern pattern)
   let positions := fifteenInnerPositions pattern
   let digits ← assignment.toList.mapM fifteenDigit?
   guard (positions.length == digits.length)
-  let box ← (List.zip positions digits).foldlM (fun box (position, digit) => do
-    guard (digit != 0 && digit ≤ 10)
-    let interval ← fifteenBins[digit]?
-    pure (box.set! position interval)) (Array.replicate 15 fifteenBins[11]!)
+  let box ← (List.zip positions digits).foldlM fifteenSetBin?
+    (Array.replicate 15 fifteenBins[11]!)
   some box
 
 structure FifteenCycleEdge where

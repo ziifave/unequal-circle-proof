@@ -108,12 +108,6 @@ theorem fifteenDefaultBox_good :
     change 0 < fifteenRational 35213569647 10000000000
     exact fifteenRational_pos _ _ (by norm_num) (by norm_num)
 
-def fifteenSetBin? (box : FifteenBox) (entry : Nat × Nat) : Option FifteenBox := do
-  let (position, digit) := entry
-  guard (digit != 0 && digit ≤ 10)
-  let interval ← fifteenBins[digit]?
-  pure (box.set! position interval)
-
 theorem fifteenSetBin_preserves_good (box result : FifteenBox) (entry : Nat × Nat)
     (hgood : fifteenBoxGood box) (hposition : entry.1 < 15)
     (hupdate : fifteenSetBin? box entry = some result) :
@@ -187,6 +181,45 @@ theorem fifteenInnerPositions_lt (pattern : String) (position : Nat)
     position < pattern.length := by
   have hbound := fifteenInnerPositionsAux_lt 0 pattern.toList position hmem
   simpa [fifteenInnerPositions, String.length] using hbound
+
+theorem fifteenInitialBox?_good (pattern assignment : String) (box : FifteenBox)
+    (hinit : fifteenInitialBox? pattern assignment = some box) :
+    fifteenBoxGood box := by
+  unfold fifteenInitialBox? at hinit
+  cases hpattern : fifteenIsBinaryPattern pattern with
+  | false => simp [hpattern] at hinit
+  | true =>
+      cases hdigits : assignment.toList.mapM fifteenDigit? with
+      | none => simp [hpattern, hdigits] at hinit
+      | some digits =>
+          by_cases hlength : (fifteenInnerPositions pattern).length = digits.length
+          ·
+              cases hfold : (List.zip (fifteenInnerPositions pattern) digits).foldlM
+                  fifteenSetBin?
+                  (Array.replicate 15 fifteenBins[11]!) with
+              | none => simp [hpattern, hdigits, hlength, hfold] at hinit
+              | some foldedBox =>
+                  have hpatternLength : pattern.length = 15 := by
+                    simp [fifteenIsBinaryPattern] at hpattern
+                    exact hpattern.1
+                  have hpositions : ∀ entry,
+                      entry ∈ List.zip (fifteenInnerPositions pattern) digits →
+                        entry.1 < 15 := by
+                    intro entry hentry
+                    rcases entry with ⟨position, digit⟩
+                    have ⟨hposition, _hdigit⟩ := List.of_mem_zip hentry
+                    have hbound := fifteenInnerPositions_lt pattern position hposition
+                    omega
+                  have hfoldGood : fifteenBoxGood foldedBox := by
+                    apply fifteenSetBinsFold_preserves_good
+                      (List.zip (fifteenInnerPositions pattern) digits)
+                      (Array.replicate 15 fifteenBins[11]!) foldedBox
+                      fifteenDefaultBox_good hpositions
+                    exact hfold
+                  simp [hpattern, hdigits, hlength, hfold] at hinit
+                  cases hinit
+                  exact hfoldGood
+          · simp [hpattern, hdigits, hlength] at hinit
 
 def fifteenTaskBoxGood (task : FifteenTask) : Prop :=
   fifteenBoxGood task.1

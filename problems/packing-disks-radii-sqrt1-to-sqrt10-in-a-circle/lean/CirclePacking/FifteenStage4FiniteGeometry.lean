@@ -1,5 +1,6 @@
 import CirclePacking.FifteenStage3FiniteGeometry
 import CirclePacking.FifteenStage4GeometricHandoff
+import CirclePacking.FifteenCertificateGeometryBridge
 
 /-! The verified Stage 4 streams remove the nineteen closed Stage 3 survivors
 from actual packing profiles, leaving precisely the four profiles passed to
@@ -102,5 +103,42 @@ theorem fifteen_unit_packing_wall_push_stage4_residual_profile
       radii labels hlabels hgeometry profile hprofile hnonneg hclassification
       theta hsorted (fun i => (hrange i).1) (fun i => (hrange i).2) hsep hclosed)
   · exact ⟨hresidual, hgeometry, hsorted, hrange, hsep⟩
+
+/-- The Stage 4 geometric reduction also gives an exact radial-bin owner for
+every center marked inner by its residual profile.  This records the concrete
+rational box in which each such radius lies, before matching the resulting
+assignment against the finite root list. -/
+theorem fifteen_unit_packing_wall_push_stage4_exact_bin_profile
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    ∃ reflected : Bool, ∃ shift : Fin 15,
+      let Q := fifteen_unit_packing_wall_push P hunit hR
+      let radii := fifteenStage0TransformProfile (fifteenPackingSortedRadius Q)
+        reflected shift
+      let profile := fun i => decide
+        (radii i < fifteenCandidateInnerThreshold)
+      fifteenStage0ProfileWord profile ∈ fifteenStage4ResidualPatterns ∧
+      ∀ i, profile i = true →
+        fifteenExactRadialOwnerSpec (fifteenExactRadialOwner (radii i))
+          (radii i) := by
+  obtain ⟨reflected, shift, hprofileWord, hgeometry, _hsorted, _hrange,
+      _hsep⟩ := fifteen_unit_packing_wall_push_stage4_residual_profile P hunit hR
+  refine ⟨reflected, shift, ?_⟩
+  dsimp only
+  let Q := fifteen_unit_packing_wall_push P hunit hR
+  let radii := fifteenStage0TransformProfile (fifteenPackingSortedRadius Q)
+    reflected shift
+  let profile := fun i => decide
+    (radii i < fifteenCandidateInnerThreshold)
+  refine ⟨hprofileWord, ?_⟩
+  intro i hinnerBit
+  have hinner : radii i < fifteenCandidateInnerThreshold := by
+    simpa [profile] using hinnerBit
+  have hnonneg : 0 ≤ radii i :=
+    fifteenStage3OwnerSpec_nonneg (hgeometry.owners i)
+  have hupper : radii i < 2385432 / 1000000 :=
+    lt_trans hinner fifteenCandidateInnerThreshold_lt_2385432_1e6
+  exact fifteenExactRadialOwner_spec hnonneg hupper
 
 end CirclePacking
