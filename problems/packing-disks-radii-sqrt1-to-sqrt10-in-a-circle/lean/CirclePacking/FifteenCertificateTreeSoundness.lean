@@ -283,4 +283,73 @@ theorem fifteenCheckTasks_split_step_sound
   exact ⟨axis, cut, left, right, lo, hi, hparts, hbox, haxis, hinner,
     hchildren, hrec⟩
 
+/-- An accepted `CYCLE` terminal is valid and the queue replay continues with
+the remaining tasks. -/
+theorem fifteenCheckTasks_cycle_recursion
+    (fuel : Nat) (box : FifteenBox) (inner : List Nat) (node : Json)
+    (rest : List FifteenTask) (counts result : FifteenTreeCounts)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "CYCLE")
+    (haccepted : fifteenCheckTasks (fuel + 1)
+      ((box, inner, node) :: rest) counts = some result) :
+    fifteenTerminalValid box inner node false = true ∧
+      fifteenCheckTasks fuel rest
+        { counts with nodes := counts.nodes + 1, cycles := counts.cycles + 1 } =
+          some result := by
+  cases hterminal : fifteenTerminalValid box inner node false with
+  | false => simp [fifteenCheckTasks, Id.run, htag, hterminal] at haccepted
+  | true =>
+      have hrec := haccepted
+      simp [fifteenCheckTasks, Id.run, htag, hterminal] at hrec
+      have hrec1 := hrec
+      change fifteenCheckTasks fuel rest
+        { counts with nodes := counts.nodes + 1, cycles := counts.cycles + 1 } =
+          some result at hrec1
+      exact ⟨rfl, hrec1⟩
+
+/-- An accepted `SUM` terminal is valid and the queue replay continues with
+the remaining tasks. -/
+theorem fifteenCheckTasks_sum_recursion
+    (fuel : Nat) (box : FifteenBox) (inner : List Nat) (node : Json)
+    (rest : List FifteenTask) (counts result : FifteenTreeCounts)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SUM")
+    (haccepted : fifteenCheckTasks (fuel + 1)
+      ((box, inner, node) :: rest) counts = some result) :
+    fifteenTerminalValid box inner node false = true ∧
+      fifteenCheckTasks fuel rest
+        { counts with nodes := counts.nodes + 1, sums := counts.sums + 1 } =
+          some result := by
+  cases hterminal : fifteenTerminalValid box inner node false with
+  | false => simp [fifteenCheckTasks, Id.run, htag, hterminal] at haccepted
+  | true =>
+      have hrec := haccepted
+      simp [fifteenCheckTasks, Id.run, htag, hterminal] at hrec
+      have hrec1 := hrec
+      change fifteenCheckTasks fuel rest
+        { counts with nodes := counts.nodes + 1, sums := counts.sums + 1 } =
+          some result at hrec1
+      exact ⟨rfl, hrec1⟩
+
+/-- An accepted `LOCAL` terminal is valid and the queue replay continues with
+the remaining tasks. -/
+theorem fifteenCheckTasks_local_recursion
+    (fuel : Nat) (box : FifteenBox) (inner : List Nat) (node : Json)
+    (rest : List FifteenTask) (counts result : FifteenTreeCounts)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "LOCAL")
+    (haccepted : fifteenCheckTasks (fuel + 1)
+      ((box, inner, node) :: rest) counts = some result) :
+    fifteenTerminalValid box inner node true = true ∧
+      fifteenCheckTasks fuel rest
+        { counts with nodes := counts.nodes + 1, localLeaves := counts.localLeaves + 1 } =
+          some result := by
+  cases hterminal : fifteenTerminalValid box inner node true with
+  | false => simp [fifteenCheckTasks, Id.run, htag, hterminal] at haccepted
+  | true =>
+      have hrec := haccepted
+      simp [fifteenCheckTasks, Id.run, htag, hterminal] at hrec
+      have hrec1 := hrec
+      change fifteenCheckTasks fuel rest
+        { counts with nodes := counts.nodes + 1, localLeaves := counts.localLeaves + 1 } =
+          some result at hrec1
+      exact ⟨rfl, hrec1⟩
+
 end CirclePacking
