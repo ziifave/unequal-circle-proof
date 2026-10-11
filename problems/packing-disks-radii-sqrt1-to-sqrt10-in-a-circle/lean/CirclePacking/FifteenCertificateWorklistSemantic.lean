@@ -1,5 +1,6 @@
 import CirclePacking.FifteenCertificateTreeSoundness
 import CirclePacking.FifteenCertificateLeafSoundness
+import CirclePacking.FifteenCertificateCycleSoundness
 
 /-! Semantic endpoint of the exact certificate work-list replay. -/
 
@@ -32,5 +33,45 @@ theorem fifteenCheckTasks_profile_reaches_local_bounds
   obtain ⟨hinner, hbounds⟩ := fifteenTerminalValid_local_spec
     box inner node true [] [] htag hvalid
   exact ⟨box, inner, hprofile, hinner, hbounds⟩
+
+/-- Packing-specialized form of the work-list reduction. The only remaining
+box-side hypothesis is strict positivity and correct dimension at accepted
+cycle leaves; sorted radial containment itself discharges every `SUM` leaf. -/
+theorem fifteenPackingCheckTasks_force_local_profile
+    {R : ℝ} (P : Packing 15 R) (hunit : ∀ k, (P.circles k).radius = 1)
+    (fuel : Nat) (tasks : List FifteenTask) (counts result : FifteenTreeCounts)
+    (hcycleBox : ∀ box inner node,
+      fifteenJsonAt? node 0 >>= fifteenJsonString? = some "CYCLE" →
+      fifteenTerminalValid box inner node false = true →
+      fifteenRealBoxContains box (fifteenPackingSortedRadius P) →
+      box.size = 15 ∧ ∀ i, i < 15 → 0 < (box[i]!.1 : ℝ))
+    (hcheck : fifteenCheckTasks fuel tasks counts = some result)
+    (hcontains : ∃ task, task ∈ tasks ∧
+      fifteenTaskHasProfile task (fifteenPackingSortedRadius P)) :
+    ∃ box inner,
+      fifteenRealBoxContains box (fifteenPackingSortedRadius P) ∧
+      inner = fifteenInnerPositions "001001001001001" ∧
+      ∀ p ∈ inner,
+        fifteenLocalLo ≤ box[p]!.1 ∧ box[p]!.2 ≤ fifteenLocalHi := by
+  apply fifteenCheckTasks_profile_reaches_local_bounds fuel tasks counts result
+    (fifteenPackingSortedRadius P)
+  · intro box inner node htag hvalid hprofile
+    obtain ⟨hsize, hpositive⟩ := hcycleBox box inner node htag hvalid hprofile
+    have hradial : ∀ k : Fin 15,
+        (box[k.1]!.1 : ℝ) ≤ fifteenPackingSortedRadius P k ∧
+          fifteenPackingSortedRadius P k ≤ (box[k.1]!.2 : ℝ) := by
+      intro k
+      exact hprofile k
+    exact fifteen_unit_packing_terminal_cycle_excludes P hunit box inner node
+      false htag hvalid hsize hpositive hradial
+  · intro box inner node htag hvalid hprofile
+    have hradial : ∀ k : Fin 15,
+        fifteenPackingSortedRadius P k ≤ (box[k.1]!.2 : ℝ) := by
+      intro k
+      exact (hprofile k).2
+    exact fifteen_unit_packing_terminal_sum_excludes P hunit box inner node
+      false [] [] htag hvalid hradial
+  · exact hcheck
+  · exact hcontains
 
 end CirclePacking
