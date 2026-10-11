@@ -536,7 +536,7 @@ The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 class
 \section{Scope of the Lean formalization}\label{sec:lean-status}
 
 The partial formalization is available in the repository's
-\href{https://github.com/ziifave/unequal-circle-proof/tree/b541c2642fb6f9fbda48fe62a9993b0b8766a91e/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{b541c26}}.
+\href{https://github.com/ziifave/unequal-circle-proof/tree/69cfc6311922ceb1184865fc576872283ec2b649/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{69cfc63}}.
 The project is hosted under the unequal-disk problem directory, but its
 \texttt{Fifteen} modules concern the equal-disk problem in this manuscript.
 They use the same candidate radii $a_0,b_0$ and the same local cube
@@ -554,11 +554,13 @@ Radius and contact-angle identities are proved. An explicit feasible
 Radial reduction (\cref{sec:radial}) &
 Wall replacement, the 5--8 inner-center count, and coarse radial-box
 membership are proved, together with canonical dihedral radius/angle
-normalization and complete Stage 0 assignment coverage.\\[5pt]
+normalization, complete Stage 0 assignment coverage, the sixth-radius
+bound, and refined half-open owner coverage.\\[5pt]
 Finite reduction (\cref{prop:finite-reduction}) &
 All finite certificate replays are collected in one theorem. The geometric
 $760\to378$ reduction is proved. Packing-level soundness and coverage of
-Stage 3/4 and the refined subdivision remain unfinished.\\[5pt]
+Stage 3/4 and the refined subdivision remain unfinished; the four
+structural Stage 3 leaf families have geometric exclusion lemmas.\\[5pt]
 Local angular barrier (\cref{sec:local}) &
 Taylor error estimates, the odd five-cycle identity, and local rigidity are
 proved. The strict smaller-container exclusion is proved assuming the
@@ -595,10 +597,19 @@ enumeration, and its string encoding is proved to reconstruct the same fifteen
 labels. The replay then provides either a survivor record or a matching cycle
 witness; geometric cycle soundness rules out the latter. Thus an arbitrary
 feasible candidate-radius packing has a canonical profile among the 378
-Stage 0 survivors. The remaining connection concerns the refined rank and
-leaf soundness of Stage 3/4, and coverage and soundness of the residual roots
-and the six-inner special case. A successful Boolean replay alone does not
-supply these remaining implications.
+Stage 0 survivors. The theorem
+\nolinkurl{fifteen_unit_packing_wall_push_stage3_geometric_handoff}, in
+\nolinkurl{CirclePacking/FifteenStage3GeometricHandoff.lean}, attaches the
+refined owners, pair-sum bounds, and both rank counts to this same real
+profile. The owner proof covers the origin separately, assigns rational
+cutpoints to the interval on their right, and encloses every owner by its
+stored closed rational hull. Separate lemmas rule out the small-count,
+origin, rank, and mixed-bin leaves, including rank tests before all positions
+are assigned. The remaining Stage 3 step is to identify each checker state's
+labels and counters with its partial geometric assignment and prove cycle
+and stream soundness. Stage 4, the residual roots, and the six-inner special
+case still require their corresponding connections. Boolean replay alone
+does not supply these remaining implications.
 
 \paragraph{Alternative intermediate proofs.}
 The Lean development sometimes proves the same required bound by a different
@@ -611,6 +622,13 @@ canonical-mask enumeration rather than by formalizing Burnside's formula.
 For local Taylor errors, Lean bounds the second derivative along a segment by
 $5(\delta_i^2+\delta_{i+1}^2)$, giving the remainder in \cref{sec:local} without
 individual Hessian bounds.
+The sixth-radius bound is also proved directly: for $0<a,b<2$,
+$a^2+b^2-ab\le\max(a^2,b^2)<4$, so any separated pair has contact angle
+greater than $\pi/3$. Six such centers would require more than a full turn.
+This retains the feasible boundary case at radius $2$ and avoids assuming
+the six-disk optimum. The exact wall radius is proved to lie in the refined
+certificate interval
+$(35213569647/10^{10},35213569648/10^{10})$ by rational square comparisons.
 
 \paragraph{Trust dependencies.}
 Several finite replays use \texttt{native\_decide} and carry native-evaluation
@@ -647,6 +665,16 @@ The full packing-level $760\to378$ theorem inherits nine existing native
 axioms: canonical coverage, the Stage 0 replay, and the seven coarse-table
 checks. Positional and transported population-count lemmas use only the
 standard logical axioms.
+The refined owner and structural-leaf interface has a further targeted audit:
+\begin{verbatim}
+lake build CirclePacking.FifteenStage3GeometricHandoff
+lake env lean CirclePacking/FifteenStage3GeometryAudit.lean
+\end{verbatim}
+The sixth-radius bound, refined wall enclosure, owner coverage, partial-rank
+and structural exclusion lemmas, and packing-level structural conditions
+depend only on the standard logical axioms. The combined Stage 3 input
+handoff inherits the same nine Stage 0 native axioms as the $760\to378$
+reduction; these new proofs introduce no native-evaluation axiom.
 
 \begin{thebibliography}{9}
 \bibitem{Graham1968}
