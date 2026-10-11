@@ -1,6 +1,7 @@
 import CirclePacking.FifteenStage3GeometricHandoff
 import CirclePacking.FifteenStage3Certificate
 import CirclePacking.FifteenStage3OwnerPath
+import CirclePacking.FifteenStage3PathStructural
 
 /-! Audit the newly proved geometry separately from the existing finite
 replays.  Only the final survivor handoff is expected to inherit Stage 0's
@@ -28,6 +29,8 @@ existing native-evaluation dependencies. -/
 #print axioms CirclePacking.fifteenStage3TargetPath_outerSlot_seven
 #print axioms CirclePacking.fifteenStage3TargetPath_originReason_excluded
 #print axioms CirclePacking.fifteenStage3TargetPath_mixedReason_excluded
+#print axioms CirclePacking.fifteenStage3TargetPath_smallReason_excluded
+#print axioms CirclePacking.fifteenStage3TargetPath_rankReason_excluded_of_population
 #print axioms CirclePacking.fifteenStage3TargetPath_full
 #print axioms CirclePacking.fifteenStage3ProfileWord_inner_iff
 #print axioms CirclePacking.fifteenStage3GeometricInnerOwner_is_branch

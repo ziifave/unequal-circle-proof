@@ -60,13 +60,13 @@ def s3Initial (pattern : String) : S3State := Id.run do
     if bits[i]? == some '1' then 8 else 7
   return ⟨labels, 0, 0, 0, 0⟩
 
-private def s3SmallReason (s : S3State) : Bool := s.small > 1
+def s3SmallReason (s : S3State) : Bool := s.small > 1
 
 def s3OriginReason (inner : Array Nat) (s : S3State) : Bool :=
   (inner.toList.any fun p => s.labels[p]! == 9) &&
   (inner.toList.any fun p => s.labels[p]! < 6 && s.labels[p]! != 9)
 
-private def s3RankReason (inner : Array Nat) (s : S3State) : Bool :=
+def s3RankReason (inner : Array Nat) (s : S3State) : Bool :=
   let remaining := inner.size - s.depth
   s.high + remaining < inner.size - 4 ||
     s.high2 + remaining < max 0 (inner.size - 5)

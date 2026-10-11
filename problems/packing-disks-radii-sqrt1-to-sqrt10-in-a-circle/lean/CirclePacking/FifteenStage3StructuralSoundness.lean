@@ -1,10 +1,11 @@
 import CirclePacking.FifteenStage3RadialOwners
 import CirclePacking.FifteenSixRadiusCount
 
-/-! Geometric soundness of the structural Stage 3 leaf reasons, including
-rank pruning at partial assignments.  These theorems do not yet identify a
-checker state with its assigned-prefix set or prove soundness of cycle leaves
-and complete certificate streams. -/
+/-! Population bounds and structural soundness of Stage 3 leaf reasons,
+including the generic partial-assignment rank inequality.  The path-level
+rank theorem is in `FifteenStage3PathStructural`; connecting its sequence
+counts to the geometric Finset populations and proving cycle/stream soundness
+remain separate obligations. -/
 
 namespace CirclePacking
 
