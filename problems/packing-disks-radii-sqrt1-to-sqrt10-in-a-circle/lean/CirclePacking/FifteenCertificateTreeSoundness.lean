@@ -38,6 +38,58 @@ theorem fifteenRealIntervalRightChildSubset (lo cut hi : Rat) (x : ℝ)
   rcases hx with ⟨hcutx, hhi⟩
   exact ⟨le_trans hcut hcutx, hhi⟩
 
+theorem fifteenRealBox_leftChildSubset
+    (box : FifteenBox) (radii : Fin 15 → ℝ) (axis : Nat) (cut : Rat)
+    (hsize : box.size = 15) (haxis : axis < 15)
+    (hcut : (cut : ℝ) ≤ (box[axis]!.2 : ℝ))
+    (hchild : fifteenRealBoxContains
+      (box.set! axis ((box[axis]!).1, cut)) radii) :
+    fifteenRealBoxContains box radii := by
+  have haxisBox : axis < box.size := by omega
+  intro i
+  by_cases hi : i.1 = axis
+  · have heq : i = ⟨axis, by omega⟩ := Fin.ext hi
+    subst i
+    have hpart := hchild ⟨axis, by omega⟩
+    have hpart' : fifteenRealIntervalContains ((box[axis]!).1, cut)
+        (radii ⟨axis, by omega⟩) := by
+      simpa only [fifteenRealIntervalContains, Array.set!_eq_setIfInBounds,
+      Array.getElem!_eq_getD, Array.getD_eq_getD_getElem?,
+      Array.getElem?_setIfInBounds_self_of_lt haxisBox,
+      Option.getD_some] using hpart
+    exact fifteenRealIntervalLeftChildSubset (box[axis]!).1 cut
+      (box[axis]!).2 (radii ⟨axis, by omega⟩) hcut hpart'
+  · have hpart := hchild i
+    rw [Array.getElem!_set!_ne box axis i.1 ((box[axis]!).1, cut)
+      (Ne.symm hi)] at hpart
+    exact hpart
+
+theorem fifteenRealBox_rightChildSubset
+    (box : FifteenBox) (radii : Fin 15 → ℝ) (axis : Nat) (cut : Rat)
+    (hsize : box.size = 15) (haxis : axis < 15)
+    (hcut : (box[axis]!.1 : ℝ) ≤ cut)
+    (hchild : fifteenRealBoxContains
+      (box.set! axis (cut, (box[axis]!).2)) radii) :
+    fifteenRealBoxContains box radii := by
+  have haxisBox : axis < box.size := by omega
+  intro i
+  by_cases hi : i.1 = axis
+  · have heq : i = ⟨axis, by omega⟩ := Fin.ext hi
+    subst i
+    have hpart := hchild ⟨axis, by omega⟩
+    have hpart' : fifteenRealIntervalContains (cut, (box[axis]!).2)
+        (radii ⟨axis, by omega⟩) := by
+      simpa only [fifteenRealIntervalContains, Array.set!_eq_setIfInBounds,
+      Array.getElem!_eq_getD, Array.getD_eq_getD_getElem?,
+      Array.getElem?_setIfInBounds_self_of_lt haxisBox,
+      Option.getD_some] using hpart
+    exact fifteenRealIntervalRightChildSubset (box[axis]!).1 cut
+      (box[axis]!).2 (radii ⟨axis, by omega⟩) hcut hpart'
+  · have hpart := hchild i
+    rw [Array.getElem!_set!_ne box axis i.1 (cut, (box[axis]!).2)
+      (Ne.symm hi)] at hpart
+    exact hpart
+
 /-- Every real profile in a parent box remains in at least one of the two
 array boxes produced by the checker at a legal split coordinate. -/
 theorem fifteenRealBox_split_covers
