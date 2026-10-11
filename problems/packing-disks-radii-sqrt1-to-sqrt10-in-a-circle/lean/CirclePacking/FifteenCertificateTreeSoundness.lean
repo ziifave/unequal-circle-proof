@@ -1,5 +1,6 @@
 import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.IntervalCases
 import CirclePacking.FifteenCertificate
 
 /-! Semantic facts about the exact certificate's closed rational boxes.
@@ -18,6 +19,36 @@ def fifteenRealBoxContains (box : FifteenBox) (radii : Fin 15 → ℝ) : Prop :=
 
 def fifteenRealBoxStrictlyPositive (box : FifteenBox) : Prop :=
   ∀ i, i < 15 → 0 < (box[i]!.1 : ℝ)
+
+theorem fifteenRational_pos (n d : Nat) (hn : 0 < n) (hd : 0 < d) :
+    0 < fifteenRational n d := by
+  have hdn : d ≠ 0 := by omega
+  unfold fifteenRational
+  rw [dif_neg hdn, Rat.normalize_eq_mkRat hdn]
+  exact Rat.mkRat_pos (Int.natCast_pos.mpr hn) hdn
+
+theorem fifteenBins_interval_lower_positive (digit : Nat) (interval : FifteenInterval)
+    (hdigit : digit ≠ 0) (hbound : digit ≤ 10)
+    (hget : fifteenBins[digit]? = some interval) :
+    0 < (interval.1 : ℝ) := by
+  interval_cases digit <;> simp_all [fifteenBins] <;>
+    first | contradiction | (cases hget; exact fifteenRational_pos _ _ (by norm_num) (by norm_num))
+
+theorem fifteenRealBox_set_strictlyPositive
+    (box : FifteenBox) (axis : Nat) (interval : FifteenInterval)
+    (haxisLtSize : axis < box.size)
+    (hinterval : 0 < (interval.1 : ℝ))
+    (hpositive : fifteenRealBoxStrictlyPositive box) :
+    fifteenRealBoxStrictlyPositive (box.set! axis interval) := by
+  intro i hi
+  by_cases hia : i = axis
+  · subst i
+    simpa only [Array.set!_eq_setIfInBounds, Array.getElem!_eq_getD,
+      Array.getD_eq_getD_getElem?,
+      Array.getElem?_setIfInBounds_self_of_lt haxisLtSize,
+      Option.getD_some] using hinterval
+  · rw [Array.getElem!_set!_ne box axis i interval (Ne.symm hia)]
+    exact hpositive i hi
 
 theorem fifteenRealBox_set_size (box : FifteenBox) (axis : Nat)
     (interval : FifteenInterval) :
@@ -62,6 +93,100 @@ theorem fifteenRealBox_rightChild_strictlyPositive
 
 def fifteenBoxGood (box : FifteenBox) : Prop :=
   box.size = 15 ∧ fifteenRealBoxStrictlyPositive box
+
+theorem fifteenDefaultBox_good :
+    fifteenBoxGood (Array.replicate 15 fifteenBins[11]!) := by
+  constructor
+  · simp
+  · intro i hi
+    have hi' : i < (Array.replicate 15 fifteenBins[11]!).size := by simpa using hi
+    have hentry : (Array.replicate 15 fifteenBins[11]!)[i]! = fifteenBins[11]! := by
+      rw [getElem!_pos (Array.replicate 15 fifteenBins[11]!) i hi']
+      rw [Array.getElem_replicate hi']
+    rw [hentry]
+    apply Rat.cast_pos.mpr
+    change 0 < fifteenRational 35213569647 10000000000
+    exact fifteenRational_pos _ _ (by norm_num) (by norm_num)
+
+def fifteenSetBin? (box : FifteenBox) (entry : Nat × Nat) : Option FifteenBox := do
+  let (position, digit) := entry
+  guard (digit != 0 && digit ≤ 10)
+  let interval ← fifteenBins[digit]?
+  pure (box.set! position interval)
+
+theorem fifteenSetBin_preserves_good (box result : FifteenBox) (entry : Nat × Nat)
+    (hgood : fifteenBoxGood box) (hposition : entry.1 < 15)
+    (hupdate : fifteenSetBin? box entry = some result) :
+    fifteenBoxGood result := by
+  rcases entry with ⟨position, digit⟩
+  unfold fifteenSetBin? at hupdate
+  cases hguard : (digit != 0 && digit ≤ 10) with
+  | false => simp [hguard] at hupdate
+  | true =>
+      cases hinterval : fifteenBins[digit]? with
+      | none => simp [hguard, hinterval] at hupdate
+      | some interval =>
+          simp [hguard, hinterval] at hupdate
+          have hguardProp : digit ≠ 0 ∧ digit ≤ 10 := by simpa using hguard
+          have hintervalPositive := fifteenBins_interval_lower_positive digit interval
+            hguardProp.1 hguardProp.2 hinterval
+          have hpositionLtSize : position < box.size := by
+            rw [hgood.1]
+            exact hposition
+          have hpositive := fifteenRealBox_set_strictlyPositive
+            box position interval hpositionLtSize hintervalPositive hgood.2
+          have hsize : (box.set! position interval).size = 15 := by
+            rw [fifteenRealBox_set_size, hgood.1]
+          cases hupdate
+          exact ⟨hsize, hpositive⟩
+
+theorem fifteenSetBinsFold_preserves_good :
+    ∀ (entries : List (Nat × Nat)) (box result : FifteenBox),
+      fifteenBoxGood box →
+      (∀ entry, entry ∈ entries → entry.1 < 15) →
+      entries.foldlM fifteenSetBin? box = some result →
+      fifteenBoxGood result := by
+  intro entries
+  induction entries with
+  | nil =>
+      intro box result hgood _ hfold
+      simp at hfold
+      cases hfold
+      exact hgood
+  | cons entry rest ih =>
+      intro box result hgood hpositions hfold
+      simp only [List.foldlM_cons] at hfold
+      cases hstep : fifteenSetBin? box entry with
+      | none => simp [hstep] at hfold
+      | some next =>
+          have hrest : rest.foldlM fifteenSetBin? next = some result := by
+            simpa [hstep] using hfold
+          have hnextGood := fifteenSetBin_preserves_good box next entry hgood
+            (hpositions entry (by simp)) hstep
+          apply ih next result hnextGood
+          · intro nextEntry hmem
+            exact hpositions nextEntry (by simp [hmem])
+          · exact hrest
+
+theorem fifteenInnerPositionsAux_lt (offset : Nat) (chars : List Char) :
+    ∀ position, position ∈ fifteenInnerPositionsAux offset chars →
+      position < offset + chars.length := by
+  induction chars generalizing offset with
+  | nil => simp [fifteenInnerPositionsAux]
+  | cons char chars ih =>
+      intro position hmem
+      simp only [fifteenInnerPositionsAux, List.length_cons] at hmem ⊢
+      rcases List.mem_append.mp hmem with hhead | htail
+      · simp at hhead
+        omega
+      · have hbound := ih (offset + 1) position htail
+        omega
+
+theorem fifteenInnerPositions_lt (pattern : String) (position : Nat)
+    (hmem : position ∈ fifteenInnerPositions pattern) :
+    position < pattern.length := by
+  have hbound := fifteenInnerPositionsAux_lt 0 pattern.toList position hmem
+  simpa [fifteenInnerPositions, String.length] using hbound
 
 def fifteenTaskBoxGood (task : FifteenTask) : Prop :=
   fifteenBoxGood task.1
