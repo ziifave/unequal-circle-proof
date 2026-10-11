@@ -57,6 +57,7 @@ import CirclePacking.FifteenStageZeroLabelCoverage
 import CirclePacking.FifteenStageZeroFiniteReduction
 import CirclePacking.FifteenStage3GeometricHandoff
 import CirclePacking.FifteenStage3Certificate
+import CirclePacking.FifteenStage3OwnerPath
 import CirclePacking.FifteenLocalAngleGeometry
 import CirclePacking.FifteenStrictWallBarrier
 import CirclePacking.FifteenPackingLocalRigidity

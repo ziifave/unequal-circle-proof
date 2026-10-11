@@ -23,6 +23,11 @@ private def s3TwoPi : Nat := 17600
 def s3InnerPositions (pattern : String) : Array Nat :=
   ((List.range s3N).filter fun i => pattern.toList[i]? == some '1').toArray
 
+theorem s3InnerPositions_mem_iff_char (pattern : String) (i : Nat) :
+    i ∈ (s3InnerPositions pattern).toList ↔
+      i < s3N ∧ pattern.toList[i]? = some '1' := by
+  simp [s3InnerPositions]
+
 private def s3PatternValid (pattern : String) : Bool :=
   let bits := pattern.toList
   bits.length == s3N &&
@@ -324,6 +329,126 @@ theorem fifteenStage3ReachableState_semantics (pattern : String) {s : S3State}
         by rw [fifteenStage3Next_labels_size]; exact hlabels,
         by change s.depth + 1 ≤ (s3InnerPositions pattern).size
            exact Nat.succ_le_of_lt hdepth⟩
+
+/-- The single root-to-leaf branch selected by a proposed full owner-label
+array.  The certificate checker splits in the order `0, 9, 1, ..., 6`; this
+relation follows the child carrying the proposed owner's actual label. -/
+inductive FifteenStage3TargetPath (pattern : String) (target : Array Nat) :
+    S3State → Prop where
+  | initial : FifteenStage3TargetPath pattern target (s3Initial pattern)
+  | step {s : S3State} :
+      FifteenStage3TargetPath pattern target s →
+      s.depth < (s3InnerPositions pattern).size →
+      FifteenStage3TargetPath pattern target
+        (s3Next (s3InnerPositions pattern) s
+          target[(s3InnerPositions pattern)[s.depth]!]!)
+
+theorem fifteenStage3TargetPath_reachable (pattern : String) (target : Array Nat)
+    {s : S3State} (hpath : FifteenStage3TargetPath pattern target s) :
+    FifteenStage3StateReachable pattern s := by
+  induction hpath with
+  | initial => exact .initial
+  | @step s hpath hdepth ih =>
+      exact .step ih hdepth
+
+/-- Along the owner-selected branch, every position already split by the
+checker carries exactly its proposed owner label.  This is the state/geometry
+interface needed before proving that a verified stream excludes the branch. -/
+theorem fifteenStage3TargetPath_prefix_agrees (pattern : String) (target : Array Nat)
+    {s : S3State} (hpath : FifteenStage3TargetPath pattern target s) :
+    ∀ k, k < s.depth →
+      s.labels[(s3InnerPositions pattern)[k]!]! =
+        target[(s3InnerPositions pattern)[k]!]! := by
+  induction hpath with
+  | initial =>
+      intro k hk
+      simp [s3Initial] at hk
+  | @step s hpath hdepth ih =>
+      intro k hk
+      change k < s.depth + 1 at hk
+      have hreachable := fifteenStage3TargetPath_reachable pattern target hpath
+      have hsem := fifteenStage3ReachableState_semantics pattern hreachable
+      have hposition : (s3InnerPositions pattern)[s.depth]! < s.labels.size := by
+        rw [hsem.2.1]
+        exact fifteenStage3InnerPosition_get_bound pattern hdepth
+      have hsplit : k < s.depth ∨ k = s.depth := by omega
+      rcases hsplit with hprevious | rfl
+      · have hdifferent :
+            (s3InnerPositions pattern)[k]! ≠
+              (s3InnerPositions pattern)[s.depth]! := by
+          intro heq
+          have h1 : k < (s3InnerPositions pattern).toList.length := by
+            simpa using Nat.lt_trans hprevious hdepth
+          have h2 : s.depth < (s3InnerPositions pattern).toList.length := by
+            simpa using hdepth
+          have hindexEq : k = s.depth :=
+            (fifteenStage3InnerPositions_nodup pattern).getElem!_inj h1 h2 |>.mp (by
+              calc
+                (s3InnerPositions pattern).toList[k]! =
+                    (s3InnerPositions pattern)[k]! := by rw [Array.getElem!_toList]
+                _ = (s3InnerPositions pattern)[s.depth]! := heq
+                _ = (s3InnerPositions pattern).toList[s.depth]! := by
+                    rw [Array.getElem!_toList])
+          omega
+        change getElem! (s.labels.set! (s3InnerPositions pattern)[s.depth]!
+          target[(s3InnerPositions pattern)[s.depth]!]!)
+            ((s3InnerPositions pattern)[k]!) =
+          target[(s3InnerPositions pattern)[k]!]!
+        rw [Array.getElem!_set!_ne _ _ _ _ (Ne.symm hdifferent)]
+        exact ih k hprevious
+      · change getElem! (s.labels.set! (s3InnerPositions pattern)[s.depth]!
+          target[(s3InnerPositions pattern)[s.depth]!]!)
+            ((s3InnerPositions pattern)[s.depth]!) =
+          target[(s3InnerPositions pattern)[s.depth]!]!
+        rw [Array.getElem!_set!_self _ _ _ hposition]
+
+theorem fifteenStage3TargetPath_depth_le_size (pattern : String) (target : Array Nat)
+    {s : S3State} (hpath : FifteenStage3TargetPath pattern target s) :
+    s.depth ≤ (s3InnerPositions pattern).size :=
+  (fifteenStage3ReachableState_semantics pattern
+    (fifteenStage3TargetPath_reachable pattern target hpath)).2.2
+
+/-- Any proposed owner array determines a complete root-to-leaf branch in the
+uncertified split tree.  Whether its leaf can be pruned is established by the
+separate geometric soundness and stream replay theorems. -/
+theorem fifteenStage3TargetPath_full (pattern : String) (target : Array Nat) :
+    ∃ s : S3State, FifteenStage3TargetPath pattern target s ∧
+      s.depth = (s3InnerPositions pattern).size := by
+  let inner := s3InnerPositions pattern
+  have hbuild : ∀ n, n ≤ inner.size →
+      ∃ s : S3State, FifteenStage3TargetPath pattern target s ∧ s.depth = n := by
+    intro n
+    induction n with
+    | zero =>
+        intro _
+        exact ⟨s3Initial pattern, .initial, rfl⟩
+    | succ n ih =>
+        intro hbound
+        have hprev : n ≤ inner.size := by omega
+        obtain ⟨s, hs, hdepth⟩ := ih hprev
+        have hsplit : s.depth < inner.size := by omega
+        refine ⟨s3Next inner s target[inner[s.depth]!]!, .step hs ?_, ?_⟩
+        · simpa [inner] using hsplit
+        · simp [s3Next, hdepth]
+  simpa [inner] using hbuild inner.size (Nat.le_refl _)
+
+/-- The proposed label at each next inner slot is one of the eight choices
+enumerated by the Stage 3 certificate, provided the target array records only
+legal owner labels on inner positions. -/
+theorem fifteenStage3TargetPath_next_label_allowed
+    (pattern : String) (target : Array Nat) {s : S3State}
+    (_hpath : FifteenStage3TargetPath pattern target s)
+    (hdepth : s.depth < (s3InnerPositions pattern).size)
+    (hallowed : ∀ p ∈ (s3InnerPositions pattern).toList,
+      target[p]! ∈ [0, 9, 1, 2, 3, 4, 5, 6]) :
+    target[(s3InnerPositions pattern)[s.depth]!]! ∈ [0, 9, 1, 2, 3, 4, 5, 6] := by
+  have hmemOrdinary : (s3InnerPositions pattern)[s.depth] ∈
+      (s3InnerPositions pattern).toList := Array.getElem_mem_toList hdepth
+  have hmem : (s3InnerPositions pattern)[s.depth]! ∈
+      (s3InnerPositions pattern).toList := by
+    rw [getElem!_pos (s3InnerPositions pattern) s.depth hdepth]
+    exact hmemOrdinary
+  exact hallowed _ hmem
 
 private def s3CheckStream : Nat → Array Nat → Array (List S3CertEdge) →
     S3State → List Char → Option (List Char)

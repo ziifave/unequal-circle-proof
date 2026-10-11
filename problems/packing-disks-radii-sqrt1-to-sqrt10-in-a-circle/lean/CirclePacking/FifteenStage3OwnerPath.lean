@@ -1,0 +1,177 @@
+import CirclePacking.FifteenStage3GeometricHandoff
+import CirclePacking.FifteenStage3Certificate
+import CirclePacking.FifteenStageZero
+
+/-! The Stage 3 profile word, radial owners, and checker branch choices are
+identified at the same positional slots. -/
+
+namespace CirclePacking
+
+private theorem fifteenStage3ProfileWord_toList (profile : Fin 15 → Bool) :
+    (fifteenStage0ProfileWord profile).toList =
+      List.ofFn (fun i => if profile i then '1' else '0') := by
+  change (String.ofList ((List.range 15).map fun i =>
+    if Nat.testBit (fifteenStage0ProfileMask profile) (14 - i) then '1' else '0')).toList = _
+  rw [String.toList_ofList]
+  apply List.ext_getElem
+  · simp
+  · intro i hi _
+    have hi' : i < 15 := by simpa using hi
+    simp only [List.getElem_map, List.getElem_range, List.getElem_ofFn]
+    rw [fifteenStage0ProfileMask_testBit profile ⟨i, hi'⟩]
+
+/-- The positional `1` bits selected by `s3InnerPositions` are exactly the
+true entries of the profile used to construct the Stage 0 word. -/
+theorem fifteenStage3ProfileWord_inner_iff (profile : Fin 15 → Bool) (i : Fin 15) :
+    i.val ∈ (s3InnerPositions (fifteenStage0ProfileWord profile)).toList ↔
+      profile i = true := by
+  rw [s3InnerPositions_mem_iff_char]
+  constructor
+  · rintro ⟨_, hchar⟩
+    have hword :
+        (fifteenStage0ProfileWord profile).toList[i.val]? =
+          some (if profile i then '1' else '0') := by
+      rw [fifteenStage3ProfileWord_toList]
+      change (List.ofFn (fun j : Fin 15 => if profile j then '1' else '0'))[i.val]? = _
+      rw [List.getElem?_ofFn, dif_pos i.isLt]
+    rw [hword] at hchar
+    cases hprofile : profile i <;> simp_all
+  · intro hprofile
+    constructor
+    · exact i.isLt
+    · rw [fifteenStage3ProfileWord_toList]
+      change (List.ofFn (fun j : Fin 15 => if profile j then '1' else '0'))[i.val]? = _
+      rw [List.getElem?_ofFn, dif_pos i.isLt]
+      simp [hprofile]
+
+def fifteenStage3OwnerLabelArray (labels : Fin 15 → Nat) : Array Nat :=
+  Array.ofFn labels
+
+theorem fifteenStage3OwnerLabelArray_get (labels : Fin 15 → Nat) (i : Nat)
+    (hi : i < 15) :
+    (fifteenStage3OwnerLabelArray labels)[i]! = labels ⟨i, hi⟩ := by
+  unfold fifteenStage3OwnerLabelArray
+  rw [getElem!_pos _ _ (by simpa using hi)]
+  rw [Array.getElem_ofFn (by simpa using hi)]
+
+/-- A real inner owner belongs to one of precisely the eight labels split by
+the certificate. This names the geometric side of the branch choice. -/
+theorem fifteenStage3GeometricInnerOwner_is_branch
+    (radii : Fin 15 → ℝ) (labels : Fin 15 → Nat)
+    (howners : ∀ i, fifteenStage3OwnerSpec (labels i) (radii i))
+    (profile : Fin 15 → Bool)
+    (hprofile : ∀ i, profile i = true → radii i < fifteenCandidateInnerThreshold)
+    (i : Fin 15) (hi : profile i = true) :
+    labels i ∈ [0, 9, 1, 2, 3, 4, 5, 6] := by
+  exact fifteenStage3OwnerSpec_inner_choices (howners i) (hprofile i hi)
+
+/-- For a complete geometric owner profile, every index the checker splits
+has a target label among the corresponding eight children. -/
+theorem fifteenStage3GeometricProfile_nextLabel_allowed
+    (radii : Fin 15 → ℝ) (labels : Fin 15 → Nat)
+    (howners : ∀ i, fifteenStage3OwnerSpec (labels i) (radii i))
+    (profile : Fin 15 → Bool)
+    (hprofile : ∀ i, profile i = true → radii i < fifteenCandidateInnerThreshold)
+    (k : Nat)
+    (hk : k < (s3InnerPositions (fifteenStage0ProfileWord profile)).size) :
+    let ownerArray := fifteenStage3OwnerLabelArray labels
+    ownerArray[(s3InnerPositions (fifteenStage0ProfileWord profile))[k]!]! ∈
+        [0, 9, 1, 2, 3, 4, 5, 6] := by
+  let p := (s3InnerPositions (fifteenStage0ProfileWord profile))[k]!
+  have hp : p < 15 := by
+    dsimp [p]
+    exact fifteenStage3InnerPosition_get_bound
+      (fifteenStage0ProfileWord profile) hk
+  have hmemOrdinary :
+      (s3InnerPositions (fifteenStage0ProfileWord profile))[k] ∈
+        (s3InnerPositions (fifteenStage0ProfileWord profile)).toList :=
+    Array.getElem_mem_toList hk
+  have hmem : p ∈ (s3InnerPositions (fifteenStage0ProfileWord profile)).toList := by
+    dsimp [p]
+    rw [getElem!_pos (s3InnerPositions (fifteenStage0ProfileWord profile)) k hk]
+    exact hmemOrdinary
+  have htrue : profile ⟨p, hp⟩ = true := by
+    have hiff := fifteenStage3ProfileWord_inner_iff profile ⟨p, hp⟩
+    exact hiff.mp hmem
+  change (fifteenStage3OwnerLabelArray labels)[p]! ∈ _
+  rw [fifteenStage3OwnerLabelArray_get labels p hp]
+  exact fifteenStage3GeometricInnerOwner_is_branch radii labels howners profile
+    hprofile ⟨p, hp⟩ htrue
+
+/-- A complete radial profile therefore selects one complete Stage 3 path;
+at every split, its label is one of the certificate's eight children, and
+the resulting state agrees with the actual owner array on all split slots. -/
+theorem fifteenStage3GeometricProfile_targetPath
+    (radii : Fin 15 → ℝ) (labels : Fin 15 → Nat)
+    (howners : ∀ i, fifteenStage3OwnerSpec (labels i) (radii i))
+    (profile : Fin 15 → Bool)
+    (hprofile : ∀ i, profile i = true → radii i < fifteenCandidateInnerThreshold) :
+    ∃ s : S3State,
+      FifteenStage3TargetPath (fifteenStage0ProfileWord profile)
+        (fifteenStage3OwnerLabelArray labels) s ∧
+      s.depth = (s3InnerPositions (fifteenStage0ProfileWord profile)).size ∧
+      (∀ k, k < s.depth →
+        s.labels[(s3InnerPositions (fifteenStage0ProfileWord profile))[k]!]! =
+          getElem! (fifteenStage3OwnerLabelArray labels)
+            ((s3InnerPositions (fifteenStage0ProfileWord profile))[k]!)) ∧
+      (∀ k, k < (s3InnerPositions (fifteenStage0ProfileWord profile)).size →
+        getElem! (fifteenStage3OwnerLabelArray labels)
+          ((s3InnerPositions (fifteenStage0ProfileWord profile))[k]!) ∈
+            [0, 9, 1, 2, 3, 4, 5, 6]) := by
+  obtain ⟨s, hpath, hdepth⟩ := fifteenStage3TargetPath_full
+    (fifteenStage0ProfileWord profile) (fifteenStage3OwnerLabelArray labels)
+  refine ⟨s, hpath, hdepth, ?_, ?_⟩
+  · exact fifteenStage3TargetPath_prefix_agrees
+      (fifteenStage0ProfileWord profile) (fifteenStage3OwnerLabelArray labels) hpath
+  · intro k hk
+    exact fifteenStage3GeometricProfile_nextLabel_allowed radii labels howners profile
+      hprofile k hk
+
+/-- An arbitrary packing below the candidate radius reaches the same
+owner-selected Stage 3 branch after wall replacement and Stage 0 dihedral
+normalization.  This is the concrete geometry-to-search-tree handoff; the
+certificate stream still needs a soundness theorem showing that this branch
+is pruned. -/
+theorem fifteen_unit_packing_wall_push_stage3_target_path
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    ∃ reflected : Bool, ∃ shift : Fin 15,
+      let radii := fifteenStage0TransformProfile
+        (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR))
+        reflected shift
+      let labels := fun i : Fin 15 => fifteenStage3RadialLabel (radii i)
+      let profile := fun i : Fin 15 => decide
+        (radii i < fifteenCandidateInnerThreshold)
+      fifteenStage0ProfileWord profile ∈ fifteenStage0SurvivorPatterns ∧
+      ∃ s : S3State,
+        FifteenStage3TargetPath (fifteenStage0ProfileWord profile)
+          (fifteenStage3OwnerLabelArray labels) s ∧
+        s.depth = (s3InnerPositions (fifteenStage0ProfileWord profile)).size ∧
+        (∀ k, k < s.depth →
+          s.labels[(s3InnerPositions (fifteenStage0ProfileWord profile))[k]!]! =
+            getElem! (fifteenStage3OwnerLabelArray labels)
+              ((s3InnerPositions (fifteenStage0ProfileWord profile))[k]!)) ∧
+        (∀ k, k < (s3InnerPositions (fifteenStage0ProfileWord profile)).size →
+          getElem! (fifteenStage3OwnerLabelArray labels)
+            ((s3InnerPositions (fifteenStage0ProfileWord profile))[k]!) ∈
+              [0, 9, 1, 2, 3, 4, 5, 6]) := by
+  dsimp only
+  obtain ⟨reflected, shift, hsurvivor, hconditions, _, _, _⟩ :=
+    fifteen_unit_packing_wall_push_stage3_geometric_handoff P hunit hR
+  refine ⟨reflected, shift, hsurvivor, ?_⟩
+  let radii := fifteenStage0TransformProfile
+    (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR))
+    reflected shift
+  let labels := fun i : Fin 15 => fifteenStage3RadialLabel (radii i)
+  let profile := fun i : Fin 15 => decide (radii i < fifteenCandidateInnerThreshold)
+  have hprofile : ∀ i, profile i = true →
+      radii i < fifteenCandidateInnerThreshold := by
+    intro i hi
+    exact of_decide_eq_true hi
+  obtain ⟨s, hpath, hdepth, hagree, hchoices⟩ :=
+    fifteenStage3GeometricProfile_targetPath radii labels hconditions.owners
+      profile hprofile
+  exact ⟨s, hpath, hdepth, hagree, hchoices⟩
+
+end CirclePacking
