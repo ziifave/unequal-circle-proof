@@ -20,7 +20,7 @@ namespace CirclePacking
 private def s3N : Nat := 15
 private def s3TwoPi : Nat := 17600
 
-private def s3InnerPositions (pattern : String) : Array Nat :=
+def s3InnerPositions (pattern : String) : Array Nat :=
   ((List.range s3N).filter fun i => pattern.toList[i]? == some '1').toArray
 
 private def s3PatternValid (pattern : String) : Bool :=
@@ -30,7 +30,7 @@ private def s3PatternValid (pattern : String) : Bool :=
     let count := bits.filter (· == '1') |>.length
     5 ≤ count && count ≤ 8
 
-private structure S3State where
+structure S3State where
   labels : Array Nat
   depth : Nat
   small : Nat
@@ -49,7 +49,7 @@ private structure S3WeightedEdge where
   kind : Char
   ticks : Nat
 
-private def s3Initial (pattern : String) : S3State := Id.run do
+def s3Initial (pattern : String) : S3State := Id.run do
   let bits := pattern.toList.toArray
   let labels := (Array.range s3N).map fun i =>
     if bits[i]? == some '1' then 8 else 7
@@ -168,15 +168,162 @@ private def s3CycleValid (labels : Array Nat) (edges : List S3CertEdge) : Bool :
     s3LinkValid materialized && s3EndsClosed materialized &&
     decide (s3Weight materialized < 0)
 
-private def s3Next (inner : Array Nat) (s : S3State) (label : Nat) : S3State := Id.run do
-  let p := inner[s.depth]!
-  return {
-    labels := s.labels.set! p label,
-    depth := s.depth + 1,
-    small := s.small + (if label <= 1 || label == 9 then 1 else 0),
-    high := s.high + (if label >= 5 && label <= 6 then 1 else 0),
-    high2 := s.high2 + (if label == 6 then 1 else 0)
-  }
+def s3Next (inner : Array Nat) (s : S3State) (label : Nat) : S3State :=
+  { labels := s.labels.set! inner[s.depth]! label
+    depth := s.depth + 1
+    small := s.small + (if label <= 1 || label == 9 then 1 else 0)
+    high := s.high + (if label >= 5 && label <= 6 then 1 else 0)
+    high2 := s.high2 + (if label == 6 then 1 else 0) }
+
+/-- The checker counters are the exact counts of predicates on the labels
+assigned at positions before `depth`. -/
+def fifteenStage3PrefixCount (inner labels : Array Nat) (depth : Nat)
+    (predicate : Nat → Bool) : Nat :=
+  ((List.range depth).filter fun k => predicate labels[inner[k]!]!).length
+
+/-- One transition adds precisely the new label's contribution to a prefix
+count.  The distinct-position premise ensures the array update cannot alter
+any earlier assignment. -/
+theorem fifteenStage3PrefixCount_step
+    (inner labels : Array Nat) (depth label : Nat) (predicate : Nat → Bool)
+    (hnodup : inner.toList.Nodup) (hdepth : depth < inner.size)
+    (hposition : inner[depth]! < labels.size) :
+    fifteenStage3PrefixCount inner (labels.set! inner[depth]! label) (depth + 1) predicate =
+      fifteenStage3PrefixCount inner labels depth predicate +
+        (if predicate label then 1 else 0) := by
+  have hne : ∀ k, k < depth → inner[k]! ≠ inner[depth]! := by
+    intro k hk
+    intro hEqArray
+    have h1 : k < inner.toList.length := by
+      simpa using Nat.lt_trans hk hdepth
+    have h2 : depth < inner.toList.length := by simpa using hdepth
+    have hEq : inner.toList[k]! = inner.toList[depth]! := by
+      calc
+        inner.toList[k]! = inner[k]! := by rw [Array.getElem!_toList]
+        _ = inner[depth]! := hEqArray
+        _ = inner.toList[depth]! := by rw [Array.getElem!_toList]
+    have hindex := (hnodup.getElem!_inj h1 h2).mp hEq
+    have hfalse : False := by
+      have hkEq : k = depth := hindex
+      subst depth
+      exact Nat.lt_irrefl k hk
+    exact hfalse.elim
+  unfold fifteenStage3PrefixCount
+  rw [List.range_succ, List.filter_append, List.length_append]
+  congr 1
+  · apply congrArg List.length
+    apply List.filter_congr
+    intro k hk
+    have hklt : k < depth := List.mem_range.mp hk
+    rw [Array.getElem!_set!_ne labels (inner[depth]!) (inner[k]!) label
+      (Ne.symm (hne k hklt))]
+  · simp only [List.filter_cons, List.filter_nil]
+    rw [Array.getElem!_set!_self labels (inner[depth]!) label hposition]
+    split <;> rfl
+
+/-- The three incremental counters faithfully summarize the assigned prefix. -/
+def fifteenStage3CountersConsistent (inner : Array Nat) (s : S3State) : Prop :=
+  s.small = fifteenStage3PrefixCount inner s.labels s.depth (fun t => t ≤ 1 || t == 9) ∧
+  s.high = fifteenStage3PrefixCount inner s.labels s.depth (fun t => 5 ≤ t && t ≤ 6) ∧
+  s.high2 = fifteenStage3PrefixCount inner s.labels s.depth (fun t => t == 6)
+
+/-- Counter consistency is preserved by every legal checker transition. -/
+theorem fifteenStage3CountersConsistent_step
+    (inner : Array Nat) (s : S3State) (label : Nat)
+    (hnodup : inner.toList.Nodup) (hdepth : s.depth < inner.size)
+    (hposition : inner[s.depth]! < s.labels.size)
+    (hconsistent : fifteenStage3CountersConsistent inner s) :
+    fifteenStage3CountersConsistent inner (s3Next inner s label) := by
+  rcases s with ⟨labels, depth, small, high, high2⟩
+  change depth < inner.size at hdepth
+  change inner[depth]! < labels.size at hposition
+  change small = fifteenStage3PrefixCount inner labels depth (fun t => t ≤ 1 || t == 9) ∧
+    high = fifteenStage3PrefixCount inner labels depth (fun t => 5 ≤ t && t ≤ 6) ∧
+    high2 = fifteenStage3PrefixCount inner labels depth (fun t => t == 6) at hconsistent
+  change small + (if label ≤ 1 || label == 9 then 1 else 0) =
+      fifteenStage3PrefixCount inner (labels.set! inner[depth]! label) (depth + 1)
+        (fun t => t ≤ 1 || t == 9) ∧
+    high + (if label >= 5 && label <= 6 then 1 else 0) =
+      fifteenStage3PrefixCount inner (labels.set! inner[depth]! label) (depth + 1)
+        (fun t => 5 ≤ t && t ≤ 6) ∧
+    high2 + (if label == 6 then 1 else 0) =
+      fifteenStage3PrefixCount inner (labels.set! inner[depth]! label) (depth + 1)
+        (fun t => t == 6)
+  rcases hconsistent with ⟨hsmall, hhigh, hhigh2⟩
+  refine ⟨?_, ?_, ?_⟩
+  · rw [fifteenStage3PrefixCount_step inner labels depth label _ hnodup hdepth hposition]
+    rw [← hsmall]
+  · rw [fifteenStage3PrefixCount_step inner labels depth label _ hnodup hdepth hposition]
+    rw [← hhigh]
+  · rw [fifteenStage3PrefixCount_step inner labels depth label _ hnodup hdepth hposition]
+    rw [← hhigh2]
+
+theorem fifteenStage3InnerPositions_nodup (pattern : String) :
+    (s3InnerPositions pattern).toList.Nodup := by
+  unfold s3InnerPositions
+  rw [List.nodup_iff_pairwise_ne]
+  exact List.Pairwise.filter _ (List.nodup_iff_pairwise_ne.mp List.nodup_range)
+
+theorem fifteenStage3InnerPosition_mem_bound (pattern : String) {p : Nat}
+    (hp : p ∈ (s3InnerPositions pattern).toList) : p < s3N := by
+  unfold s3InnerPositions at hp
+  simp only [List.mem_filter, List.mem_range] at hp
+  exact hp.1
+
+theorem fifteenStage3InnerPosition_get_bound (pattern : String) {i : Nat}
+    (hi : i < (s3InnerPositions pattern).size) :
+    (s3InnerPositions pattern)[i]! < s3N := by
+  have hmemOrdinary : (s3InnerPositions pattern)[i] ∈
+      (s3InnerPositions pattern).toList := Array.getElem_mem_toList hi
+  have hmem : (s3InnerPositions pattern)[i]! ∈ (s3InnerPositions pattern).toList := by
+    rw [getElem!_pos (s3InnerPositions pattern) i hi]
+    exact hmemOrdinary
+  exact fifteenStage3InnerPosition_mem_bound pattern hmem
+
+theorem fifteenStage3Initial_labels_size (pattern : String) :
+    (s3Initial pattern).labels.size = s3N := by
+  simp [s3Initial, s3N]
+
+theorem fifteenStage3Next_labels_size (inner : Array Nat) (s : S3State) (label : Nat) :
+    (s3Next inner s label).labels.size = s.labels.size := by
+  cases s
+  simp [s3Next]
+
+theorem fifteenStage3Initial_countersConsistent (pattern : String) :
+    fifteenStage3CountersConsistent (s3InnerPositions pattern) (s3Initial pattern) := by
+  unfold fifteenStage3CountersConsistent fifteenStage3PrefixCount
+  simp [s3Initial]
+
+/-- The state paths generated by the recursive checker, abstracting away the
+certificate text while retaining its exact transition function. -/
+inductive FifteenStage3StateReachable (pattern : String) : S3State → Prop where
+  | initial : FifteenStage3StateReachable pattern (s3Initial pattern)
+  | step {s : S3State} {label : Nat} :
+      FifteenStage3StateReachable pattern s →
+      s.depth < (s3InnerPositions pattern).size →
+      FifteenStage3StateReachable pattern
+        (s3Next (s3InnerPositions pattern) s label)
+
+/-- Every state generated from the checker's initial state has exact prefix
+counters, keeps the fifteen-label array intact, and stays within the profile. -/
+theorem fifteenStage3ReachableState_semantics (pattern : String) {s : S3State}
+    (hs : FifteenStage3StateReachable pattern s) :
+    fifteenStage3CountersConsistent (s3InnerPositions pattern) s ∧
+      s.labels.size = s3N ∧ s.depth ≤ (s3InnerPositions pattern).size := by
+  induction hs with
+  | initial =>
+      exact ⟨fifteenStage3Initial_countersConsistent pattern,
+        fifteenStage3Initial_labels_size pattern, Nat.zero_le _⟩
+  | @step s label hs hdepth ih =>
+      rcases ih with ⟨hconsistent, hlabels, hdepthBound⟩
+      have hposition : (s3InnerPositions pattern)[s.depth]! < s.labels.size := by
+        rw [hlabels]
+        exact fifteenStage3InnerPosition_get_bound pattern hdepth
+      exact ⟨fifteenStage3CountersConsistent_step (s3InnerPositions pattern) s label
+          (fifteenStage3InnerPositions_nodup pattern) hdepth hposition hconsistent,
+        by rw [fifteenStage3Next_labels_size]; exact hlabels,
+        by change s.depth + 1 ≤ (s3InnerPositions pattern).size
+           exact Nat.succ_le_of_lt hdepth⟩
 
 private def s3CheckStream : Nat → Array Nat → Array (List S3CertEdge) →
     S3State → List Char → Option (List Char)

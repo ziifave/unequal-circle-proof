@@ -231,10 +231,15 @@ the assigned high count plus the number of remaining positions is still an
 upper bound for any completion. `FifteenStage3GeometricHandoff.lean` attaches
 these owner, pair-sum, and population facts to the same ordered real profile
 which survived Stage 0. It is imported by the default `CirclePacking` target.
-This is not yet a geometric 378-to-23 theorem: the checker state's labels and
-counters must still be matched to the assigned-prefix sets, cycle leaves
-must be connected to the refined angle table, and stream soundness must be
-proved by induction.
+`FifteenStage3Certificate.lean` now makes the checker transition state
+available to the proof and establishes that its small/high/high2 counters are
+exactly the corresponding counts among assigned prefix positions. The result
+holds inductively for every state generated from the checker root, while also
+proving the position list is duplicate-free and the label array retains all 15
+slots. This closes the counter bookkeeping lemma. It is not yet a geometric
+378-to-23 theorem: the branch choices still need to be matched to the actual
+radial owner profile, cycle leaves must be connected to the refined angle
+table, and the stream replay must be given a soundness induction.
 
 The radius-two bound, refined wall enclosure, owner coverage, structural
 exclusion lemmas, and actual-packing structural conditions have only
