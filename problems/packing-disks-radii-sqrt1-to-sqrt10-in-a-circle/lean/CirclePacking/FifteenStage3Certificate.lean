@@ -62,7 +62,7 @@ def s3Initial (pattern : String) : S3State := Id.run do
 
 private def s3SmallReason (s : S3State) : Bool := s.small > 1
 
-private def s3OriginReason (inner : Array Nat) (s : S3State) : Bool :=
+def s3OriginReason (inner : Array Nat) (s : S3State) : Bool :=
   (inner.toList.any fun p => s.labels[p]! == 9) &&
   (inner.toList.any fun p => s.labels[p]! < 6 && s.labels[p]! != 9)
 
@@ -71,7 +71,7 @@ private def s3RankReason (inner : Array Nat) (s : S3State) : Bool :=
   s.high + remaining < inner.size - 4 ||
     s.high2 + remaining < max 0 (inner.size - 5)
 
-private def s3MixedReason (s : S3State) : Bool := Id.run do
+def s3MixedReason (s : S3State) : Bool := Id.run do
   if s.small != 1 then return false
   let hasZero := s.labels.toList.any (fun t => t == 0 || t == 9)
   let hasTwo := s.labels.toList.any (fun t => t == 2)
@@ -401,6 +401,96 @@ theorem fifteenStage3TargetPath_prefix_agrees (pattern : String) (target : Array
             ((s3InnerPositions pattern)[s.depth]!) =
           target[(s3InnerPositions pattern)[s.depth]!]!
         rw [Array.getElem!_set!_self _ _ _ hposition]
+
+/-- On a target path, every inner slot is either already assigned its target
+label or still has the checker's unassigned sentinel `8`.  This stronger
+prefix invariant lets the geometric soundness proof interpret predicates
+which scan the whole label array, even when the certificate prunes early. -/
+theorem fifteenStage3TargetPath_slot_semantics (pattern : String) (target : Array Nat)
+    {s : S3State} (hpath : FifteenStage3TargetPath pattern target s) :
+    ∀ k, k < (s3InnerPositions pattern).size →
+      s.labels[(s3InnerPositions pattern)[k]!]! =
+        if k < s.depth then
+          target[(s3InnerPositions pattern)[k]!]!
+        else 8 := by
+  induction hpath with
+  | initial =>
+      intro k hk
+      have hmemOrdinary : (s3InnerPositions pattern)[k] ∈
+          (s3InnerPositions pattern).toList := Array.getElem_mem_toList hk
+      have hmem : (s3InnerPositions pattern)[k]! ∈
+          (s3InnerPositions pattern).toList := by
+        rw [getElem!_pos (s3InnerPositions pattern) k hk]
+        exact hmemOrdinary
+      have hchar := (s3InnerPositions_mem_iff_char pattern
+        ((s3InnerPositions pattern)[k]!)).mp hmem
+      have hindex : (s3InnerPositions pattern)[k]! < s3N := hchar.1
+      have hbits : pattern.toList[(s3InnerPositions pattern)[k]!]? = some '1' := hchar.2
+      simp [s3Initial, hbits, hindex]
+  | @step s hpath hdepth ih =>
+      intro k hk
+      have hposition : (s3InnerPositions pattern)[s.depth]! < s.labels.size := by
+        rw [(fifteenStage3ReachableState_semantics pattern
+          (fifteenStage3TargetPath_reachable pattern target hpath)).2.1]
+        exact fifteenStage3InnerPosition_get_bound pattern hdepth
+      have hsplit : k < s.depth ∨ k = s.depth ∨ s.depth < k := by omega
+      rcases hsplit with hprev | heq | hnext
+      · have hdifferent :
+            (s3InnerPositions pattern)[k]! ≠
+              (s3InnerPositions pattern)[s.depth]! := by
+          intro heqArray
+          have h1 : k < (s3InnerPositions pattern).toList.length := by
+            simpa using Nat.lt_trans hprev hdepth
+          have h2 : s.depth < (s3InnerPositions pattern).toList.length := by
+            simpa using hdepth
+          have hindexEq : k = s.depth :=
+            (fifteenStage3InnerPositions_nodup pattern).getElem!_inj h1 h2 |>.mp (by
+              calc
+                (s3InnerPositions pattern).toList[k]! =
+                    (s3InnerPositions pattern)[k]! := by rw [Array.getElem!_toList]
+                _ = (s3InnerPositions pattern)[s.depth]! := heqArray
+                _ = (s3InnerPositions pattern).toList[s.depth]! := by
+                    rw [Array.getElem!_toList])
+          omega
+        change getElem! (s.labels.set! (s3InnerPositions pattern)[s.depth]!
+          target[(s3InnerPositions pattern)[s.depth]!]!)
+            ((s3InnerPositions pattern)[k]!) = _
+        rw [Array.getElem!_set!_ne _ _ _ _ (Ne.symm hdifferent)]
+        rw [ih k (by omega)]
+        simp [s3Next, hprev]
+        intro hbad
+        omega
+      · subst k
+        change getElem! (s.labels.set! (s3InnerPositions pattern)[s.depth]!
+          target[(s3InnerPositions pattern)[s.depth]!]!)
+            ((s3InnerPositions pattern)[s.depth]!) = _
+        rw [Array.getElem!_set!_self _ _ _ hposition]
+        simp [s3Next]
+      · have hdifferent :
+            (s3InnerPositions pattern)[k]! ≠
+              (s3InnerPositions pattern)[s.depth]! := by
+          intro heqArray
+          have h1 : s.depth < (s3InnerPositions pattern).toList.length := by
+            simpa using hdepth
+          have h2 : k < (s3InnerPositions pattern).toList.length := by
+            simpa using hk
+          have hindexEq : s.depth = k :=
+            (fifteenStage3InnerPositions_nodup pattern).getElem!_inj h1 h2 |>.mp (by
+              calc
+                (s3InnerPositions pattern).toList[s.depth]! =
+                    (s3InnerPositions pattern)[s.depth]! := by rw [Array.getElem!_toList]
+                _ = (s3InnerPositions pattern)[k]! := heqArray.symm
+                _ = (s3InnerPositions pattern).toList[k]! := by
+                    rw [Array.getElem!_toList])
+          omega
+        change getElem! (s.labels.set! (s3InnerPositions pattern)[s.depth]!
+          target[(s3InnerPositions pattern)[s.depth]!]!)
+            ((s3InnerPositions pattern)[k]!) = _
+        rw [Array.getElem!_set!_ne _ _ _ _ (Ne.symm hdifferent)]
+        rw [ih k hk]
+        simp [s3Next, Nat.not_lt_of_ge (Nat.le_of_lt hnext)]
+        intro hbad
+        omega
 
 theorem fifteenStage3TargetPath_depth_le_size (pattern : String) (target : Array Nat)
     {s : S3State} (hpath : FifteenStage3TargetPath pattern target s) :

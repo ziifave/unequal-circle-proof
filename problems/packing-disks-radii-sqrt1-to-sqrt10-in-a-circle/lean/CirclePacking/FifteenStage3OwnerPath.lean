@@ -127,6 +127,83 @@ theorem fifteenStage3GeometricProfile_targetPath
     exact fifteenStage3GeometricProfile_nextLabel_allowed radii labels howners profile
       hprofile k hk
 
+/-- A non-sentinel label observed at an inner position on a target path has
+already been assigned, and therefore equals the corresponding geometric
+owner label. -/
+private theorem fifteenStage3TargetPath_label_agrees_at_inner
+    (labels : Fin 15 → Nat) (profile : Fin 15 → Bool) {s : S3State}
+    (hpath : FifteenStage3TargetPath (fifteenStage0ProfileWord profile)
+      (fifteenStage3OwnerLabelArray labels) s)
+    (k : Nat) (hk : k < (s3InnerPositions (fifteenStage0ProfileWord profile)).size)
+    (hsentinel : s.labels[(s3InnerPositions
+      (fifteenStage0ProfileWord profile))[k]!]! ≠ 8) :
+    s.labels[(s3InnerPositions (fifteenStage0ProfileWord profile))[k]!]! =
+      labels ⟨(s3InnerPositions (fifteenStage0ProfileWord profile))[k]!,
+        fifteenStage3InnerPosition_get_bound
+          (fifteenStage0ProfileWord profile) hk⟩ := by
+  let pattern := fifteenStage0ProfileWord profile
+  let inner := s3InnerPositions pattern
+  have hsem := fifteenStage3TargetPath_slot_semantics pattern
+    (fifteenStage3OwnerLabelArray labels) hpath k (by simpa [inner] using hk)
+  have hsem' : s.labels[inner[k]!]! = if k < s.depth then
+      (fifteenStage3OwnerLabelArray labels)[inner[k]!]! else 8 := by
+    simpa [inner] using hsem
+  have hassigned : k < s.depth := by
+    by_contra hnot
+    have hkge : s.depth ≤ k := by omega
+    have hnot' : ¬ k < s.depth := not_lt.mpr hkge
+    have hsem8 : s.labels[inner[k]!]! = 8 := by
+      simpa [hnot'] using hsem'
+    exact hsentinel hsem8
+  have htarget : s.labels[inner[k]!]! =
+      (fifteenStage3OwnerLabelArray labels)[inner[k]!]! := by
+    simpa [hassigned] using hsem'
+  have hpositionBound : inner[k]! < 15 := by
+    exact fifteenStage3InnerPosition_get_bound pattern hk
+  rw [fifteenStage3OwnerLabelArray_get labels inner[k]! hpositionBound] at htarget
+  exact htarget
+
+/-- The checker’s origin-conflict leaf cannot occur on a geometrically valid
+owner path: both labels it detects have already been assigned, so they
+would give two actual centers whose radii sum to less than two. -/
+theorem fifteenStage3TargetPath_originReason_excluded
+    (radii : Fin 15 → ℝ) (labels : Fin 15 → Nat)
+    (howners : ∀ i, fifteenStage3OwnerSpec (labels i) (radii i))
+    (hsum : ∀ i j, i ≠ j → 2 ≤ radii i + radii j)
+    (profile : Fin 15 → Bool) {s : S3State}
+    (hpath : FifteenStage3TargetPath (fifteenStage0ProfileWord profile)
+      (fifteenStage3OwnerLabelArray labels) s)
+    (hreason : s3OriginReason
+      (s3InnerPositions (fifteenStage0ProfileWord profile)) s = true) : False := by
+  let inner := s3InnerPositions (fifteenStage0ProfileWord profile)
+  have hparts :
+      (∃ k, ∃ hk : k < inner.size, s.labels[inner[k]]! = 9) ∧
+      (∃ k, ∃ hk : k < inner.size,
+        s.labels[inner[k]]! < 6 ∧ ¬ s.labels[inner[k]]! = 9) := by
+    simpa [s3OriginReason, List.any_eq_true, Bool.and_eq_true] using hreason
+  obtain ⟨⟨i, hi, hi9⟩, ⟨j, hj, hjLow, _⟩⟩ := hparts
+  have hi9Array : s.labels[inner[i]!]! = 9 := by
+    simpa only [getElem!_pos inner i hi] using hi9
+  have hjLowArray : s.labels[inner[j]!]! < 6 := by
+    simpa only [getElem!_pos inner j hj] using hjLow
+  have hiSentinel : s.labels[inner[i]!]! ≠ 8 := by
+    rw [hi9Array]
+    decide
+  have hjSentinel : s.labels[inner[j]!]! ≠ 8 := by omega
+  have hiLabel := fifteenStage3TargetPath_label_agrees_at_inner labels profile
+    hpath i hi hiSentinel
+  have hjLabel := fifteenStage3TargetPath_label_agrees_at_inner labels profile
+    hpath j hj hjSentinel
+  have hi9' : labels ⟨inner[i]!, fifteenStage3InnerPosition_get_bound _ hi⟩ = 9 := by
+    rw [← hiLabel]
+    exact hi9Array
+  have hjLow' : labels ⟨inner[j]!, fifteenStage3InnerPosition_get_bound _ hj⟩ < 6 := by
+    rw [← hjLabel]
+    exact hjLowArray
+  exact fifteenStage3Owners_exclude_origin_leaf radii labels howners hsum
+    ⟨inner[i]!, fifteenStage3InnerPosition_get_bound _ hi⟩
+    ⟨inner[j]!, fifteenStage3InnerPosition_get_bound _ hj⟩ hi9' hjLow'
+
 /-- An arbitrary packing below the candidate radius reaches the same
 owner-selected Stage 3 branch after wall replacement and Stage 0 dihedral
 normalization.  This is the concrete geometry-to-search-tree handoff; the
