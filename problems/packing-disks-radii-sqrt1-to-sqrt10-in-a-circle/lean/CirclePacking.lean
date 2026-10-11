@@ -60,6 +60,7 @@ import CirclePacking.FifteenStage3Certificate
 import CirclePacking.FifteenStage3OwnerPath
 import CirclePacking.FifteenStage3PathStructural
 import CirclePacking.FifteenStage3TickSoundness
+import CirclePacking.FifteenStage3AngularEdge
 import CirclePacking.FifteenLocalAngleGeometry
 import CirclePacking.FifteenStrictWallBarrier
 import CirclePacking.FifteenPackingLocalRigidity
