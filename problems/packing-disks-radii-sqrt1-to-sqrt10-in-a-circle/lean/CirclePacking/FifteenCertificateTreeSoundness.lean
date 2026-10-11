@@ -7,6 +7,8 @@ tree from rational endpoints to the real radii of a packing. -/
 
 namespace CirclePacking
 
+open Lean
+
 def fifteenRealIntervalContains (interval : FifteenInterval) (x : ℝ) : Prop :=
   (interval.1 : ℝ) ≤ x ∧ x ≤ (interval.2 : ℝ)
 
@@ -95,8 +97,7 @@ array boxes produced by the checker at a legal split coordinate. -/
 theorem fifteenRealBox_split_covers
     (box : FifteenBox) (radii : Fin 15 → ℝ) (axis : Nat) (cut : Rat)
     (hsize : box.size = 15) (haxis : axis < 15)
-    (hparent : fifteenRealBoxContains box radii)
-    (hcut : (box[axis]!).1 < cut ∧ cut < (box[axis]!).2) :
+    (hparent : fifteenRealBoxContains box radii) :
     fifteenRealBoxContains (box.set! axis ((box[axis]!).1, cut)) radii ∨
       fifteenRealBoxContains (box.set! axis (cut, (box[axis]!).2)) radii := by
   have haxisLtSize : axis < box.size := by omega
@@ -128,5 +129,68 @@ theorem fifteenRealBox_split_covers
     · rw [Array.getElem!_set!_ne box axis i.1 (cut, (box[axis]!).2)
         (Ne.symm hi)]
       exact hparent i
+
+/- If a work-list replay accepts a split task, its recorded bisection is a
+legal midpoint split of one of the fifteen coordinates. This extracts the
+facts needed to apply `fifteenRealBox_split_covers` to an actual profile. -/
+theorem fifteenCheckTasks_split_wellFormed
+    (fuel : Nat) (box : FifteenBox) (inner : List Nat) (node : Json)
+    (rest : List FifteenTask) (counts result : FifteenTreeCounts)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SPLIT")
+    (haccepted : fifteenCheckTasks (fuel + 1)
+      ((box, inner, node) :: rest) counts = some result) :
+    ∃ axis cut left right lo hi,
+      fifteenSplitParts? node = some (axis, cut, left, right) ∧
+      box[axis]? = some (lo, hi) ∧ axis < 15 ∧ axis ∈ inner ∧
+      lo < cut ∧ cut < hi ∧ cut = (lo + hi) / 2 := by
+  cases hparts : fifteenSplitParts? node with
+  | none => simp [fifteenCheckTasks, Id.run, htag, hparts] at haccepted
+  | some parts =>
+    rcases parts with ⟨axis, cut, left, right⟩
+    cases hbox : box[axis]? with
+    | none => simp [fifteenCheckTasks, Id.run, htag, hparts, hbox] at haccepted
+    | some endpoints =>
+      rcases endpoints with ⟨lo, hi⟩
+      have hvalid :
+          ¬ ((((15 ≤ axis ∨ axis ∉ inner) ∨ cut ≤ lo) ∨ hi ≤ cut) ∨
+            cut ≠ (lo + hi) / 2) := by
+        intro hbad
+        simp [fifteenCheckTasks, Id.run, htag, hparts, hbox, hbad] at haccepted
+      simp only [not_or] at hvalid
+      rcases hvalid with ⟨⟨⟨⟨haxis, hmem⟩, hlo⟩, hhi⟩, hmid⟩
+      have haxis' : axis < 15 := by omega
+      have hmem' : axis ∈ inner := by
+        by_contra h
+        exact hmem h
+      have hlo' : lo < cut := lt_of_not_ge hlo
+      have hhi' : cut < hi := lt_of_not_ge hhi
+      have hmid' : cut = (lo + hi) / 2 := by
+        by_contra h
+        exact hmid h
+      exact ⟨axis, cut, left, right, lo, hi, rfl, hbox, haxis',
+        hmem', hlo', hhi', hmid'⟩
+
+/-- An accepted split node preserves containment of an actual profile in at
+least one of the two child tasks. -/
+theorem fifteenCheckTasks_split_profile_children
+    (fuel : Nat) (box : FifteenBox) (inner : List Nat) (node : Json)
+    (rest : List FifteenTask) (counts result : FifteenTreeCounts)
+    (radii : Fin 15 → ℝ) (hsize : box.size = 15)
+    (hparent : fifteenRealBoxContains box radii)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SPLIT")
+    (haccepted : fifteenCheckTasks (fuel + 1)
+      ((box, inner, node) :: rest) counts = some result) :
+    ∃ axis cut left right,
+      fifteenSplitParts? node = some (axis, cut, left, right) ∧
+        (fifteenRealBoxContains
+            (box.set! axis ((box[axis]!).1, cut)) radii ∨
+          fifteenRealBoxContains
+            (box.set! axis (cut, (box[axis]!).2)) radii) := by
+  obtain ⟨axis, cut, left, right, _lo, _hi, hparts, _hbox, haxis,
+      _hinner, _hlo, _hhi, _hmid⟩ :=
+    fifteenCheckTasks_split_wellFormed fuel box inner node rest counts result
+      htag haccepted
+  exact ⟨axis, cut, left, right, hparts,
+    fifteenRealBox_split_covers box radii axis cut hsize haxis hparent⟩
 
 end CirclePacking
