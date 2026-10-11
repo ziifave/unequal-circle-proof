@@ -6,6 +6,7 @@ import CirclePacking.FifteenStage3TickSoundness
 import CirclePacking.FifteenStage3AngularEdge
 import CirclePacking.FifteenStage3CycleGeometry
 import CirclePacking.FifteenStage3CycleHandoff
+import CirclePacking.FifteenStage3StreamSoundness
 
 /-! Audit the newly proved geometry separately from the existing finite
 replays.  Only the final survivor handoff is expected to inherit Stage 0's
@@ -49,6 +50,8 @@ existing native-evaluation dependencies. -/
 #print axioms CirclePacking.s3CycleValid_excludes_ownerAngles
 #print axioms CirclePacking.fifteenStage3TargetPath_knownOwnerLabel
 #print axioms CirclePacking.fifteenStage3TargetPath_cycleLeaf_excluded
+#print axioms CirclePacking.s3CheckStream_targetPath_no_success
+#print axioms CirclePacking.fifteenStage3GeometricTargetPath_stream_no_success
 #print axioms CirclePacking.fifteenStage3TargetPath_full
 #print axioms CirclePacking.fifteenStage3ProfileWord_inner_iff
 #print axioms CirclePacking.fifteenStage3GeometricInnerOwner_is_branch

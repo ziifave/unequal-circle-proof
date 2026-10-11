@@ -77,7 +77,7 @@ def s3MixedReason (s : S3State) : Bool := Id.run do
   let hasTwo := s.labels.toList.any (fun t => t == 2)
   return hasZero && hasTwo
 
-private def s3StructurallyPruned (inner : Array Nat) (s : S3State) : Bool :=
+def s3StructurallyPruned (inner : Array Nat) (s : S3State) : Bool :=
   s3SmallReason s || s3OriginReason inner s || s3RankReason inner s ||
     s3MixedReason s
 
@@ -575,7 +575,7 @@ theorem fifteenStage3TargetPath_next_label_allowed
     exact hmemOrdinary
   exact hallowed _ hmem
 
-private def s3CheckStream : Nat → Array Nat → Array (List S3CertEdge) →
+def s3CheckStream : Nat → Array Nat → Array (List S3CertEdge) →
     S3State → List Char → Option (List Char)
   | 0, _, _, _, 'B' :: _ => none
   | _, _, _, s, 'S' :: rest => if s3SmallReason s then some rest else none
@@ -599,6 +599,86 @@ private def s3CheckStream : Nat → Array Nat → Array (List S3CertEdge) →
         s3CheckStream fuel inner cycles (s3Next inner s 6) tail
   | _, _, _, _, _ => none
 termination_by fuel _ _ _ _ => fuel
+
+def s3BranchLabels : List Nat := [0, 9, 1, 2, 3, 4, 5, 6]
+
+/-- Replay the sequential children of a split in the same order as the
+checker stream, preserving the remaining suffix after each subtree. -/
+def s3RunChildren (fuel : Nat) (inner : Array Nat)
+    (cycles : Array (List S3CertEdge)) (s : S3State) :
+    List Nat → List Char → Option (List Char)
+  | [], input => some input
+  | label :: rest, input =>
+      (s3CheckStream fuel inner cycles (s3Next inner s label) input).bind
+        (s3RunChildren fuel inner cycles s rest)
+
+theorem s3RunChildren_success_for_mem
+    (fuel : Nat) (inner : Array Nat) (cycles : Array (List S3CertEdge))
+    (s : S3State) (labels : List Nat) (input output : List Char)
+    (hcheck : s3RunChildren fuel inner cycles s labels input = some output)
+    (label : Nat) (hmem : label ∈ labels) :
+    ∃ before after,
+      s3CheckStream fuel inner cycles (s3Next inner s label) before = some after := by
+  induction labels generalizing input output with
+  | nil => simp at hmem
+  | cons first rest ih =>
+      simp only [s3RunChildren, Option.bind_eq_some_iff] at hcheck
+      obtain ⟨middle, hfirst, hrest⟩ := hcheck
+      rcases List.mem_cons.mp hmem with heq | htail
+      · subst label
+        exact ⟨input, middle, hfirst⟩
+      · exact ih middle output hrest htail
+
+/-- A successfully checked split contains a successful checker call for
+each child in its finite branch list. -/
+theorem s3CheckStream_split_has_successful_child
+    (fuel : Nat) (inner : Array Nat) (cycles : Array (List S3CertEdge))
+    (s : S3State) (input output : List Char) (label : Nat)
+    (hsuccess : s3CheckStream (fuel + 1) inner cycles s ('B' :: input) = some output)
+    (hdepth : s.depth < inner.size)
+    (hnotpruned : s3StructurallyPruned inner s = false)
+    (hlabel : label ∈ s3BranchLabels) :
+    ∃ before after,
+      s3CheckStream fuel inner cycles (s3Next inner s label) before = some after := by
+  have hchildren :
+      s3RunChildren fuel inner cycles s s3BranchLabels input = some output := by
+    simpa [s3CheckStream, s3BranchLabels, s3RunChildren,
+      Nat.not_le_of_gt hdepth, hnotpruned] using hsuccess
+  exact s3RunChildren_success_for_mem fuel inner cycles s s3BranchLabels input
+    output hchildren label hlabel
+
+/-- A successful cycle token has a dictionary entry whose recomputed cycle
+check passed. This exposes exactly the geometric payload needed by the
+cycle-soundness theorem without exposing the stream parser implementation. -/
+theorem s3CheckStream_cycle_success_specs
+    (fuel : Nat) (inner : Array Nat) (cycles : Array (List S3CertEdge))
+    (s : S3State) (refHi refLo : Char) (rest : List Char) (output : List Char)
+    (hsuccess : s3CheckStream fuel inner cycles s
+      ('C' :: refHi :: refLo :: rest) = some output) :
+    ∃ id tail edges,
+      s3ParseCycleId? (refHi :: refLo :: rest) = some (id, tail) ∧
+      cycles[id]? = some edges ∧
+      s.depth ≥ 3 ∧ s3StructurallyPruned inner s = false ∧
+      s3CycleValid s.labels edges = true := by
+  simp only [s3CheckStream] at hsuccess
+  have hbind := Option.bind_eq_some_iff.mp hsuccess
+  rcases hbind with ⟨idTail, hparse, hnext⟩
+  rcases idTail with ⟨id, tail⟩
+  have hbind' := Option.bind_eq_some_iff.mp hnext
+  rcases hbind' with ⟨edges, hedge, hif⟩
+  let cond := decide (s.depth ≥ 3) && !s3StructurallyPruned inner s &&
+    s3CycleValid s.labels edges
+  change (if cond = true then some tail else none) = some output at hif
+  by_cases hc : cond = true
+  · simp [hc] at hif
+    have hparts := Bool.and_eq_true_iff.mp hc
+    have hparts' := Bool.and_eq_true_iff.mp hparts.1
+    have hdepth : s.depth ≥ 3 := of_decide_eq_true hparts'.1
+    have hnotpruned : s3StructurallyPruned inner s = false := by
+      simpa using hparts'.2
+    have hvalid : s3CycleValid s.labels edges = true := hparts.2
+    exact ⟨id, tail, edges, hparse, hedge, hdepth, hnotpruned, hvalid⟩
+  · simp [hc] at hif
 
 private structure S3CertificateRecord where
   pattern : String
