@@ -59,27 +59,6 @@ def fifteenStage4ResidualPatterns : List String :=
   | some records => (records.filter (!·.closed)).map (·.pattern)
   | none => []
 
-def fifteenStage4CertifiedPatterns : List String :=
-  fifteenStage4Batch000Patterns ++
-  fifteenStage4Batch001Patterns ++
-  fifteenStage4Batch002Patterns ++
-  fifteenStage4Batch003Patterns ++
-  fifteenStage4Batch004Patterns ++
-  fifteenStage4Batch005Patterns ++
-  fifteenStage4Batch006Patterns ++
-  fifteenStage4Batch007Patterns ++
-  fifteenStage4Batch008Patterns ++
-  fifteenStage4Batch009Patterns ++
-  fifteenStage4Batch010Patterns ++
-  fifteenStage4Batch011Patterns ++
-  fifteenStage4Batch012Patterns ++
-  fifteenStage4Batch013Patterns ++
-  fifteenStage4Batch014Patterns ++
-  fifteenStage4Batch015Patterns ++
-  fifteenStage4Batch016Patterns ++
-  fifteenStage4Batch017Patterns ++
-  fifteenStage4Batch018Patterns
-
 def fifteenStage4AllBatchChecks : List Bool := [
   fifteenStage4Batch000Checks,
   fifteenStage4Batch001Checks,
@@ -102,6 +81,34 @@ def fifteenStage4AllBatchChecks : List Bool := [
   fifteenStage4Batch018Checks
 ]
 
+/-- Source bytes and declared pattern lists for each independent Stage 4
+certificate batch. These pairs are also the geometric layer's index into the
+replayed proof streams. -/
+def fifteenStage4BatchInputs : List (String × List String) := [
+  (fifteenStage4Batch000Source, fifteenStage4Batch000Patterns),
+  (fifteenStage4Batch001Source, fifteenStage4Batch001Patterns),
+  (fifteenStage4Batch002Source, fifteenStage4Batch002Patterns),
+  (fifteenStage4Batch003Source, fifteenStage4Batch003Patterns),
+  (fifteenStage4Batch004Source, fifteenStage4Batch004Patterns),
+  (fifteenStage4Batch005Source, fifteenStage4Batch005Patterns),
+  (fifteenStage4Batch006Source, fifteenStage4Batch006Patterns),
+  (fifteenStage4Batch007Source, fifteenStage4Batch007Patterns),
+  (fifteenStage4Batch008Source, fifteenStage4Batch008Patterns),
+  (fifteenStage4Batch009Source, fifteenStage4Batch009Patterns),
+  (fifteenStage4Batch010Source, fifteenStage4Batch010Patterns),
+  (fifteenStage4Batch011Source, fifteenStage4Batch011Patterns),
+  (fifteenStage4Batch012Source, fifteenStage4Batch012Patterns),
+  (fifteenStage4Batch013Source, fifteenStage4Batch013Patterns),
+  (fifteenStage4Batch014Source, fifteenStage4Batch014Patterns),
+  (fifteenStage4Batch015Source, fifteenStage4Batch015Patterns),
+  (fifteenStage4Batch016Source, fifteenStage4Batch016Patterns),
+  (fifteenStage4Batch017Source, fifteenStage4Batch017Patterns),
+  (fifteenStage4Batch018Source, fifteenStage4Batch018Patterns)
+]
+
+def fifteenStage4CertifiedPatterns : List String :=
+  fifteenStage4BatchInputs.flatMap Prod.snd
+
 theorem fifteenStage4AllBatchCertificates_replay :
     fifteenStage4AllBatchChecks.all id = true := by
   simp [fifteenStage4AllBatchChecks, fifteenStage4Batch000_checks,
@@ -123,6 +130,34 @@ theorem fifteenStage4AllBatchCertificates_replay :
       fifteenStage4Batch016_checks,
       fifteenStage4Batch017_checks,
       fifteenStage4Batch018_checks]
+
+theorem fifteenStage4BatchInputs_all_checked :
+    fifteenStage4BatchInputs.all
+      (fun batch => fifteenStage4CheckBatch batch.1 batch.2) = true := by
+  change fifteenStage4AllBatchChecks.all id = true
+  exact fifteenStage4AllBatchCertificates_replay
+
+theorem fifteenStage4BatchInput_checked (batch : String × List String)
+    (hmem : batch ∈ fifteenStage4BatchInputs) :
+    fifteenStage4CheckBatch batch.1 batch.2 = true :=
+  (List.all_eq_true.mp fifteenStage4BatchInputs_all_checked) batch hmem
+
+theorem fifteenStage4CertifiedPattern_occurs_in_batch (pattern : String)
+    (hmem : pattern ∈ fifteenStage4CertifiedPatterns) :
+    ∃ batch, batch ∈ fifteenStage4BatchInputs ∧ pattern ∈ batch.2 := by
+  have hmem' : pattern ∈ fifteenStage4BatchInputs.flatMap Prod.snd := by
+    simpa [fifteenStage4CertifiedPatterns] using hmem
+  exact List.mem_flatMap.mp hmem'
+
+theorem fifteenStage4CertifiedPattern_has_valid_record (pattern : String)
+    (hmem : pattern ∈ fifteenStage4CertifiedPatterns) :
+    ∃ record, record.pattern = pattern ∧ s4RecordValid record = true := by
+  obtain ⟨batch, hbatch, hpattern⟩ :=
+    fifteenStage4CertifiedPattern_occurs_in_batch pattern hmem
+  obtain ⟨_records, record, _hparse, _hrecord, hrecordPattern, hvalid⟩ :=
+    fifteenStage4CheckBatch_record_of_mem batch.1 batch.2 pattern
+      (fifteenStage4BatchInput_checked batch hbatch) hpattern
+  exact ⟨record, hrecordPattern, hvalid⟩
 
 def fifteenStage4ManifestMatchesStage3 : Bool := Id.run do
   let some stage3Records := fifteenStage4ParseManifest fifteenStage3ManifestSource | return false

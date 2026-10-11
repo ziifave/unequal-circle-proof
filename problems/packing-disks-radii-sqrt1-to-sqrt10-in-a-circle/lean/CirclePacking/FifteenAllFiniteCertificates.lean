@@ -1,5 +1,6 @@
 import CirclePacking.FifteenStageZero
 import CirclePacking.FifteenStage4LocalHandoff
+import CirclePacking.FifteenStage4FiniteGeometry
 
 /-! A single proposition collecting the currently replayed finite layers for
 the 15-disk argument. This is deliberately a dedicated build target rather
@@ -19,6 +20,7 @@ theorem fifteenAllFiniteCertificates_replay :
       fifteenStage3AllBatchChecks.all id = true) ∧
     (fifteenStage4TableValid && fifteenStage4ManifestMatchesStage3 &&
       fifteenStage4AllBatchChecks.all id = true) ∧
+    fifteenStage4ResidualPartitionCheck = true ∧
     fifteenExactCertificateReplay = true ∧
     fifteenStage4ExactHandoffValid = true := by
   exact ⟨fifteenStage0Certificate_replays,
@@ -27,6 +29,7 @@ theorem fifteenAllFiniteCertificates_replay :
     fifteenStage0DihedralClassCounts,
     fifteenStage3AndStage4FiniteCertificates_replay.1,
     fifteenStage3AndStage4FiniteCertificates_replay.2,
+    fifteenStage4ResidualPartition_replays,
     fifteenExactCertificate_replays,
     fifteenStage4ExactHandoff_replays⟩
 

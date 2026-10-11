@@ -17,20 +17,20 @@ model remains a separate soundness obligation.
 
 namespace CirclePacking
 
-private def s4N : Nat := 15
-private def s4TwoPi : Nat := 17600
+def s4N : Nat := 15
+def s4TwoPi : Nat := 17600
 
-private def s4InnerPositions (pattern : String) : Array Nat :=
+def s4InnerPositions (pattern : String) : Array Nat :=
   ((List.range s4N).filter fun i => pattern.toList[i]? == some '1').toArray
 
-private def s4PatternValid (pattern : String) : Bool :=
+def s4PatternValid (pattern : String) : Bool :=
   let bits := pattern.toList
   bits.length == s4N &&
     bits.all (fun c => c == '0' || c == '1') &&
     let count := bits.filter (· == '1') |>.length
     5 ≤ count && count ≤ 8
 
-private structure S4State where
+structure S4State where
   labels : Array Nat
   depth : Nat
   small : Nat
@@ -38,57 +38,57 @@ private structure S4State where
   high2 : Nat
   deriving Inhabited
 
-private structure S4CertEdge where
+structure S4CertEdge where
   source : Nat
   target : Nat
   kind : Char
 
-private structure S4WeightedEdge where
+structure S4WeightedEdge where
   source : Nat
   target : Nat
   kind : Char
   ticks : Nat
 
-private def s4Initial (pattern : String) : S4State := Id.run do
+def s4Initial (pattern : String) : S4State := Id.run do
   let bits := pattern.toList.toArray
   let labels := (Array.range s4N).map fun i =>
     if bits[i]? == some '1' then 12 else 11
   return ⟨labels, 0, 0, 0, 0⟩
 
-private def s4SmallReason (s : S4State) : Bool := s.small > 1
+def s4SmallReason (s : S4State) : Bool := s.small > 1
 
-private def s4OriginReason (inner : Array Nat) (s : S4State) : Bool :=
+def s4OriginReason (inner : Array Nat) (s : S4State) : Bool :=
   (inner.toList.any fun p => s.labels[p]! == 13) &&
   (inner.toList.any fun p => s.labels[p]! < 8 && s.labels[p]! != 13)
 
-private def s4RankReason (inner : Array Nat) (s : S4State) : Bool :=
+def s4RankReason (inner : Array Nat) (s : S4State) : Bool :=
   let remaining := inner.size - s.depth
   s.high + remaining < inner.size - 4 ||
     s.high2 + remaining < max 0 (inner.size - 5)
 
-private def s4MixedReason (s : S4State) : Bool := Id.run do
+def s4MixedReason (s : S4State) : Bool := Id.run do
   if s.small != 1 then return false
   let hasZero := s.labels.toList.any (fun t => t == 0 || t == 13)
   let hasTwo := s.labels.toList.any (fun t => t == 2)
   return hasZero && hasTwo
 
-private def s4StructurallyPruned (inner : Array Nat) (s : S4State) : Bool :=
+def s4StructurallyPruned (inner : Array Nat) (s : S4State) : Bool :=
   s4SmallReason s || s4OriginReason inner s || s4RankReason inner s ||
     s4MixedReason s
 
-private def s4PairTick (labels : Array Nat) (i j : Nat) : Nat := Id.run do
+def s4PairTick (labels : Array Nat) (i j : Nat) : Nat := Id.run do
   let a := labels[i]!
   let b := labels[j]!
   if a >= 12 || b >= 12 then return 0
   return (fifteenStage4Q[a]!)[b]!
 
-private def s4Digit? (c : Char) : Option Nat :=
+def s4Digit? (c : Char) : Option Nat :=
   let n := c.toNat
   if 48 ≤ n && n ≤ 57 then some (n - 48)
   else if 65 ≤ n && n ≤ 70 then some (n - 65 + 10)
   else none
 
-private def s4Decode64? (c : Char) : Option Nat :=
+def s4Decode64? (c : Char) : Option Nat :=
   if '0' ≤ c && c ≤ '9' then some (c.toNat - 48)
   else if 'A' ≤ c && c ≤ 'Z' then some (c.toNat - 65 + 10)
   else if 'a' ≤ c && c ≤ 'z' then some (c.toNat - 97 + 36)
@@ -96,14 +96,14 @@ private def s4Decode64? (c : Char) : Option Nat :=
   else if c == '_' then some 63
   else none
 
-private def s4ParseCycleId? : List Char → Option (Nat × List Char)
+def s4ParseCycleId? : List Char → Option (Nat × List Char)
   | a :: b :: rest => do
       let hi ← s4Decode64? a
       let lo ← s4Decode64? b
       some (hi * 64 + lo, rest)
   | _ => none
 
-private def s4ParseEdges : Nat → List Char → Option (List S4CertEdge × List Char)
+def s4ParseEdges : Nat → List Char → Option (List S4CertEdge × List Char)
   | 0, rest => some ([], rest)
   | n + 1, sourceChar :: targetChar :: kind :: rest => do
       let source ← s4Digit? sourceChar
@@ -113,28 +113,28 @@ private def s4ParseEdges : Nat → List Char → Option (List S4CertEdge × List
   | _ + 1, _ => none
 termination_by n _ => n
 
-private def s4ParseCycle? (text : String) : Option (List S4CertEdge) := do
+def s4ParseCycle? (text : String) : Option (List S4CertEdge) := do
   let chars := text.toList
   guard (chars.length % 3 == 0)
   let (edges, rest) ← s4ParseEdges (chars.length / 3) chars
   guard rest.isEmpty
   some edges
 
-private def s4ParseCycleDictionary? (text : String) : Option (Array (List S4CertEdge)) := do
+def s4ParseCycleDictionary? (text : String) : Option (Array (List S4CertEdge)) := do
   guard (text != "")
   let cycles ← (text.splitOn ";").mapM s4ParseCycle?
   some cycles.toArray
 
-private def s4EdgeTick (labels : Array Nat) (e : S4CertEdge) : Nat := Id.run do
+def s4EdgeTick (labels : Array Nat) (e : S4CertEdge) : Nat := Id.run do
   if e.kind == 'O' then return 0
   if e.kind == 'L' then return s4PairTick labels e.target e.source
   if e.kind == 'U' then return s4PairTick labels e.source e.target
   return 0
 
-private def s4MaterializeEdge (labels : Array Nat) (e : S4CertEdge) : S4WeightedEdge :=
+def s4MaterializeEdge (labels : Array Nat) (e : S4CertEdge) : S4WeightedEdge :=
   ⟨e.source, e.target, e.kind, s4EdgeTick labels e⟩
 
-private def s4EdgeShape (e : S4WeightedEdge) : Bool :=
+def s4EdgeShape (e : S4WeightedEdge) : Bool :=
   decide (e.source < s4N) && decide (e.target < s4N) && decide (e.ticks ≤ 8790) &&
     (if e.kind == 'O' then
       decide (e.source == e.target + 1) && decide (e.target < 14) && decide (e.ticks == 0)
@@ -142,33 +142,33 @@ private def s4EdgeShape (e : S4WeightedEdge) : Bool :=
     else if e.kind == 'U' then decide (e.source < e.target)
     else false)
 
-private def s4EdgeWeight (e : S4WeightedEdge) : Int :=
+def s4EdgeWeight (e : S4WeightedEdge) : Int :=
   if e.kind == 'O' then 0
   else if e.kind == 'L' then -(Int.ofNat e.ticks)
   else Int.ofNat (s4TwoPi - e.ticks)
 
-private def s4LinkValid : List S4WeightedEdge → Bool
+def s4LinkValid : List S4WeightedEdge → Bool
   | [] => true
   | [_] => true
   | first :: second :: rest =>
       decide (first.target == second.source) && s4LinkValid (second :: rest)
 
-private def s4EndsClosed (edges : List S4WeightedEdge) : Bool :=
+def s4EndsClosed (edges : List S4WeightedEdge) : Bool :=
   match edges.head?, edges.getLast? with
   | some first, some last => decide (last.target == first.source)
   | _, _ => false
 
-private def s4Weight (edges : List S4WeightedEdge) : Int :=
+def s4Weight (edges : List S4WeightedEdge) : Int :=
   edges.foldl (fun total edge => total + s4EdgeWeight edge) 0
 
-private def s4CycleValid (labels : Array Nat) (edges : List S4CertEdge) : Bool := Id.run do
+def s4CycleValid (labels : Array Nat) (edges : List S4CertEdge) : Bool := Id.run do
   let materialized := edges.map (s4MaterializeEdge labels)
   return decide (2 ≤ edges.length) && decide (edges.length ≤ 15) &&
     materialized.all s4EdgeShape &&
     s4LinkValid materialized && s4EndsClosed materialized &&
     decide (s4Weight materialized < 0)
 
-private def s4Next (inner : Array Nat) (s : S4State) (label : Nat) : S4State := Id.run do
+def s4Next (inner : Array Nat) (s : S4State) (label : Nat) : S4State := Id.run do
   let p := inner[s.depth]!
   return {
     labels := s.labels.set! p label,
@@ -178,7 +178,7 @@ private def s4Next (inner : Array Nat) (s : S4State) (label : Nat) : S4State := 
     high2 := s.high2 + (if label >= 8 && label <= 10 then 1 else 0)
   }
 
-private def s4CheckStream : Nat → Array Nat → Array (List S4CertEdge) →
+def s4CheckStream : Nat → Array Nat → Array (List S4CertEdge) →
     S4State → List Char → Option (List Char)
   | 0, _, _, _, 'B' :: _ => none
   | _, _, _, s, 'S' :: rest => if s4SmallReason s then some rest else none
@@ -207,12 +207,91 @@ private def s4CheckStream : Nat → Array Nat → Array (List S4CertEdge) →
   | _, _, _, _, _ => none
 termination_by fuel _ _ _ _ => fuel
 
-private structure S4CertificateRecord where
+def s4BranchLabels : List Nat := [0, 13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+/-- Replay the sequential child calls made by a Stage 4 split. -/
+def s4RunChildren (fuel : Nat) (inner : Array Nat)
+    (cycles : Array (List S4CertEdge)) (s : S4State) :
+    List Nat → List Char → Option (List Char)
+  | [], input => some input
+  | label :: rest, input =>
+      (s4CheckStream fuel inner cycles (s4Next inner s label) input).bind
+        (s4RunChildren fuel inner cycles s rest)
+
+theorem s4RunChildren_success_for_mem
+    (fuel : Nat) (inner : Array Nat) (cycles : Array (List S4CertEdge))
+    (s : S4State) (labels : List Nat) (input output : List Char)
+    (hcheck : s4RunChildren fuel inner cycles s labels input = some output)
+    (label : Nat) (hmem : label ∈ labels) :
+    ∃ before after,
+      s4CheckStream fuel inner cycles (s4Next inner s label) before = some after := by
+  induction labels generalizing input output with
+  | nil => simp at hmem
+  | cons first rest ih =>
+      simp only [s4RunChildren, Option.bind_eq_some_iff] at hcheck
+      obtain ⟨middle, hfirst, hrest⟩ := hcheck
+      rcases List.mem_cons.mp hmem with heq | htail
+      · subst label
+        exact ⟨input, middle, hfirst⟩
+      · exact ih middle output hrest htail
+
+/-- Every selected branch of a successfully replayed split itself returned a
+successful suffix. This is the branch-coverage fact needed for geometric
+target-path soundness. -/
+theorem s4CheckStream_split_has_successful_child
+    (fuel : Nat) (inner : Array Nat) (cycles : Array (List S4CertEdge))
+    (s : S4State) (input output : List Char) (label : Nat)
+    (hsuccess : s4CheckStream (fuel + 1) inner cycles s ('B' :: input) = some output)
+    (hdepth : s.depth < inner.size)
+    (hnotpruned : s4StructurallyPruned inner s = false)
+    (hlabel : label ∈ s4BranchLabels) :
+    ∃ before after,
+      s4CheckStream fuel inner cycles (s4Next inner s label) before = some after := by
+  have hchildren :
+      s4RunChildren fuel inner cycles s s4BranchLabels input = some output := by
+    simpa [s4CheckStream, s4BranchLabels, s4RunChildren,
+      Nat.not_le_of_gt hdepth, hnotpruned] using hsuccess
+  exact s4RunChildren_success_for_mem fuel inner cycles s s4BranchLabels input
+    output hchildren label hlabel
+
+/-- A successful Stage 4 cycle token exposes a dictionary cycle whose
+topology and recomputed negative weight passed the checker. -/
+theorem s4CheckStream_cycle_success_specs
+    (fuel : Nat) (inner : Array Nat) (cycles : Array (List S4CertEdge))
+    (s : S4State) (refHi refLo : Char) (rest : List Char) (output : List Char)
+    (hsuccess : s4CheckStream fuel inner cycles s
+      ('C' :: refHi :: refLo :: rest) = some output) :
+    ∃ id tail edges,
+      s4ParseCycleId? (refHi :: refLo :: rest) = some (id, tail) ∧
+      cycles[id]? = some edges ∧
+      s.depth ≥ 3 ∧ s4StructurallyPruned inner s = false ∧
+      s4CycleValid s.labels edges = true := by
+  simp only [s4CheckStream] at hsuccess
+  have hbind := Option.bind_eq_some_iff.mp hsuccess
+  rcases hbind with ⟨idTail, hparse, hnext⟩
+  rcases idTail with ⟨id, tail⟩
+  have hbind' := Option.bind_eq_some_iff.mp hnext
+  rcases hbind' with ⟨edges, hedge, hif⟩
+  let cond := decide (s.depth ≥ 3) && !s4StructurallyPruned inner s &&
+    s4CycleValid s.labels edges
+  change (if cond = true then some tail else none) = some output at hif
+  by_cases hc : cond = true
+  · simp [hc] at hif
+    have hparts := Bool.and_eq_true_iff.mp hc
+    have hparts' := Bool.and_eq_true_iff.mp hparts.1
+    have hdepth : s.depth ≥ 3 := of_decide_eq_true hparts'.1
+    have hnotpruned : s4StructurallyPruned inner s = false := by
+      simpa using hparts'.2
+    have hvalid : s4CycleValid s.labels edges = true := hparts.2
+    exact ⟨id, tail, edges, hparse, hedge, hdepth, hnotpruned, hvalid⟩
+  · simp [hc] at hif
+
+structure S4CertificateRecord where
   pattern : String
   cycles : Array (List S4CertEdge)
   stream : String
 
-private def s4ParseRecord? (line : String) : Option S4CertificateRecord := do
+def s4ParseRecord? (line : String) : Option S4CertificateRecord := do
   match line.splitOn "\t" with
   | [pattern, cycleText, stream] => do
       guard (s4PatternValid pattern)
@@ -220,12 +299,12 @@ private def s4ParseRecord? (line : String) : Option S4CertificateRecord := do
       some ⟨pattern, cycles, stream⟩
   | _ => none
 
-private def s4ParseBatch? (source : String) : Option (List S4CertificateRecord) := do
+def s4ParseBatch? (source : String) : Option (List S4CertificateRecord) := do
   let lines := (source.splitOn "\n").filter (· != "")
   guard (!lines.isEmpty)
   lines.mapM s4ParseRecord?
 
-private def s4RecordValid (record : S4CertificateRecord) : Bool := Id.run do
+def s4RecordValid (record : S4CertificateRecord) : Bool := Id.run do
   let inner := s4InnerPositions record.pattern
   match s4CheckStream inner.size inner record.cycles (s4Initial record.pattern)
       record.stream.toList with
@@ -240,5 +319,29 @@ def fifteenStage4CheckBatch (source : String) (expectedPatterns : List String) :
       patterns == expectedPatterns &&
         patterns.eraseDups.length == patterns.length && records.all s4RecordValid
   | none => false
+
+/-- Any checked Stage 4 batch contains the checked record for each declared
+pattern. The geometric layer uses this to retrieve its exact replayed stream. -/
+theorem fifteenStage4CheckBatch_record_of_mem
+    (source : String) (expectedPatterns : List String) (pattern : String)
+    (hcheck : fifteenStage4CheckBatch source expectedPatterns = true)
+    (hmem : pattern ∈ expectedPatterns) :
+    ∃ records record, s4ParseBatch? source = some records ∧ record ∈ records ∧
+      record.pattern = pattern ∧ s4RecordValid record = true := by
+  unfold fifteenStage4CheckBatch at hcheck
+  cases hparse : s4ParseBatch? source with
+  | none => simp [hparse] at hcheck
+  | some records =>
+      simp only [hparse] at hcheck
+      have hparts := Bool.and_eq_true_iff.mp hcheck
+      have hparts' := Bool.and_eq_true_iff.mp hparts.1
+      have hpatternEq : records.map (·.pattern) = expectedPatterns :=
+        beq_iff_eq.mp hparts'.1
+      have hrecordMem : pattern ∈ records.map (·.pattern) := by
+        rw [hpatternEq]
+        exact hmem
+      obtain ⟨record, hrecord, hrecordPattern⟩ := List.mem_map.mp hrecordMem
+      refine ⟨records, record, rfl, hrecord, hrecordPattern, ?_⟩
+      exact (List.all_eq_true.mp hparts.2) record hrecord
 
 end CirclePacking
