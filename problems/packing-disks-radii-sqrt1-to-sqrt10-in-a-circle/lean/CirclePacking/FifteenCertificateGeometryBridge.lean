@@ -1,4 +1,5 @@
 import CirclePacking.FifteenCertificateBins
+import CirclePacking.FifteenCertificateRadiusBounds
 import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Rat.Cast.Order
 import Mathlib.Tactic.Linarith
@@ -88,5 +89,20 @@ theorem fifteenExactRadialOwnerSpec_certificate_interval
     norm_num [fifteenExactRadialOwnerSpec, fifteenBins, fifteenRational,
       Rat.normalize_eq_mkRat, Rat.cast_mkRat_of_ne_zero] at howner ⊢ <;>
       constructor <;> linarith
+
+/-- The exact outer-wall radius is enclosed by the final certificate's
+dedicated outer bin. -/
+theorem fifteenCandidateOuterRadius_certificate_interval :
+    ((fifteenBins[11]!.1 : ℝ) ≤ fifteenCandidateOuterRadius) ∧
+      fifteenCandidateOuterRadius ≤ (fifteenBins[11]!.2 : ℝ) := by
+  have h := fifteenCandidateOuterRadius_mem_certificate_interval
+  have hlo : (fifteenBins[11]!.1 : ℝ) =
+      (35213569647 : ℝ) / 10000000000 := by
+    norm_num [fifteenBins, fifteenRational, Rat.normalize_eq_mkRat]
+  have hhi : (fifteenBins[11]!.2 : ℝ) =
+      (35213569648 : ℝ) / 10000000000 := by
+    norm_num [fifteenBins, fifteenRational, Rat.normalize_eq_mkRat]
+  rw [hlo, hhi]
+  exact ⟨le_of_lt h.1, le_of_lt h.2⟩
 
 end CirclePacking

@@ -141,4 +141,63 @@ theorem fifteen_unit_packing_wall_push_stage4_exact_bin_profile
     lt_trans hinner fifteenCandidateInnerThreshold_lt_2385432_1e6
   exact fifteenExactRadialOwner_spec hnonneg hupper
 
+/-- Every coordinate of an arbitrary candidate packing's normalized radial
+profile lies in a concrete interval of the final certificate: inner centers
+use their exact radial-owner bin (with the origin kept exact), and outer
+centers use the certificate's narrow wall-radius bin.  The remaining finite
+gap is to prove that the resulting owner word is among the serialized roots. -/
+theorem fifteen_unit_packing_wall_push_stage4_closed_bin_profile
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    ∃ reflected : Bool, ∃ shift : Fin 15,
+      let Q := fifteen_unit_packing_wall_push P hunit hR
+      let radii := fifteenStage0TransformProfile (fifteenPackingSortedRadius Q)
+        reflected shift
+      let profile := fun i => decide
+        (radii i < fifteenCandidateInnerThreshold)
+      fifteenStage0ProfileWord profile ∈ fifteenStage4ResidualPatterns ∧
+      (∀ i, profile i = true →
+        (if fifteenExactRadialOwner (radii i) = 13 then radii i = 0 else
+          ((fifteenBins[fifteenExactRadialOwner (radii i)]!.1 : ℝ) ≤ radii i ∧
+            radii i ≤
+              (fifteenBins[fifteenExactRadialOwner (radii i)]!.2 : ℝ)))) ∧
+      (∀ i, profile i = false →
+        ((fifteenBins[11]!.1 : ℝ) ≤ radii i ∧
+          radii i ≤ (fifteenBins[11]!.2 : ℝ))) := by
+  obtain ⟨reflected, shift, hprofileWord, hgeometry, _hsorted, _hrange,
+      _hsep⟩ := fifteen_unit_packing_wall_push_stage4_residual_profile P hunit hR
+  refine ⟨reflected, shift, ?_⟩
+  dsimp only
+  let Q := fifteen_unit_packing_wall_push P hunit hR
+  let radii := fifteenStage0TransformProfile (fifteenPackingSortedRadius Q)
+    reflected shift
+  let profile := fun i => decide
+    (radii i < fifteenCandidateInnerThreshold)
+  have hnonneg : ∀ i, 0 ≤ radii i := by
+    intro i
+    exact fifteenStage3OwnerSpec_nonneg (hgeometry.owners i)
+  have hclassification : ∀ i,
+      radii i = fifteenCandidateOuterRadius ∨
+        radii i < fifteenCandidateInnerThreshold := by
+    intro i
+    exact fifteenStage3RadialOwner_classification (hgeometry.owners i)
+  refine ⟨hprofileWord, ?_, ?_⟩
+  · intro i hinnerBit
+    have hinner : radii i < fifteenCandidateInnerThreshold := by
+      simpa [profile] using hinnerBit
+    have hupper : radii i < 2385432 / 1000000 :=
+      lt_trans hinner fifteenCandidateInnerThreshold_lt_2385432_1e6
+    exact fifteenExactRadialOwnerSpec_certificate_interval
+      (fifteenExactRadialOwner_spec (hnonneg i) hupper)
+  · intro i houterBit
+    have hnotinner : ¬ radii i < fifteenCandidateInnerThreshold := by
+      simpa [profile] using houterBit
+    rcases hclassification i with hwall | hinner
+    · change ((fifteenBins[11]!.1 : ℝ) ≤ radii i ∧
+        radii i ≤ (fifteenBins[11]!.2 : ℝ))
+      rw [hwall]
+      exact fifteenCandidateOuterRadius_certificate_interval
+    · exact False.elim (hnotinner hinner)
+
 end CirclePacking
