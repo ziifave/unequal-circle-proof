@@ -35,6 +35,7 @@ existing native-evaluation dependencies. -/
 #print axioms CirclePacking.fifteenStage3ProfileOwnerArrayLabelCount
 #print axioms CirclePacking.fifteenStage3TargetPath_rankReason_excluded_of_geometry
 #print axioms CirclePacking.fifteenStage3TargetPath_structuralReasons_excluded_of_geometry
+#print axioms CirclePacking.fifteen_unit_packing_wall_push_stage3_structural_path
 #print axioms CirclePacking.fifteenStage3TargetPath_full
 #print axioms CirclePacking.fifteenStage3ProfileWord_inner_iff
 #print axioms CirclePacking.fifteenStage3GeometricInnerOwner_is_branch

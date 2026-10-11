@@ -488,4 +488,47 @@ theorem fifteenStage3TargetPath_structuralReasons_excluded_of_geometry
   · exact fifteenStage3TargetPath_mixedReason_excluded radii labels
       hgeometry.owners hgeometry.pairSum profile hpath hmixed
 
+/-- Every candidate packing below the proposed radius has a Stage 3
+owner-selected path on which none of the four structural leaf rules applies.
+This isolates the remaining certificate and cycle-leaf soundness obligations. -/
+theorem fifteen_unit_packing_wall_push_stage3_structural_path
+    {R : ℝ} (P : Packing 15 R)
+    (hunit : ∀ i, (P.circles i).radius = 1)
+    (hR : R ≤ fifteenCandidateOuterRadius + 1) :
+    ∃ reflected : Bool, ∃ shift : Fin 15,
+      let radii := fifteenStage0TransformProfile
+        (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR))
+        reflected shift
+      let labels := fun i : Fin 15 => fifteenStage3RadialLabel (radii i)
+      let profile := fun i : Fin 15 => decide
+        (radii i < fifteenCandidateInnerThreshold)
+      fifteenStage0ProfileWord profile ∈ fifteenStage0SurvivorPatterns ∧
+      ∃ s : S3State,
+        FifteenStage3TargetPath (fifteenStage0ProfileWord profile)
+          (fifteenStage3OwnerLabelArray labels) s ∧
+        ¬ (s3SmallReason s = true ∨
+          s3OriginReason (s3InnerPositions (fifteenStage0ProfileWord profile)) s = true ∨
+          s3RankReason (s3InnerPositions (fifteenStage0ProfileWord profile)) s = true ∨
+          s3MixedReason s = true) := by
+  dsimp only
+  obtain ⟨reflected, shift, hsurvivor,
+    ⟨s, hpath, _hdepth, _hagrees, _hchoices⟩⟩ :=
+      fifteen_unit_packing_wall_push_stage3_target_path P hunit hR
+  refine ⟨reflected, shift, hsurvivor, ⟨s, hpath, ?_⟩⟩
+  let radii := fifteenStage0TransformProfile
+    (fifteenPackingSortedRadius (fifteen_unit_packing_wall_push P hunit hR))
+    reflected shift
+  let labels := fun i : Fin 15 => fifteenStage3RadialLabel (radii i)
+  let profile := fun i : Fin 15 => decide
+    (radii i < fifteenCandidateInnerThreshold)
+  have hgeometry : FifteenStage3GeometricConditions radii labels :=
+    fifteen_unit_packing_wall_push_stage3_geometric_conditions P hunit hR reflected shift
+  have hprofile : ∀ i, profile i = true ↔
+      radii i < fifteenCandidateInnerThreshold := by
+    intro i
+    simp [profile]
+  intro hreason
+  exact fifteenStage3TargetPath_structuralReasons_excluded_of_geometry
+    radii labels hgeometry profile hprofile hpath hreason
+
 end CirclePacking
