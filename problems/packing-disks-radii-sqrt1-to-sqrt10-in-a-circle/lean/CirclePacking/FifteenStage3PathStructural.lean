@@ -42,6 +42,135 @@ private theorem s3FilterRangeCount_le_prefix_add_remaining
         subst depth
         simp [s3FilterRangeCount]
 
+def fifteenStage3ProfileOwnerPosition (profile : Fin 15 → Bool) (k : Nat) : Fin 15 :=
+  let position :=
+    (s3InnerPositions (fifteenStage0ProfileWord profile))[k]!
+  ⟨position % 15, Nat.mod_lt _ (by decide)⟩
+
+/-- Counting owner labels along the array of inner positions is the same as
+counting them in the finite set selected by the profile word. This is the
+reindexing bridge from geometric Finset population bounds to checker slots. -/
+theorem fifteenStage3ProfileOwnerLabelCount
+    (profile : Fin 15 → Bool) (labels : Fin 15 → Nat)
+    (predicate : Nat → Bool) :
+    s3FilterRangeCount
+        (s3InnerPositions (fifteenStage0ProfileWord profile)).size
+        (fun k => predicate (labels (fifteenStage3ProfileOwnerPosition profile k))) =
+      ((Finset.univ.filter fun i : Fin 15 => profile i = true).filter
+        fun i => predicate (labels i) = true).card := by
+  classical
+  let pattern := fifteenStage0ProfileWord profile
+  let positions := s3InnerPositions pattern
+  let ownerAt (k : Nat) : Nat := labels (fifteenStage3ProfileOwnerPosition profile k)
+  let source := (Finset.range positions.size).filter fun k => predicate (ownerAt k) = true
+  let profileSet := Finset.univ.filter fun i : Fin 15 => profile i = true
+  let target := profileSet.filter fun i => predicate (labels i) = true
+  have hfilteredNodup :
+      ((List.range positions.size).filter fun k => predicate (ownerAt k)).Nodup :=
+    List.nodup_range.filter _
+  have hlistSet :
+      ((List.range positions.size).filter fun k => predicate (ownerAt k)).toFinset = source := by
+    ext k
+    simp [source, List.mem_range]
+  have hcountSource : source.card = s3FilterRangeCount positions.size
+      (fun k => predicate (ownerAt k)) := by
+    calc
+      source.card =
+          ((List.range positions.size).filter fun k => predicate (ownerAt k)).toFinset.card := by
+        rw [hlistSet]
+      _ = ((List.range positions.size).filter fun k => predicate (ownerAt k)).length :=
+        List.toFinset_card_of_nodup hfilteredNodup
+      _ = s3FilterRangeCount positions.size (fun k => predicate (ownerAt k)) := by
+        rfl
+  let hmap (k : Nat) (_hk : k ∈ source) : Fin 15 :=
+    fifteenStage3ProfileOwnerPosition profile k
+  have hmap_mem (k : Nat) (hk : k ∈ source) : hmap k hk ∈ target := by
+    have hklt := Finset.mem_range.mp (Finset.mem_filter.mp hk).1
+    have hmod : positions[k]! % 15 = positions[k]! :=
+      Nat.mod_eq_of_lt (fifteenStage3InnerPosition_get_bound pattern hklt)
+    have hmemOrdinary : positions[k] ∈ positions.toList := Array.getElem_mem_toList hklt
+    have hmem : positions[k]! ∈ positions.toList := by
+      rw [getElem!_pos positions k hklt]
+      exact hmemOrdinary
+    have hprofileMem : (hmap k hk).val ∈ positions.toList := by
+      change positions[k]! % 15 ∈ positions.toList
+      rw [hmod]
+      exact hmem
+    have hprofile : profile (hmap k hk) = true := by
+      exact (fifteenStage3ProfileWord_inner_iff profile (hmap k hk)).mp
+        (by simpa only [pattern] using hprofileMem)
+    have hpredicate : predicate (labels (hmap k hk)) = true := by
+      simpa [hmap, ownerAt] using (Finset.mem_filter.mp hk).2
+    exact Finset.mem_filter.mpr ⟨
+      Finset.mem_filter.mpr ⟨Finset.mem_univ _, hprofile⟩, hpredicate⟩
+  have hmap_injective : ∀ k₁ hk₁ k₂ hk₂, hmap k₁ hk₁ = hmap k₂ hk₂ → k₁ = k₂ := by
+    intro k₁ hk₁ k₂ hk₂ heq
+    have hk₁lt := Finset.mem_range.mp (Finset.mem_filter.mp hk₁).1
+    have hk₂lt := Finset.mem_range.mp (Finset.mem_filter.mp hk₂).1
+    have hk₁mod : positions[k₁]! % 15 = positions[k₁]! :=
+      Nat.mod_eq_of_lt (fifteenStage3InnerPosition_get_bound pattern hk₁lt)
+    have hk₂mod : positions[k₂]! % 15 = positions[k₂]! :=
+      Nat.mod_eq_of_lt (fifteenStage3InnerPosition_get_bound pattern hk₂lt)
+    have hvalMod : positions[k₁]! % 15 = positions[k₂]! % 15 := by
+      simpa [hmap, fifteenStage3ProfileOwnerPosition] using congrArg Fin.val heq
+    have hval : positions[k₁]! = positions[k₂]! := by
+      calc
+        positions[k₁]! = positions[k₁]! % 15 := hk₁mod.symm
+        _ = positions[k₂]! % 15 := hvalMod
+        _ = positions[k₂]! := hk₂mod
+    have hlist₁ : k₁ < positions.toList.length := by simpa using hk₁lt
+    have hlist₂ : k₂ < positions.toList.length := by simpa using hk₂lt
+    apply (fifteenStage3InnerPositions_nodup pattern).getElem!_inj hlist₁ hlist₂ |>.mp
+    calc
+      positions.toList[k₁]! = positions[k₁]! := by rw [Array.getElem!_toList]
+      _ = positions[k₂]! := hval
+      _ = positions.toList[k₂]! := by rw [Array.getElem!_toList]
+  have hmap_surjective : ∀ i, i ∈ target → ∃ k hk, hmap k hk = i := by
+    intro i hi
+    have hiProfile : profile i = true :=
+      (Finset.mem_filter.mp (Finset.mem_filter.mp hi).1).2
+    have hmem : i.val ∈ positions.toList :=
+      (fifteenStage3ProfileWord_inner_iff profile i).mpr hiProfile
+    obtain ⟨k, hk, hget⟩ := List.mem_iff_getElem.mp hmem
+    have hklt : k < positions.size := by simpa using hk
+    have hgetBang : positions.toList[k]! = i.val := by
+      rw [getElem!_pos positions.toList k hk]
+      exact hget
+    have harray : positions[k]! = i.val := by
+      calc
+        positions[k]! = positions.toList[k]! := by rw [Array.getElem!_toList]
+        _ = i.val := hgetBang
+    have hsource : k ∈ source := by
+      apply Finset.mem_filter.mpr
+      refine ⟨Finset.mem_range.mpr hklt, ?_⟩
+      have hmod : positions[k]! % 15 = positions[k]! :=
+        Nat.mod_eq_of_lt (fifteenStage3InnerPosition_get_bound pattern hklt)
+      have hcenter : fifteenStage3ProfileOwnerPosition profile k = i := by
+        apply Fin.ext
+        calc
+          positions[k]! % 15 = positions[k]! := hmod
+          _ = i.val := harray
+      have howner : ownerAt k = labels i := by
+        simpa [ownerAt] using congrArg labels hcenter
+      rw [howner]
+      exact (Finset.mem_filter.mp hi).2
+    have hcenter : fifteenStage3ProfileOwnerPosition profile k = i := by
+      apply Fin.ext
+      have hmod : positions[k]! % 15 = positions[k]! :=
+        Nat.mod_eq_of_lt (fifteenStage3InnerPosition_get_bound pattern hklt)
+      calc
+        positions[k]! % 15 = positions[k]! := hmod
+        _ = i.val := harray
+    exact ⟨k, hsource, by simpa [hmap] using hcenter⟩
+  have hbij := Finset.card_bij hmap hmap_mem hmap_injective hmap_surjective
+  calc
+    s3FilterRangeCount positions.size (fun k => predicate (ownerAt k)) = source.card :=
+      hcountSource.symm
+    _ = target.card := hbij
+    _ = ((Finset.univ.filter fun i : Fin 15 => profile i = true).filter
+        fun i => predicate (labels i) = true).card := by
+      rfl
+
 /-- A state on a geometrically valid target path cannot trigger the
 small-count prune.  The counter records exactly the assigned-prefix labels;
 two such labels would be two distinct centers of radii below one, contrary
@@ -214,5 +343,149 @@ theorem fifteenStage3TargetPath_rankReason_excluded_of_population
   · have hmax : max 0 (inner.size - 5) = inner.size - 5 := by omega
     rw [hmax] at hbad
     omega
+
+/-- The positional count consumed by the checker is the same as the
+geometric owner-label count, now expressed through the concrete label array. -/
+theorem fifteenStage3ProfileOwnerArrayLabelCount
+    (profile : Fin 15 → Bool) (labels : Fin 15 → Nat)
+    (predicate : Nat → Bool) :
+    s3FilterRangeCount
+        (s3InnerPositions (fifteenStage0ProfileWord profile)).size
+        (fun k => predicate
+          ((fifteenStage3OwnerLabelArray labels)[
+            ((s3InnerPositions (fifteenStage0ProfileWord profile))[k]!)]!)) =
+      ((Finset.univ.filter fun i : Fin 15 => profile i = true).filter
+        fun i => predicate (labels i) = true).card := by
+  let positions := s3InnerPositions (fifteenStage0ProfileWord profile)
+  have hfilters :
+      ((List.range positions.size).filter fun k =>
+        predicate ((fifteenStage3OwnerLabelArray labels)[positions[k]!]!)) =
+      ((List.range positions.size).filter fun k =>
+        predicate (labels (fifteenStage3ProfileOwnerPosition profile k))) := by
+    apply List.filter_congr
+    intro k hk
+    have hklt : k < positions.size := List.mem_range.mp hk
+    have hpBound := fifteenStage3InnerPosition_get_bound
+      (fifteenStage0ProfileWord profile) hklt
+    have howner : fifteenStage3ProfileOwnerPosition profile k =
+        ⟨positions[k]!, hpBound⟩ := by
+      apply Fin.ext
+      simp [fifteenStage3ProfileOwnerPosition, positions,
+        Nat.mod_eq_of_lt hpBound]
+    have harray := fifteenStage3OwnerLabelArray_get labels positions[k]! hpBound
+    rw [harray, howner]
+  calc
+    s3FilterRangeCount positions.size
+        (fun k => predicate ((fifteenStage3OwnerLabelArray labels)[positions[k]!]!)) =
+      ((List.range positions.size).filter fun k =>
+        predicate ((fifteenStage3OwnerLabelArray labels)[positions[k]!]!)).length := rfl
+    _ = ((List.range positions.size).filter fun k =>
+        predicate (labels (fifteenStage3ProfileOwnerPosition profile k))).length := by
+      rw [hfilters]
+    _ = s3FilterRangeCount positions.size
+        (fun k => predicate (labels (fifteenStage3ProfileOwnerPosition profile k))) := rfl
+    _ = _ := fifteenStage3ProfileOwnerLabelCount profile labels predicate
+
+/-- The global high-bin population hypotheses from actual geometry rule out
+the Stage 3 rank-prune leaf on its owner-selected target path. -/
+theorem fifteenStage3TargetPath_rankReason_excluded_of_geometry
+    (radii : Fin 15 → ℝ) (labels : Fin 15 → Nat)
+    (hgeometry : FifteenStage3GeometricConditions radii labels)
+    (profile : Fin 15 → Bool)
+    (hprofile : ∀ i, profile i = true ↔
+      radii i < fifteenCandidateInnerThreshold)
+    {s : S3State}
+    (hpath : FifteenStage3TargetPath (fifteenStage0ProfileWord profile)
+      (fifteenStage3OwnerLabelArray labels) s)
+    (hreason : s3RankReason
+      (s3InnerPositions (fifteenStage0ProfileWord profile)) s = true) : False := by
+  let positions := s3InnerPositions (fifteenStage0ProfileWord profile)
+  let profileSet := Finset.univ.filter fun i : Fin 15 => profile i = true
+  let geometricSet := Finset.univ.filter fun i : Fin 15 =>
+    radii i < fifteenCandidateInnerThreshold
+  let profileHighSet := profileSet.filter fun i => 5 ≤ labels i ∧ labels i ≤ 6
+  let geometricHighSet := geometricSet.filter fun i => 5 ≤ labels i ∧ labels i ≤ 6
+  let profileHigh2Set := profileSet.filter fun i => labels i = 6
+  let geometricHigh2Set := geometricSet.filter fun i => labels i = 6
+  have hsets : profileSet = geometricSet := by
+    ext i
+    simp [profileSet, geometricSet, hprofile i]
+  have hhighSets : profileHighSet = geometricHighSet := by
+    simp [profileHighSet, geometricHighSet, hsets]
+  have hhigh2Sets : profileHigh2Set = geometricHigh2Set := by
+    simp [profileHigh2Set, geometricHigh2Set, hsets]
+  have hsize : positions.size = profileSet.card := by
+    have hcount := fifteenStage3ProfileOwnerLabelCount profile labels (fun _ => true)
+    simpa [positions, profileSet, s3FilterRangeCount] using hcount
+  have hhighCount :
+      s3FilterRangeCount positions.size (fun k =>
+        5 ≤ (fifteenStage3OwnerLabelArray labels)[positions[k]!]! &&
+          (fifteenStage3OwnerLabelArray labels)[positions[k]!]! ≤ 6) =
+        profileHighSet.card := by
+    have hcount := fifteenStage3ProfileOwnerArrayLabelCount profile labels
+      (fun l => 5 ≤ l && l ≤ 6)
+    simpa [positions, profileHighSet, s3FilterRangeCount] using hcount
+  have hhigh2Count :
+      s3FilterRangeCount positions.size (fun k =>
+        (fifteenStage3OwnerLabelArray labels)[positions[k]!]! == 6) =
+        profileHigh2Set.card := by
+    have hcount := fifteenStage3ProfileOwnerArrayLabelCount profile labels
+      (fun l => l == 6)
+    simpa [positions, profileHigh2Set, s3FilterRangeCount] using hcount
+  have hhighPopulation : positions.size - 4 ≤
+      s3FilterRangeCount positions.size (fun k =>
+        5 ≤ (fifteenStage3OwnerLabelArray labels)[positions[k]!]! &&
+          (fifteenStage3OwnerLabelArray labels)[positions[k]!]! ≤ 6) := by
+    calc
+      positions.size - 4 = profileSet.card - 4 := by rw [hsize]
+      _ ≤ profileHighSet.card := by
+        calc
+          profileSet.card - 4 = geometricSet.card - 4 := by rw [hsets]
+          _ ≤ geometricHighSet.card := hgeometry.highCount
+          _ = profileHighSet.card := by rw [← hhighSets]
+      _ = s3FilterRangeCount positions.size (fun k =>
+          5 ≤ (fifteenStage3OwnerLabelArray labels)[positions[k]!]! &&
+            (fifteenStage3OwnerLabelArray labels)[positions[k]!]! ≤ 6) := hhighCount.symm
+  have hhigh2Population : positions.size - 5 ≤
+      s3FilterRangeCount positions.size (fun k =>
+        (fifteenStage3OwnerLabelArray labels)[positions[k]!]! == 6) := by
+    calc
+      positions.size - 5 = profileSet.card - 5 := by rw [hsize]
+      _ ≤ profileHigh2Set.card := by
+        calc
+          profileSet.card - 5 = geometricSet.card - 5 := by rw [hsets]
+          _ ≤ geometricHigh2Set.card := hgeometry.high2Count
+          _ = profileHigh2Set.card := by rw [← hhigh2Sets]
+      _ = s3FilterRangeCount positions.size (fun k =>
+          (fifteenStage3OwnerLabelArray labels)[positions[k]!]! == 6) := hhigh2Count.symm
+  exact fifteenStage3TargetPath_rankReason_excluded_of_population
+    profile (fifteenStage3OwnerLabelArray labels) hpath hhighPopulation
+    hhigh2Population hreason
+
+/-- None of the four structural leaf reasons can occur on a target path
+selected by a geometrically valid radial owner assignment. -/
+theorem fifteenStage3TargetPath_structuralReasons_excluded_of_geometry
+    (radii : Fin 15 → ℝ) (labels : Fin 15 → Nat)
+    (hgeometry : FifteenStage3GeometricConditions radii labels)
+    (profile : Fin 15 → Bool)
+    (hprofile : ∀ i, profile i = true ↔
+      radii i < fifteenCandidateInnerThreshold)
+    {s : S3State}
+    (hpath : FifteenStage3TargetPath (fifteenStage0ProfileWord profile)
+      (fifteenStage3OwnerLabelArray labels) s)
+    (hreason : s3SmallReason s = true ∨
+      s3OriginReason (s3InnerPositions (fifteenStage0ProfileWord profile)) s = true ∨
+      s3RankReason (s3InnerPositions (fifteenStage0ProfileWord profile)) s = true ∨
+      s3MixedReason s = true) : False := by
+  rcases hreason with hsmall | horigin | hrank | hmixed
+  · have hsmall' : 1 < s.small := by simpa [s3SmallReason] using hsmall
+    exact fifteenStage3TargetPath_smallReason_excluded radii labels
+      hgeometry.owners hgeometry.pairSum profile hpath hsmall'
+  · exact fifteenStage3TargetPath_originReason_excluded radii labels
+      hgeometry.owners hgeometry.pairSum profile hpath horigin
+  · exact fifteenStage3TargetPath_rankReason_excluded_of_geometry radii labels
+      hgeometry profile hprofile hpath hrank
+  · exact fifteenStage3TargetPath_mixedReason_excluded radii labels
+      hgeometry.owners hgeometry.pairSum profile hpath hmixed
 
 end CirclePacking
