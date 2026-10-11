@@ -69,43 +69,47 @@ private def fifteenStage3ManifestEntryValid (entry : Stage3ManifestEntry) : Bool
     (bits.filter (· == '1')).length == entry.innerCount &&
     5 ≤ entry.innerCount && entry.innerCount ≤ 8
 
+def fifteenStage3BatchInputs : List (String × List String) := [
+  (fifteenStage3Batch000Source, fifteenStage3Batch000Patterns),
+  (fifteenStage3Batch001Source, fifteenStage3Batch001Patterns),
+  (fifteenStage3Batch002Source, fifteenStage3Batch002Patterns),
+  (fifteenStage3Batch003Source, fifteenStage3Batch003Patterns),
+  (fifteenStage3Batch004Source, fifteenStage3Batch004Patterns),
+  (fifteenStage3Batch005Source, fifteenStage3Batch005Patterns),
+  (fifteenStage3Batch006Source, fifteenStage3Batch006Patterns),
+  (fifteenStage3Batch007Source, fifteenStage3Batch007Patterns),
+  (fifteenStage3Batch008Source, fifteenStage3Batch008Patterns),
+  (fifteenStage3Batch009Source, fifteenStage3Batch009Patterns),
+  (fifteenStage3Batch010Source, fifteenStage3Batch010Patterns),
+  (fifteenStage3Batch011Source, fifteenStage3Batch011Patterns),
+  (fifteenStage3Batch012Source, fifteenStage3Batch012Patterns),
+  (fifteenStage3Batch013Source, fifteenStage3Batch013Patterns),
+  (fifteenStage3Batch014Source, fifteenStage3Batch014Patterns),
+  (fifteenStage3Batch015Source, fifteenStage3Batch015Patterns),
+  (fifteenStage3Batch016Source, fifteenStage3Batch016Patterns),
+  (fifteenStage3Batch017Source, fifteenStage3Batch017Patterns),
+  (fifteenStage3Batch018Source, fifteenStage3Batch018Patterns),
+  (fifteenStage3Batch019Source, fifteenStage3Batch019Patterns),
+  (fifteenStage3Batch020Source, fifteenStage3Batch020Patterns),
+  (fifteenStage3Batch021Source, fifteenStage3Batch021Patterns),
+  (fifteenStage3Batch022Source, fifteenStage3Batch022Patterns),
+  (fifteenStage3Batch023Source, fifteenStage3Batch023Patterns),
+  (fifteenStage3Batch024Source, fifteenStage3Batch024Patterns),
+  (fifteenStage3Batch025Source, fifteenStage3Batch025Patterns),
+  (fifteenStage3Batch026Source, fifteenStage3Batch026Patterns),
+  (fifteenStage3Batch027Source, fifteenStage3Batch027Patterns),
+  (fifteenStage3Batch028Source, fifteenStage3Batch028Patterns),
+  (fifteenStage3Batch029Source, fifteenStage3Batch029Patterns),
+  (fifteenStage3Batch030Source, fifteenStage3Batch030Patterns),
+  (fifteenStage3Batch031Source, fifteenStage3Batch031Patterns),
+  (fifteenStage3Batch032Source, fifteenStage3Batch032Patterns),
+  (fifteenStage3Batch033Source, fifteenStage3Batch033Patterns),
+  (fifteenStage3Batch034Source, fifteenStage3Batch034Patterns),
+  (fifteenStage3Batch035Source, fifteenStage3Batch035Patterns)
+]
+
 def fifteenStage3CertifiedPatterns : List String :=
-  fifteenStage3Batch000Patterns ++
-  fifteenStage3Batch001Patterns ++
-  fifteenStage3Batch002Patterns ++
-  fifteenStage3Batch003Patterns ++
-  fifteenStage3Batch004Patterns ++
-  fifteenStage3Batch005Patterns ++
-  fifteenStage3Batch006Patterns ++
-  fifteenStage3Batch007Patterns ++
-  fifteenStage3Batch008Patterns ++
-  fifteenStage3Batch009Patterns ++
-  fifteenStage3Batch010Patterns ++
-  fifteenStage3Batch011Patterns ++
-  fifteenStage3Batch012Patterns ++
-  fifteenStage3Batch013Patterns ++
-  fifteenStage3Batch014Patterns ++
-  fifteenStage3Batch015Patterns ++
-  fifteenStage3Batch016Patterns ++
-  fifteenStage3Batch017Patterns ++
-  fifteenStage3Batch018Patterns ++
-  fifteenStage3Batch019Patterns ++
-  fifteenStage3Batch020Patterns ++
-  fifteenStage3Batch021Patterns ++
-  fifteenStage3Batch022Patterns ++
-  fifteenStage3Batch023Patterns ++
-  fifteenStage3Batch024Patterns ++
-  fifteenStage3Batch025Patterns ++
-  fifteenStage3Batch026Patterns ++
-  fifteenStage3Batch027Patterns ++
-  fifteenStage3Batch028Patterns ++
-  fifteenStage3Batch029Patterns ++
-  fifteenStage3Batch030Patterns ++
-  fifteenStage3Batch031Patterns ++
-  fifteenStage3Batch032Patterns ++
-  fifteenStage3Batch033Patterns ++
-  fifteenStage3Batch034Patterns ++
-  fifteenStage3Batch035Patterns
+  fifteenStage3BatchInputs.flatMap Prod.snd
 
 def fifteenStage3AllBatchChecks : List Bool := [
   fifteenStage3Batch000Checks,
@@ -185,6 +189,34 @@ theorem fifteenStage3AllBatchCertificates_replay :
       fifteenStage3Batch034_checks,
       fifteenStage3Batch035_checks]
 
+theorem fifteenStage3BatchInputs_all_checked :
+    fifteenStage3BatchInputs.all
+      (fun batch => fifteenStage3CheckBatch batch.1 batch.2) = true := by
+  change fifteenStage3AllBatchChecks.all id = true
+  exact fifteenStage3AllBatchCertificates_replay
+
+theorem fifteenStage3BatchInput_checked (batch : String × List String)
+    (hmem : batch ∈ fifteenStage3BatchInputs) :
+    fifteenStage3CheckBatch batch.1 batch.2 = true :=
+  (List.all_eq_true.mp fifteenStage3BatchInputs_all_checked) batch hmem
+
+theorem fifteenStage3CertifiedPattern_occurs_in_batch (pattern : String)
+    (hmem : pattern ∈ fifteenStage3CertifiedPatterns) :
+    ∃ batch, batch ∈ fifteenStage3BatchInputs ∧ pattern ∈ batch.2 := by
+  have hmem' : pattern ∈ fifteenStage3BatchInputs.flatMap Prod.snd := by
+    simpa [fifteenStage3CertifiedPatterns] using hmem
+  exact List.mem_flatMap.mp hmem'
+
+theorem fifteenStage3CertifiedPattern_has_valid_record (pattern : String)
+    (hmem : pattern ∈ fifteenStage3CertifiedPatterns) :
+    ∃ record, record.pattern = pattern ∧ s3RecordValid record = true := by
+  obtain ⟨batch, hbatch, hpattern⟩ :=
+    fifteenStage3CertifiedPattern_occurs_in_batch pattern hmem
+  obtain ⟨_records, record, _hparse, _hrecord, hrecordPattern, hvalid⟩ :=
+    fifteenStage3CheckBatch_record_of_mem batch.1 batch.2 pattern
+      (fifteenStage3BatchInput_checked batch hbatch) hpattern
+  exact ⟨record, hrecordPattern, hvalid⟩
+
 def fifteenStage3ManifestMatchesStageZero : Bool := Id.run do
   let some records := fifteenStage3ManifestRecords? | return false
   let patterns := records.map (·.pattern)
@@ -205,6 +237,23 @@ def fifteenStage3ResidualPatterns : List String :=
   match fifteenStage3ManifestRecords? with
   | some records => (records.filter (!·.closed)).map (·.pattern)
   | none => []
+
+def fifteenStage3SurvivorClassificationReplay : Bool :=
+  fifteenStage0SurvivorPatterns.all fun pattern =>
+    decide (pattern ∈ fifteenStage3CertifiedPatterns ∨
+      pattern ∈ fifteenStage3ResidualPatterns)
+
+theorem fifteenStage3SurvivorClassification_replays :
+    fifteenStage3SurvivorClassificationReplay = true := by
+  native_decide
+
+theorem fifteenStage0Survivor_stage3_closed_or_residual (pattern : String)
+    (hmem : pattern ∈ fifteenStage0SurvivorPatterns) :
+    pattern ∈ fifteenStage3CertifiedPatterns ∨
+      pattern ∈ fifteenStage3ResidualPatterns := by
+  have hclass := (List.all_eq_true.mp
+    fifteenStage3SurvivorClassification_replays) pattern hmem
+  exact of_decide_eq_true hclass
 
 def fifteenStage3ClosedCertificateCoverage : Bool := Id.run do
   let some records := fifteenStage3ManifestRecords? | return false

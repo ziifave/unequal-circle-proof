@@ -680,12 +680,12 @@ theorem s3CheckStream_cycle_success_specs
     exact ⟨id, tail, edges, hparse, hedge, hdepth, hnotpruned, hvalid⟩
   · simp [hc] at hif
 
-private structure S3CertificateRecord where
+structure S3CertificateRecord where
   pattern : String
   cycles : Array (List S3CertEdge)
   stream : String
 
-private def s3ParseRecord? (line : String) : Option S3CertificateRecord := do
+def s3ParseRecord? (line : String) : Option S3CertificateRecord := do
   match line.splitOn "\t" with
   | [pattern, cycleText, stream] => do
       guard (s3PatternValid pattern)
@@ -693,12 +693,12 @@ private def s3ParseRecord? (line : String) : Option S3CertificateRecord := do
       some ⟨pattern, cycles, stream⟩
   | _ => none
 
-private def s3ParseBatch? (source : String) : Option (List S3CertificateRecord) := do
+def s3ParseBatch? (source : String) : Option (List S3CertificateRecord) := do
   let lines := (source.splitOn "\n").filter (· != "")
   guard (!lines.isEmpty)
   lines.mapM s3ParseRecord?
 
-private def s3RecordValid (record : S3CertificateRecord) : Bool := Id.run do
+def s3RecordValid (record : S3CertificateRecord) : Bool := Id.run do
   let inner := s3InnerPositions record.pattern
   match s3CheckStream inner.size inner record.cycles (s3Initial record.pattern)
       record.stream.toList with
@@ -713,5 +713,30 @@ def fifteenStage3CheckBatch (source : String) (expectedPatterns : List String) :
       patterns == expectedPatterns &&
         patterns.eraseDups.length == patterns.length && records.all s3RecordValid
   | none => false
+
+/-- A checked batch contains a checked record for every declared pattern.
+This lets the geometric soundness layer retrieve the exact stream and cycle
+dictionary that the finite replay accepted. -/
+theorem fifteenStage3CheckBatch_record_of_mem
+    (source : String) (expectedPatterns : List String) (pattern : String)
+    (hcheck : fifteenStage3CheckBatch source expectedPatterns = true)
+    (hmem : pattern ∈ expectedPatterns) :
+    ∃ records record, s3ParseBatch? source = some records ∧ record ∈ records ∧
+      record.pattern = pattern ∧ s3RecordValid record = true := by
+  unfold fifteenStage3CheckBatch at hcheck
+  cases hparse : s3ParseBatch? source with
+  | none => simp [hparse] at hcheck
+  | some records =>
+      simp only [hparse] at hcheck
+      have hparts := Bool.and_eq_true_iff.mp hcheck
+      have hparts' := Bool.and_eq_true_iff.mp hparts.1
+      have hpatternEq : records.map (·.pattern) = expectedPatterns :=
+        beq_iff_eq.mp hparts'.1
+      have hrecordMem : pattern ∈ records.map (·.pattern) := by
+        rw [hpatternEq]
+        exact hmem
+      obtain ⟨record, hrecord, hrecordPattern⟩ := List.mem_map.mp hrecordMem
+      refine ⟨records, record, rfl, hrecord, hrecordPattern, ?_⟩
+      exact (List.all_eq_true.mp hparts.2) record hrecord
 
 end CirclePacking
