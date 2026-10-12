@@ -23,4 +23,18 @@ theorem fifteen_unit_packing_radius_iff_ge_candidate {R : ℝ} :
     intro i
     rfl
 
+/-- The same characterization in the closed form stated in the paper. -/
+theorem fifteen_unit_packing_radius_iff_ge_closed_form {R : ℝ} :
+    (∃ P : Packing 15 R, ∀ i, (P.circles i).radius = 1) ↔
+      1 + Real.sqrt
+        (1 + (2 + Real.cot (Real.pi / 5)) ^ 2) ≤ R := by
+  have hformula :
+      1 + Real.sqrt
+          (1 + (2 + Real.cot (Real.pi / 5)) ^ 2) =
+        fifteenCandidateOuterRadius + 1 := by
+    rw [fifteenCandidateOuterRadius_eq_cot_formula]
+    ring
+  rw [hformula]
+  exact fifteen_unit_packing_radius_iff_ge_candidate
+
 end CirclePacking
