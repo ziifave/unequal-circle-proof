@@ -28,6 +28,60 @@ private theorem s4Coverage_stage3Radial_classification {r : ℝ}
   · exact Or.inr hinner
   · exact Or.inl (by simpa [fifteenStage3OwnerSpec] using howner)
 
+private theorem s4CoverageLocalBox_forces_profile_index_two
+    (G : FifteenStage4CoverageGeometry) (pattern : String)
+    (hword : pattern = fifteenStage0ProfileWord G.profile)
+    (box : FifteenBox) (inner : List Nat)
+    (hcontains : fifteenRealBoxContains box G.radii)
+    (hinner : inner = fifteenInnerPositions "001001001001001")
+    (hbounds : ∀ p ∈ inner,
+      fifteenLocalLo ≤ box[p]!.1 ∧ box[p]!.2 ≤ fifteenLocalHi) :
+    G.profile ⟨2, by decide⟩ = true := by
+  have htwo : 2 ∈ inner := by
+    rw [hinner]
+    decide
+  have hboxUpper : (box[2]!.2 : ℝ) ≤ (43 : ℝ) / 25 := by
+    have h := (hbounds 2 htwo).2
+    change box[2]!.2 ≤ fifteenRational 43 25 at h
+    have hcast : (box[2]!.2 : ℝ) ≤ (fifteenLocalHi : ℝ) := by
+      exact_mod_cast h
+    calc
+      (box[2]!.2 : ℝ) ≤ (fifteenLocalHi : ℝ) := hcast
+      _ = (43 : ℝ) / 25 := by
+        norm_num [fifteenLocalHi, fifteenRational, Rat.normalize_eq_mkRat,
+          Rat.cast_mkRat_of_ne_zero]
+  have hcontainsTwo := hcontains ⟨2, by decide⟩
+  change (box[2]!.1 : ℝ) ≤ G.radii ⟨2, by decide⟩ ∧
+    G.radii ⟨2, by decide⟩ ≤ (box[2]!.2 : ℝ) at hcontainsTwo
+  have hupper : (43 : ℝ) / 25 < fifteenCandidateInnerThreshold := by
+    have hsmall : (43 : ℝ) / 25 < 2 := by norm_num
+    linarith [fifteenCandidateInnerThreshold_gt_two]
+  have hradius : G.radii ⟨2, by decide⟩ <
+      fifteenCandidateInnerThreshold :=
+    lt_of_le_of_lt (le_trans hcontainsTwo.2 hboxUpper) hupper
+  exact (G.hprofile ⟨2, by decide⟩).2 hradius
+
+private theorem s4CoverageNormalPattern_eq_canonical
+    (pattern : String) (G : FifteenStage4CoverageGeometry)
+    (hword : pattern = fifteenStage0ProfileWord G.profile)
+    (hpattern : pattern ∈ s4CoverageNormalPatterns) :
+    pattern = "001001001001001" := by
+  obtain ⟨box, inner, hcontains, hinner, hbounds⟩ :=
+    s4CoverageGeometricNormalTarget_forces_local pattern G hword hpattern
+  have htrue := s4CoverageLocalBox_forces_profile_index_two
+    G pattern hword box inner hcontains hinner hbounds
+  have hmem : 2 ∈ (s3InnerPositions pattern).toList := by
+    have hmem' := (fifteenStage3ProfileWord_inner_iff G.profile ⟨2, by decide⟩).2 htrue
+    simpa [hword] using hmem'
+  have hchar := (s3InnerPositions_mem_iff_char pattern 2).mp hmem
+  rcases List.mem_cons.mp hpattern with h0 | hrest
+  · have hnot : ("000100100010101".toList[2]?) ≠ some '1' := by decide
+    exact False.elim (hnot (by simpa [h0] using hchar.2))
+  · rcases List.mem_cons.mp hrest with h1 | hrest
+    · have hnot : ("000100100100101".toList[2]?) ≠ some '1' := by decide
+      exact False.elim (hnot (by simpa [h1] using hchar.2))
+    · exact List.mem_singleton.mp hrest
+
 /-- Every unit-disk packing below the candidate radius, after the wall push
 and cyclic relabeling, is forced into the unique certified local radius box.
 This removes the exceptional six-inner profile left by
@@ -46,6 +100,10 @@ theorem fifteen_unit_packing_stage4_coverage_local
       let profile := fun i => decide
         (radii i < fifteenCandidateInnerThreshold)
       let pattern := fifteenStage0ProfileWord profile
+      ∃ geometry : FifteenStage4CoverageGeometry,
+        geometry.radii = radii ∧ geometry.theta = theta ∧
+        geometry.profile = profile ∧
+      pattern = "001001001001001" ∧
       ∃ box inner, fifteenRealBoxContains box radii ∧
         inner = fifteenInnerPositions "001001001001001" ∧
         ∀ p ∈ inner,
@@ -102,13 +160,16 @@ theorem fifteen_unit_packing_stage4_coverage_local
   rcases hprofileList with h0 | h1 | h2 | hspecial
   · have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h0]
-    exact s4CoverageGeometricNormalTarget_forces_local pattern G rfl hnormal
+    have hcanonical := s4CoverageNormalPattern_eq_canonical pattern G rfl hnormal
+    simp [h0] at hcanonical
   · have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h1]
-    exact s4CoverageGeometricNormalTarget_forces_local pattern G rfl hnormal
+    have hcanonical := s4CoverageNormalPattern_eq_canonical pattern G rfl hnormal
+    simp [h1] at hcanonical
   · have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h2]
-    exact s4CoverageGeometricNormalTarget_forces_local pattern G rfl hnormal
+    exact ⟨G, rfl, rfl, rfl, h2,
+      s4CoverageGeometricNormalTarget_forces_local pattern G rfl hnormal⟩
   · rcases hspecial with hspecial | hnil
     · have hword : fifteenSpecialPattern = fifteenStage0ProfileWord G.profile := by
         change "001001001001011" = fifteenStage0ProfileWord profile
