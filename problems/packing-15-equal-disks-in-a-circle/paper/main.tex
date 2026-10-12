@@ -38,24 +38,24 @@
   proofleaf/.style={draw=proofgold!75!black,fill=proofpaleyellow,rounded corners,align=center,inner sep=5pt,font=\small}
 }
 
-\title{Optimal Packing of Fifteen Equal Disks in a Circle:\\An Exact Computer-Assisted Certificate}
+\title{Optimal Packing of Fifteen Equal Disks in a Circle:\\An Exact Computer-Assisted and Lean-Verified Proof}
 \author{}
-\date{October 11, 2026}
+\date{October 12, 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We study the minimum radius of a circle containing fifteen pairwise interior-disjoint unit disks. We give an exact construction of radius
+We prove that the minimum radius of a circle containing fifteen pairwise interior-disjoint unit disks is
 \[
   R_0=1+\sqrt{1+\bigl(2+\cot(\pi/5)\bigr)^2}
      =4.521356964706164\ldots
 \]
-and a candidate computer-assisted certificate for the matching lower bound. A radial threshold reduces every putative packing with radius at most $R_0$ to four possible inner/outer counts. For each of the 760 dihedral classes of their cyclic binary words, an integer difference-constraint test either excludes the class or passes it to exact rational interval refinement. Refinement leaves one cyclic type, $(I,O,O)^5$, and confines its five inner-center radii to $[1.68,1.72]$. An explicit local angular inequality then forces the candidate radius vector and excludes every smaller container. The certificate uses integer and rational arithmetic, including an explicit Taylor remainder bound for the trigonometric table. The repository contains a serialized subdivision certificate, a separate rational checker, and a one-command replay.
+An exact fivefold-symmetric construction gives the upper bound. For the lower bound, a radial threshold reduces every putative packing with radius at most $R_0$ to four possible inner/outer counts. For each of the 760 dihedral classes of their cyclic binary words, an integer difference-constraint test either excludes the class or passes it to exact rational interval refinement. Refinement leaves one cyclic type, $(I,O,O)^5$, and confines its five inner-center radii to $[1.68,1.72]$. An explicit local angular inequality then forces the candidate radius vector and excludes every smaller container. The certificate uses integer and rational arithmetic, including an explicit Taylor remainder bound for the trigonometric table. A Lean theorem now characterizes feasibility exactly by $R\ge R_0$; the finite replay and its trust dependencies are described below.
 \end{abstract}
 
 \paragraph{Verification status.}
-The finite computations and the separate certificate checker were successfully replayed with the accompanying source bundle. A subsequent Lean development checks the finite certificate replays and formalizes the local angular obstruction, together with parts of the geometric reduction. It does not yet prove that every feasible packing reaches the final local box, or construct the feasible candidate packing as a Lean object. This manuscript presents a candidate computer-assisted proof; a complete Lean proof of its main theorem is still outstanding. The scope and trust dependencies of the partial formalization are recorded in \cref{sec:lean-status}.
+The repository includes a serialized subdivision certificate, a separate rational checker, and a one-command replay. The Lean project also constructs the feasible candidate packing and proves the matching lower bound for arbitrary unit-disk packings, yielding an exact feasibility characterization. The finite replays use \texttt{native\_decide}; thus the theorem is formalized in Lean with explicit native-computation trust dependencies, rather than being kernel-only. The scope and trust boundary are recorded in \cref{sec:lean-status}.
 
 \section{Introduction}\label{sec:intro}
 
@@ -80,7 +80,7 @@ The minimum enclosing radius for fifteen pairwise interior-disjoint unit disks i
 \]
 \end{theorem}
 
-This is the conclusion claimed by the candidate argument below. It is not yet the conclusion of an unconditional Lean theorem; in particular, the packing-level implication in \cref{prop:finite-reduction} remains to be connected to the checked finite certificates.
+The construction in \cref{sec:construction} proves the upper bound, and the finite reduction and local barrier below prove the matching lower bound. The Lean development now states the same result as an exact characterization of all feasible container radii; its finite-computation trust dependencies are listed in \cref{sec:lean-status}.
 
 The upper bound comes from the familiar $D_5$-symmetric arrangement, invariant under rotations by $2\pi/5$ and reflections, with five inner disks and ten outer disks; it is listed among the best-known configurations \cite{GrahamEtAl1998,Packomania}. The lower-bound strategy is independent of the tight-partition reduction used for fourteen disks \cite{EF2024}.
 
@@ -495,7 +495,7 @@ If every $a_i=a_0$ but $R<R_0$, each original outer radius is strictly below $b_
 
 \section{Conclusion and reproducibility}\label{sec:conclusion}
 
-The construction in \cref{sec:construction} proves $R_{15}^*\le R_0$. The radial classification, exhaustive difference-constraint certificate, exact rational subdivision, and local angular barrier prove that every feasible packing has $R\ge R_0$, conditional on the finite certificate and geometric reductions stated above.
+The explicit construction proves $R_{15}^*\le R_0$, while the radial classification, exhaustive difference-constraint certificate, exact rational subdivision, and local angular barrier prove that every feasible packing has $R\ge R_0$. The Lean theorem \texttt{fifteen\_unit\_packing\_radius\_iff\_ge\_closed\_form} packages both directions as an equivalence: a packing of fifteen unit disks exists in radius $R$ if and only if $R_0\le R$.
 
 Replay files are in the repository's \href{https://github.com/ziifave/unequal-circle-proof/tree/02b61760e4dd392fbe3dd19499312d5d8c1135a4/problems/packing-15-equal-disks-in-a-circle/candidate_bundle}{candidate bundle pinned to commit \texttt{02b6176}}. Run it with Python 3.10 or newer, GNU C++17, and a POSIX shell:
 \begin{verbatim}
@@ -504,7 +504,7 @@ bash run_all.sh
 \end{verbatim}
 All exclusion decisions use integers or rational fractions. The code's decimal output is diagnostic only. The replay is self-contained and records the branch counts and terminal reasons.
 
-Subject to independent validation of the certificate and geometric reductions, this approach establishes the optimality of the fifteen-disk configuration without assuming a contact graph or symmetry.
+The formal statement does not assume a contact graph or symmetry. Its finite certificate checks are replayed in Lean and by the separate rational checker; the trust boundary of the Lean replay is stated explicitly in the following section.
 
 \appendix
 \section{Certificate data and exact subdivision}
@@ -533,15 +533,13 @@ The independent \texttt{check\_stage0\_certificate.py} regenerates all 760 class
 \label{fig:branch-tree}
 \end{figure}
 
-\section{Scope of the Lean formalization}\label{sec:lean-status}
+\section{Lean formalization and trust boundary}\label{sec:lean-status}
 
-The partial formalization is available in the repository's
-\href{https://github.com/ziifave/unequal-circle-proof/tree/69cfc6311922ceb1184865fc576872283ec2b649/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{69cfc63}}.
-The project is hosted under the unequal-disk problem directory, but its
-\texttt{Fifteen} modules concern the equal-disk problem in this manuscript.
-They use the same candidate radii $a_0,b_0$ and the same local cube
-$[42/25,43/25]^5$. The following distinctions are essential when interpreting
-the formalization status.
+The Lean development is available in the repository's
+\href{https://github.com/ziifave/unequal-circle-proof/tree/5a64563/problems/packing-disks-radii-sqrt1-to-sqrt10-in-a-circle/lean}{Lean project pinned to commit \texttt{5a64563}}.
+Although hosted under the unequal-disk problem directory, its \texttt{Fifteen}
+modules formalize the equal-disk problem in this manuscript. They use the same
+candidate radii $a_0,b_0$ and local cube $[42/25,43/25]^5$.
 
 \begin{center}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{.30\textwidth}>{\raggedright\arraybackslash}p{.66\textwidth}@{}}
@@ -549,67 +547,43 @@ the formalization status.
 Manuscript component & Lean status at the pinned snapshot\\
 \midrule
 Candidate construction (\cref{sec:construction}) &
-Radius and contact-angle identities are proved. An explicit feasible
-\texttt{Packing 15} at radius $R_0$ remains to be constructed.\\[5pt]
+\texttt{fifteenCandidatePacking} constructs a \texttt{Packing 15} at radius
+$R_0$; exact containment and all pairwise separation conditions are proved.\\[5pt]
 Radial reduction (\cref{sec:radial}) &
-Wall replacement, the 5--8 inner-center count, and coarse radial-box
-membership are proved, together with canonical dihedral radius/angle
-normalization, complete Stage 0 assignment coverage, the sixth-radius
-bound, and refined half-open owner coverage.\\[5pt]
+The arbitrary-packing reduction, wall replacement, radius classification,
+cyclic normalization, rank bounds, and interval ownership are connected to
+the finite Stage 0--4 checks used by the lower-bound theorem.\\[5pt]
 Finite reduction (\cref{prop:finite-reduction}) &
-All finite certificate replays are collected in one theorem. The geometric
-$760\to378$ reduction is proved. Packing-level soundness and coverage of
-Stage 3/4 and the refined subdivision remain unfinished; the four
-structural Stage 3 leaf families have geometric exclusion lemmas.\\[5pt]
+Certificate checks and their geometric soundness are applied to arbitrary
+packings; surviving canonical boxes are passed to the local argument.
+Surviving boxes are not treated as evidence of existence.\\[5pt]
 Local angular barrier (\cref{sec:local}) &
 Taylor error estimates, the odd five-cycle identity, and local rigidity are
-proved. The strict smaller-container exclusion is proved assuming the
-canonical cyclic pattern and the local-box hypotheses.\\[5pt]
+used in the strict smaller-container exclusion, including the wall-radius
+comparison for the original packing.\\[5pt]
 Optimality (\cref{thm:main}) &
-No unconditional Lean theorem of global optimality is present. It requires
-the packing-level finite reduction and the feasible candidate construction.\\
+\texttt{fifteen\_unit\_packing\_radius\_iff\_ge\_closed\_form} proves that a
+radius $R$ admits fifteen unit disks exactly when
+$1+\sqrt{1+(2+\cot(\pi/5))^2}\le R$.\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\paragraph{Replay and geometric soundness.}
-The theorem
-\nolinkurl{fifteenAllFiniteCertificates_replay}, in
-\nolinkurl{CirclePacking/FifteenAllFiniteCertificates.lean}, combines the
-760-class enumeration, coarse table and certificate checks, Stage 3 and
-Stage 4, the final rational subdivision, and the residual-pattern handoff.
-Its conclusion is a conjunction of finite check results and class counts.
-The separate theorem
-\nolinkurl{fifteen_unit_packing_canonical_pattern_local_box_impossible}, in
-\nolinkurl{CirclePacking/FifteenLocalFinalAssembly.lean}, excludes a packing
-with $R<R_0$ once its wall-replaced, angle-sorted profile has inner positions
-$0,3,6,9,12$ and those five radii lie in the local interval. The theorem
-\nolinkurl{fifteen_unit_packing_wall_push_stage0_canonical_geometry}, in
-\nolinkurl{CirclePacking/FifteenStageZeroCanonicalGeometry.lean}, now produces
-an exact canonical word and an ordered real polar profile from an arbitrary
-candidate-radius packing, preserving separation and coarse radius boxes and
-deriving the coarse angular difference constraints. Complete Stage 0
-coverage and geometric exclusion are supplied by
-\nolinkurl{fifteen_unit_packing_wall_push_stage0_survivor_geometry}, in
-\nolinkurl{CirclePacking/FifteenStageZeroFiniteReduction.lean}. Every
-admissible positional label profile is proved to occur in the finite assignment
-enumeration, and its string encoding is proved to reconstruct the same fifteen
-labels. The replay then provides either a survivor record or a matching cycle
-witness; geometric cycle soundness rules out the latter. Thus an arbitrary
-feasible candidate-radius packing has a canonical profile among the 378
-Stage 0 survivors. The theorem
-\nolinkurl{fifteen_unit_packing_wall_push_stage3_geometric_handoff}, in
-\nolinkurl{CirclePacking/FifteenStage3GeometricHandoff.lean}, attaches the
-refined owners, pair-sum bounds, and both rank counts to this same real
-profile. The owner proof covers the origin separately, assigns rational
-cutpoints to the interval on their right, and encloses every owner by its
-stored closed rational hull. Separate lemmas rule out the small-count,
-origin, rank, and mixed-bin leaves, including rank tests before all positions
-are assigned. The remaining Stage 3 step is to identify each checker state's
-labels and counters with its partial geometric assignment and prove cycle
-and stream soundness. Stage 4, the residual roots, and the six-inner special
-case still require their corresponding connections. Boolean replay alone
-does not supply these remaining implications.
+\paragraph{The final theorem.}
+The upper-bound witness is
+\nolinkurl{fifteenCandidatePacking} in
+\nolinkurl{CirclePacking/FifteenCandidatePacking.lean}. Its cyclic list uses
+five inner centers and ten outer centers; exact contact-angle identities and
+the cosine rule establish all 105 unordered pair constraints, and a radial
+inequality establishes containment. The lower-bound theorem
+\nolinkurl{fifteen_unit_packing_stage4_strict_wall_impossible}, in
+\nolinkurl{CirclePacking/FifteenStage4StrictCycle.lean}, starts from an
+arbitrary \texttt{Packing 15 R} with unit radii and proves impossibility when
+$R<R_0$. The theorem
+\nolinkurl{fifteen\_unit\_packing\_radius\_iff\_ge\_closed\_form}, in
+\nolinkurl{CirclePacking/FifteenOptimality.lean}, combines these directions
+and states the exact value in the same closed form as \cref{thm:main}.
+The default \texttt{CirclePacking} target imports this theorem.
 
 \paragraph{Alternative intermediate proofs.}
 The Lean development sometimes proves the same required bound by a different
@@ -630,51 +604,28 @@ the six-disk optimum. The exact wall radius is proved to lie in the refined
 certificate interval
 $(35213569647/10^{10},35213569648/10^{10})$ by rational square comparisons.
 
-\paragraph{Trust dependencies.}
-Several finite replays use \texttt{native\_decide} and carry native-evaluation
-axioms. Their trust dependencies must be distinguished from proofs using
-only ordinary kernel reduction. The abstract mask and angle transport lemmas
-and the local packing-exclusion theorem have been audited and depend only on
-Lean's standard logical axioms. The
-combined finite theorem can be built and audited from the Lean directory
-with:
+\paragraph{Trust boundary.}
+The final theorem depends on finite replays using \texttt{native\_decide}.
+Running \texttt{\#print axioms} on the closed-form theorem reports the usual
+logical axioms and a family of generated native-evaluation axioms inherited
+from the Stage 0, Stage 3, Stage 4, and coverage replays. There are no
+\texttt{sorry} placeholders in this theorem chain. These native axioms mean
+the finite Boolean decisions are accepted using Lean's compiled evaluator;
+the trusted base therefore includes the Lean compiler and code marked
+\texttt{@[implemented\_by]}. This is faster than kernel reduction, but it is
+not a kernel-only proof. The Lean reference describes this tradeoff in its
+\href{https://lean-lang.org/doc/reference/latest/Tactic-Proofs/Tactic-Reference}{decision-procedure section}.
+
+The target and default umbrella module build with:
 \begin{verbatim}
-lake build CirclePacking.FifteenAllFiniteCertificates
-lake env lean CirclePacking/FifteenTrustAudit.lean
+lake build CirclePacking.FifteenOptimality CirclePacking
 \end{verbatim}
-The audit prints the actual axiom dependencies; it is not a proof of the
-remaining geometric connection.
-The geometric normalization bridge has a separate targeted audit:
+To inspect the theorem's dependencies, place the following in an audit file
+and run \texttt{lake env lean Audit.lean} from the Lean directory:
 \begin{verbatim}
-lake build CirclePacking.FifteenStageZeroCanonicalGeometry
-lake env lean CirclePacking/FifteenStageZeroTransportAudit.lean
+import CirclePacking.FifteenOptimality
+#print axioms CirclePacking.fifteen_unit_packing_radius_iff_ge_closed_form
 \end{verbatim}
-The packing-level normalization theorem inherits one existing native axiom
-for canonical coverage and seven for the coarse angle table. The
-normalized-profile cycle exclusion inherits one existing Stage 0 replay
-native axiom and the same seven table axioms; the mask and angle transport
-proofs introduce no new native-evaluation axiom.
-The Stage 0 coverage and geometric reduction have their own targeted audit:
-\begin{verbatim}
-lake build CirclePacking.FifteenStageZeroFiniteReduction
-lake env lean CirclePacking/FifteenStageZeroReductionAudit.lean
-\end{verbatim}
-Assignment coverage and the survivor count are derived from the existing
-Stage 0 replay rather than from an additional native-evaluation check.
-The full packing-level $760\to378$ theorem inherits nine existing native
-axioms: canonical coverage, the Stage 0 replay, and the seven coarse-table
-checks. Positional and transported population-count lemmas use only the
-standard logical axioms.
-The refined owner and structural-leaf interface has a further targeted audit:
-\begin{verbatim}
-lake build CirclePacking.FifteenStage3GeometricHandoff
-lake env lean CirclePacking/FifteenStage3GeometryAudit.lean
-\end{verbatim}
-The sixth-radius bound, refined wall enclosure, owner coverage, partial-rank
-and structural exclusion lemmas, and packing-level structural conditions
-depend only on the standard logical axioms. The combined Stage 3 input
-handoff inherits the same nine Stage 0 native axioms as the $760\to378$
-reduction; these new proofs introduce no native-evaluation axiom.
 
 \begin{thebibliography}{9}
 \bibitem{Graham1968}
