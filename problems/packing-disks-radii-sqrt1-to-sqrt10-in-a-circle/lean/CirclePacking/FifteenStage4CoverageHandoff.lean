@@ -4,6 +4,8 @@ import CirclePacking.FifteenStage4Coverage002
 import CirclePacking.FifteenStage4CoverageSoundness
 import CirclePacking.FifteenStage4CoverageRoots
 import CirclePacking.FifteenStage4FiniteGeometry
+import CirclePacking.FifteenGeometricCertificateSoundness
+import CirclePacking.FifteenCertificateWorklistSemantic
 
 /-! The Stage 4 coverage trees are connected to geometric data and to the
 normal roots of the exact radial-subdivision certificate. The exceptional
@@ -237,6 +239,164 @@ theorem s4CoverageGeometricNormalTarget_root_contains
     rw [hboxWall, hradiusWall]
     exact fifteenCandidateOuterRadius_certificate_interval
 
+/-- Once a normal Stage 4 geometry is placed in an exact-certificate root,
+the verified subdivision cannot terminate at a `CYCLE` or `SUM` leaf. It
+therefore forces that root's path into the unique local box. -/
+theorem s4CoverageNormalGeometry_task_forces_local
+    (G : FifteenStage4CoverageGeometry)
+    (tasks : List FifteenTask) (counts result : FifteenTreeCounts)
+    (hcheck : fifteenCheckTasks 60000 tasks counts = some result)
+    (hboxesGood : fifteenTaskListBoxesGood tasks)
+    (hcontains : ∃ task, task ∈ tasks ∧
+      fifteenTaskHasProfile task G.radii) :
+    ∃ box inner, fifteenRealBoxContains box G.radii ∧
+      inner = fifteenInnerPositions "001001001001001" ∧
+      ∀ p ∈ inner,
+        fifteenLocalLo ≤ box[p]!.1 ∧ box[p]!.2 ≤ fifteenLocalHi := by
+  apply fifteenCheckTasks_profile_reaches_local_bounds 60000 tasks counts result
+    G.radii
+  · intro box inner node hboxGood htag hvalid hprofile
+    apply fifteenGeometricTerminalCycleExcludes G.radii G.theta box inner node
+      false G.hsorted G.hthetaLo G.hthetaHi G.hsep hboxGood
+    · intro i
+      exact hprofile i
+    · exact htag
+    · exact hvalid
+  · intro box inner node htag hvalid hprofile
+    apply fifteenGeometricTerminalSumExcludes G.radii box inner node false
+      G.hgeometry.pairSum htag hvalid
+    intro i
+    exact (hprofile i).2
+  · exact hcheck
+  · exact hboxesGood
+  · exact hcontains
+
+/-! The root boxes above and the exact-certificate work list are both parsed
+from the same JSON document.  The following finite links make that relation
+explicit and expose the accepted root tasks to the semantic work-list theorem. -/
+
+def s4CoverageExactTasks? : Option (List FifteenTask) := do
+  let document ← (Lean.Json.parse fifteenCertificateSource).toOption
+  let rootsJson ← fifteenJsonField? document "roots"
+  let roots ← fifteenJsonArray? rootsJson
+  fifteenRootTasksAux roots.toList
+
+def s4CoverageExactWorklistReplay : Bool := Id.run do
+  let some tasks := s4CoverageExactTasks? | return false
+  let some counts := fifteenCheckTasks 60000 tasks {} | return false
+  return counts.nodes == 58860 && counts.cycles == 30032 &&
+    counts.sums == 0 && counts.localLeaves == 31
+
+set_option maxRecDepth 1000000 in
+set_option maxHeartbeats 0 in
+theorem s4CoverageExactWorklist_replays :
+    s4CoverageExactWorklistReplay = true := by
+  native_decide
+
+def s4CoverageRootTaskMatches
+    (roots : List (String × Array Nat × FifteenBox))
+    (tasks : List FifteenTask) : Bool :=
+  roots.all (fun row => tasks.any (fun task =>
+    decide (task.1 = row.2.2 ∧
+      task.2.1 = fifteenInnerPositions row.1)))
+
+def s4CoverageRootTaskLinksReplay : Bool :=
+  match s4CoverageRootBoxes?, s4CoverageExactTasks? with
+  | some roots, some tasks => s4CoverageRootTaskMatches roots tasks
+  | _, _ => false
+
+set_option maxRecDepth 1000000 in
+set_option maxHeartbeats 0 in
+theorem s4CoverageRootTaskLinks_replay :
+    s4CoverageRootTaskLinksReplay = true := by
+  native_decide
+
+theorem s4CoverageRootTask_mem
+    {roots : List (String × Array Nat × FifteenBox)}
+    {tasks : List FifteenTask}
+    {row : String × Array Nat × FifteenBox}
+    (hroots : s4CoverageRootBoxes? = some roots)
+    (htasks : s4CoverageExactTasks? = some tasks)
+    (hrow : row ∈ roots) :
+    ∃ task, task ∈ tasks ∧ task.1 = row.2.2 ∧
+      task.2.1 = fifteenInnerPositions row.1 := by
+  have hlinks : s4CoverageRootTaskMatches roots tasks = true := by
+    simpa [s4CoverageRootTaskLinksReplay, hroots, htasks] using
+      s4CoverageRootTaskLinks_replay
+  have hrowLink := List.all_eq_true.mp hlinks row hrow
+  obtain ⟨task, hmem, hmatch⟩ := List.any_eq_true.mp hrowLink
+  have hpair : task.1 = row.2.2 ∧
+      task.2.1 = fifteenInnerPositions row.1 := of_decide_eq_true hmatch
+  exact ⟨task, hmem, hpair.1, hpair.2⟩
+
+def s4CoverageTaskBoxDataGood (task : FifteenTask) : Bool :=
+  decide (task.1.size = 15) &&
+    (List.range 15).all (fun i => decide (0 < task.1[i]!.1))
+
+def s4CoverageExactTaskBoxesGood : Bool :=
+  match s4CoverageExactTasks? with
+  | none => false
+  | some tasks => tasks.all s4CoverageTaskBoxDataGood
+
+set_option maxRecDepth 1000000 in
+set_option maxHeartbeats 0 in
+theorem s4CoverageExactTaskBoxesGood_replay :
+    s4CoverageExactTaskBoxesGood = true := by
+  native_decide
+
+theorem s4CoverageExactTasks_boxesGood {tasks : List FifteenTask}
+    (htasks : s4CoverageExactTasks? = some tasks) :
+    fifteenTaskListBoxesGood tasks := by
+  have hdata : tasks.all s4CoverageTaskBoxDataGood = true := by
+    simpa [s4CoverageExactTaskBoxesGood, htasks] using
+      s4CoverageExactTaskBoxesGood_replay
+  intro task hmem
+  have htask := List.all_eq_true.mp hdata task hmem
+  have hparts := Bool.and_eq_true_iff.mp htask
+  constructor
+  · exact of_decide_eq_true hparts.1
+  · intro i hi
+    have hpositive := List.all_eq_true.mp hparts.2 i (List.mem_range.mpr hi)
+    exact Rat.cast_pos.mpr (of_decide_eq_true hpositive)
+
+theorem s4CoverageGeometricNormalTarget_forces_local
+    (pattern : String) (G : FifteenStage4CoverageGeometry)
+    (hword : pattern = fifteenStage0ProfileWord G.profile)
+    (hpattern : pattern ∈ s4CoverageNormalPatterns) :
+    ∃ box inner,
+      fifteenRealBoxContains box G.radii ∧
+      inner = fifteenInnerPositions "001001001001001" ∧
+      ∀ p ∈ inner,
+        fifteenLocalLo ≤ box[p]!.1 ∧ box[p]!.2 ≤ fifteenLocalHi := by
+  obtain ⟨roots, hroots, box, hrow, _hbinData, hcontains⟩ :=
+    s4CoverageGeometricNormalTarget_root_contains pattern G hword hpattern
+  have hworklist : ∃ tasks counts,
+      s4CoverageExactTasks? = some tasks ∧
+        fifteenCheckTasks 60000 tasks {} = some counts := by
+    have hwork := s4CoverageExactWorklist_replays
+    unfold s4CoverageExactWorklistReplay at hwork
+    cases htask : s4CoverageExactTasks? with
+    | none => simp [htask] at hwork
+    | some tasks =>
+        cases hcounts : fifteenCheckTasks 60000 tasks {} with
+        | none => simp [htask, hcounts] at hwork
+        | some counts =>
+            exact ⟨tasks, counts, rfl, hcounts⟩
+  obtain ⟨tasks, counts, htasks, hcheck⟩ := hworklist
+  have hboxesGood := s4CoverageExactTasks_boxesGood htasks
+  let row : String × Array Nat × FifteenBox :=
+    (pattern, s4CoverageTargetAssignment (s4InnerPositions pattern)
+      (s4CoverageGeometryTarget G), box)
+  have hrow' : row ∈ roots := by simpa [row] using hrow
+  obtain ⟨task, htask, hboxEq, _hinnerEq⟩ :=
+    s4CoverageRootTask_mem hroots htasks hrow'
+  have htaskContains : fifteenTaskHasProfile task G.radii := by
+    change fifteenRealBoxContains task.1 G.radii
+    rw [hboxEq]
+    exact hcontains
+  exact s4CoverageNormalGeometry_task_forces_local G tasks {} counts
+    hcheck hboxesGood ⟨task, htask, htaskContains⟩
+
 theorem fifteenStage4ResidualPatterns_exact :
     fifteenStage4ResidualPatterns =
       ["000100100010101", "000100100100101",
@@ -262,8 +422,9 @@ private theorem s4Coverage_stage3Radial_classification {r : ℝ}
   · exact Or.inr hinner
   · exact Or.inl (by simpa [fifteenStage3OwnerSpec] using howner)
 
-/-- Every packing below the candidate radius reaches one of the exact roots
-for the three normal profiles, or the known six-inner special profile. -/
+/-- Every packing below the candidate radius is either the six-inner origin
+special profile, or its reindexed radii are forced by the checked exact
+subdivision into the unique five-inner local box. -/
 theorem fifteen_unit_packing_stage4_coverage_root_or_special
     {R : ℝ} (P : Packing 15 R)
     (hunit : ∀ i, (P.circles i).radius = 1)
@@ -279,20 +440,10 @@ theorem fifteen_unit_packing_stage4_coverage_root_or_special
         (radii i < fifteenCandidateInnerThreshold)
       let pattern := fifteenStage0ProfileWord profile
       pattern = "001001001001011" ∨
-        ∃ roots, s4CoverageRootBoxes? = some roots ∧
-          ∃ box, (pattern, s4CoverageTargetAssignment
-            (s4InnerPositions pattern)
-            (fifteenStage4OwnerLabelArray (fun i =>
-              fifteenStage4RadialLabel (radii i))), box) ∈ roots ∧
-            (∀ k, (hk : k < (s4InnerPositions pattern).size) →
-              box[(s4InnerPositions pattern)[k]!]! =
-                fifteenBins[(s4CoverageTargetAssignment
-                  (s4InnerPositions pattern)
-                  (fifteenStage4OwnerLabelArray (fun i =>
-                    fifteenStage4RadialLabel (radii i))))[k]!]!) ∧
-            (∀ i : Fin 15,
-              ((box[i.1]!.1 : ℝ) ≤ radii i) ∧
-                radii i ≤ (box[i.1]!.2 : ℝ)) := by
+        ∃ box inner, fifteenRealBoxContains box radii ∧
+          inner = fifteenInnerPositions "001001001001001" ∧
+          ∀ p ∈ inner,
+            fifteenLocalLo ≤ box[p]!.1 ∧ box[p]!.2 ≤ fifteenLocalHi := by
   obtain ⟨reflected, shift, hresidual, hgeometry, hsorted, hrange, hsep⟩ :=
     fifteen_unit_packing_wall_push_stage4_residual_profile P hunit hR
   refine ⟨reflected, shift, ?_⟩
@@ -346,15 +497,15 @@ theorem fifteen_unit_packing_stage4_coverage_root_or_special
   · right
     have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h0]
-    exact s4CoverageGeometricNormalTarget_root_contains pattern G rfl hnormal
+    exact s4CoverageGeometricNormalTarget_forces_local pattern G rfl hnormal
   · right
     have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h1]
-    exact s4CoverageGeometricNormalTarget_root_contains pattern G rfl hnormal
+    exact s4CoverageGeometricNormalTarget_forces_local pattern G rfl hnormal
   · right
     have hnormal : pattern ∈ s4CoverageNormalPatterns := by
       simp [s4CoverageNormalPatterns, h2]
-    exact s4CoverageGeometricNormalTarget_root_contains pattern G rfl hnormal
+    exact s4CoverageGeometricNormalTarget_forces_local pattern G rfl hnormal
   · left
     rcases hspecial with hspecial | hnil
     · exact hspecial
