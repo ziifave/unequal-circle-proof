@@ -249,4 +249,34 @@ theorem fifteenGeometricTerminalSumExcludes
     add_le_add (hradial fi) (hradial fj)
   exact (not_lt_of_ge hlower) (lt_of_le_of_lt hradialSum hupper)
 
+/-- The `SUM` branch remains geometrically sound when the checker is given
+explicit origin flags. The special six-inner certificate uses these flags to
+distinguish a positive radius in the first bin from the exact origin. -/
+theorem fifteenGeometricTerminalSumExcludesWithFlags
+    (radii : Fin 15 → ℝ) (box : FifteenBox) (inner : List Nat)
+    (node : Lean.Json) (allowLocal : Bool)
+    (positiveZero exactZero : List Nat)
+    (hpair : ∀ i j : Fin 15, i ≠ j → 2 ≤ radii i + radii j)
+    (htag : fifteenJsonAt? node 0 >>= fifteenJsonString? = some "SUM")
+    (hvalid : fifteenTerminalValid box inner node allowLocal
+      positiveZero exactZero = true)
+    (hradial : ∀ i : Fin 15, radii i ≤ (box[i.1]!.2 : ℝ)) : False := by
+  obtain ⟨i, j, hij, hj15, _himem, _hjmem, hsum⟩ :=
+    fifteenTerminalValid_sum_spec box inner node allowLocal
+      positiveZero exactZero htag hvalid
+  have hi15 : i < 15 := Nat.lt_trans hij hj15
+  let fi : Fin 15 := ⟨i, hi15⟩
+  let fj : Fin 15 := ⟨j, hj15⟩
+  have hfij : fi ≠ fj := by
+    intro heq
+    have hval : i = j := by simpa [fi, fj] using congrArg Fin.val heq
+    exact (Nat.ne_of_lt hij) hval
+  have hlower := hpair fi fj hfij
+  have hupper : (box[i]!.2 : ℝ) + (box[j]!.2 : ℝ) < 2 := by
+    exact_mod_cast hsum
+  have hradialSum : radii fi + radii fj ≤
+      (box[i]!.2 : ℝ) + (box[j]!.2 : ℝ) :=
+    add_le_add (hradial fi) (hradial fj)
+  exact (not_lt_of_ge hlower) (lt_of_le_of_lt hradialSum hupper)
+
 end CirclePacking

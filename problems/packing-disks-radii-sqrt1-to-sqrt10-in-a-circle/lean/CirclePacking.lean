@@ -68,6 +68,7 @@ import CirclePacking.FifteenStage3CycleGeometry
 import CirclePacking.FifteenStage3CycleHandoff
 import CirclePacking.FifteenStage3StreamSoundness
 import CirclePacking.FifteenStage4CoverageHandoff
+import CirclePacking.FifteenStage4CoverageComplete
 import CirclePacking.FifteenLocalAngleGeometry
 import CirclePacking.FifteenStrictWallBarrier
 import CirclePacking.FifteenPackingLocalRigidity
